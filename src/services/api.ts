@@ -44,7 +44,7 @@ class ApiService {
       timestamp: string;
       environment: string;
       version: string;
-    }>('/api/health');
+    }>('/health');
   }
 
   // Payment rules
@@ -53,7 +53,7 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/rules');
+    }>('/payments/rules');
   }
 
   async getGlobalRules() {
@@ -61,7 +61,7 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/rules/global');
+    }>('/payments/rules/global');
   }
 
   async createRule(ruleData: any) {
@@ -69,7 +69,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/api/payments/rules', {
+    }>('/payments/rules', {
       method: 'POST',
       body: JSON.stringify(ruleData),
     });
@@ -80,7 +80,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>(`/api/payments/rules/${id}`, {
+    }>(`/payments/rules/${id}`, {
       method: 'PUT',
       body: JSON.stringify(ruleData),
     });
@@ -90,7 +90,7 @@ class ApiService {
     return this.request<{
       success: boolean;
       message: string;
-    }>(`/api/payments/rules/${id}`, {
+    }>(`/payments/rules/${id}`, {
       method: 'DELETE',
     });
   }
@@ -101,14 +101,14 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/settings');
+    }>('/payments/settings');
   }
 
   async updateGlobalSettings(settings: any[]) {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/api/payments/settings', {
+    }>('/payments/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
@@ -116,7 +116,7 @@ class ApiService {
 
   // Data import
   async importData(formData: FormData) {
-    const url = `${this.baseURL}/api/data/import`;
+    const url = `${this.baseURL}/data/import`;
     
     try {
       const response = await fetch(url, {
@@ -141,7 +141,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/api/reports/generate', {
+    }>('/reports/generate', {
       method: 'POST',
       body: JSON.stringify({ reportType, filters }),
     });
