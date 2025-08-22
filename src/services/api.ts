@@ -135,6 +135,44 @@ class ApiService {
     }
   }
 
+  // Get data from Google Sheets
+  async getSheetData(sheet: 'attendance' | 'payments') {
+    return this.request<{
+      success: boolean;
+      data: any[];
+      count: number;
+    }>(`/data/sheets?sheet=${sheet}`);
+  }
+
+  // Export data
+  async exportData(sheet: 'attendance' | 'payments', format: 'json' | 'csv' = 'json') {
+    const url = `${this.baseURL}/data/export?sheet=${sheet}&format=${format}`;
+    
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      if (format === 'csv') {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${sheet}_export.csv`;
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        return { success: true, message: 'File downloaded successfully' };
+      } else {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Data export failed:', error);
+      throw error;
+    }
+  }
+
   // Reports
   async generateReport(reportType: string, filters: any = {}) {
     return this.request<{
