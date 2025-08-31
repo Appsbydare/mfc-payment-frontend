@@ -4,7 +4,7 @@ import apiService from '../services/api'
 import toast from 'react-hot-toast'
 
 const attendanceColumns = [
-  'Customer', 'Email', 'Date', 'Time', 'Class Type', 'Venue', 'Instructors', 'Booking Method', 'Membership', 'Booking Source', 'Status'
+  'Customer Name', 'Customer Email', 'Event Starts At', 'Offering Type Name', 'Venue Name', 'Instructors', 'Booking Method', 'Customer Membership ID', 'Membership ID', 'Membership Name', 'Booking Source', 'Status', 'Checkin Timestamp'
 ]
 const paymentColumns = [
   'Date', 'Customer', 'Memo', 'Amount', 'Invoice'
