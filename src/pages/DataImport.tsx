@@ -37,14 +37,10 @@ const DataImport: React.FC = () => {
   const [paymentFile, setPaymentFile] = useState<File | null>(null)
   
   // Status and validation
-  const [status, setStatus] = useState<string>('Ready to import. Please select files and click Validate Data.')
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [isImporting, setIsImporting] = useState<boolean>(false)
   const [importResults, setImportResults] = useState<ImportResults | null>(null)
 
-  // Force-remount keys for file inputs so onChange triggers for same file
-  const [attendanceInputKey, setAttendanceInputKey] = useState<number>(0)
-  const [paymentInputKey, setPaymentInputKey] = useState<number>(0)
 
   // File upload handlers
   const handleAttendanceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,10 +57,9 @@ const DataImport: React.FC = () => {
       transform: (value: any) => (typeof value === 'string' ? value.trim() : value),
       complete: (results: any) => {
         setAttendanceData(results.data as any[])
-        setStatus(`Attendance file loaded: ${results.data.length} records`)
+        // no-op: status text removed; rely on Import Results box
       },
       error: () => {
-        setStatus('Error parsing attendance file.')
         toast.error('Error parsing attendance file')
       }
     })
@@ -84,10 +79,9 @@ const DataImport: React.FC = () => {
       transform: (value: any) => (typeof value === 'string' ? value.trim() : value),
       complete: (results: any) => {
         setPaymentData(results.data as any[])
-        setStatus(`Payment file loaded: ${results.data.length} records`)
+        // no-op: status text removed; rely on Import Results box
       },
       error: () => {
-        setStatus('Error parsing payment file.')
         toast.error('Error parsing payment file')
       }
     })
@@ -123,10 +117,8 @@ const DataImport: React.FC = () => {
     setValidationErrors(errors)
     
     if (errors.length === 0) {
-      setStatus('Validation successful! Ready to import.')
       toast.success('Data validation successful!')
     } else {
-      setStatus('Validation failed. Please fix the errors below.')
       toast.error('Data validation failed')
     }
   }
@@ -134,19 +126,16 @@ const DataImport: React.FC = () => {
   // Import logic
   const importData = async () => {
     if (validationErrors.length > 0) {
-      setStatus('Cannot import: Please fix validation errors first.')
       toast.error('Please fix validation errors first')
       return
     }
 
     if (!attendanceFile && !paymentFile) {
-      setStatus('Please select at least one file to import.')
       toast.error('Please select at least one file to import')
       return
     }
 
     setIsImporting(true)
-    setStatus('Importing data to Google Sheets...')
 
     try {
       const formData = new FormData()
@@ -181,7 +170,6 @@ const DataImport: React.FC = () => {
           statusMessage += `- Duplicates removed: ${response.results.payments.duplicates} records\n`
         }
         
-        setStatus(statusMessage)
         toast.success('Data imported successfully!')
         
         // Clear files after successful import
@@ -198,7 +186,6 @@ const DataImport: React.FC = () => {
       
     } catch (error: any) {
       console.error('Import error:', error)
-      setStatus(`Import failed: ${error.message}`)
       toast.error(`Import failed: ${error.message}`)
     } finally {
       setIsImporting(false)
@@ -262,7 +249,6 @@ const DataImport: React.FC = () => {
             onClick={(e) => { (e.currentTarget as HTMLInputElement).value = '' }}
             className="hidden" 
             id="attendance-upload" 
-            key={attendanceInputKey}
           />
           <label 
             htmlFor="attendance-upload" 
@@ -293,7 +279,6 @@ const DataImport: React.FC = () => {
             onClick={(e) => { (e.currentTarget as HTMLInputElement).value = '' }}
             className="hidden" 
             id="payment-upload" 
-            key={paymentInputKey}
           />
           <label 
             htmlFor="payment-upload" 
@@ -358,9 +343,6 @@ const DataImport: React.FC = () => {
         >
           {isImporting ? 'Importing...' : 'Import Data'}
         </button>
-        <div className="ml-4 text-gray-600 dark:text-gray-300 text-sm flex-1">
-          <pre className="whitespace-pre-wrap">{status}</pre>
-        </div>
       </div>
       
       {validationErrors.length > 0 && (
