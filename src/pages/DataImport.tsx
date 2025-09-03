@@ -152,24 +152,6 @@ const DataImport: React.FC = () => {
       
       if (response.success) {
         setImportResults(response.results)
-        
-        // Create detailed status message
-        let statusMessage = 'Import completed successfully!\n\n'
-        
-        if (response.results.attendance.processed > 0) {
-          statusMessage += `Attendance Data:\n`
-          statusMessage += `- Processed: ${response.results.attendance.processed} records\n`
-          statusMessage += `- Added: ${response.results.attendance.added} new records\n`
-          statusMessage += `- Duplicates removed: ${response.results.attendance.duplicates} records\n`
-        }
-        
-        if (response.results.payments.processed > 0) {
-          statusMessage += `\nPayment Data:\n`
-          statusMessage += `- Processed: ${response.results.payments.processed} records\n`
-          statusMessage += `- Added: ${response.results.payments.added} new records\n`
-          statusMessage += `- Duplicates removed: ${response.results.payments.duplicates} records\n`
-        }
-        
         toast.success('Data imported successfully!')
         
         // Clear files after successful import
