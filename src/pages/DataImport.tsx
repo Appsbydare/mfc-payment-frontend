@@ -42,6 +42,10 @@ const DataImport: React.FC = () => {
   const [isImporting, setIsImporting] = useState<boolean>(false)
   const [importResults, setImportResults] = useState<ImportResults | null>(null)
 
+  // Force-remount keys for file inputs so onChange triggers for same file
+  const [attendanceInputKey, setAttendanceInputKey] = useState<number>(0)
+  const [paymentInputKey, setPaymentInputKey] = useState<number>(0)
+
   // File upload handlers
   const handleAttendanceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -53,6 +57,8 @@ const DataImport: React.FC = () => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header: string) => (header || '').replace(/^\uFEFF/, '').trim(),
+      transform: (value: any) => (typeof value === 'string' ? value.trim() : value),
       complete: (results: any) => {
         setAttendanceData(results.data as any[])
         setStatus(`Attendance file loaded: ${results.data.length} records`)
@@ -74,6 +80,8 @@ const DataImport: React.FC = () => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header: string) => (header || '').replace(/^\uFEFF/, '').trim(),
+      transform: (value: any) => (typeof value === 'string' ? value.trim() : value),
       complete: (results: any) => {
         setPaymentData(results.data as any[])
         setStatus(`Payment file loaded: ${results.data.length} records`)
@@ -251,8 +259,10 @@ const DataImport: React.FC = () => {
             type="file" 
             accept=".csv" 
             onChange={handleAttendanceUpload} 
+            onClick={(e) => { (e.currentTarget as HTMLInputElement).value = '' }}
             className="hidden" 
             id="attendance-upload" 
+            key={attendanceInputKey}
           />
           <label 
             htmlFor="attendance-upload" 
@@ -280,8 +290,10 @@ const DataImport: React.FC = () => {
             type="file" 
             accept=".csv" 
             onChange={handlePaymentUpload} 
+            onClick={(e) => { (e.currentTarget as HTMLInputElement).value = '' }}
             className="hidden" 
             id="payment-upload" 
+            key={paymentInputKey}
           />
           <label 
             htmlFor="payment-upload" 
