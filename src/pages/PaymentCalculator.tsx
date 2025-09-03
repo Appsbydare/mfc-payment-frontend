@@ -2,29 +2,6 @@ import React, { useState } from 'react'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
 
-const coachPayments = [
-  { name: 'Alice Smith', classes: 23, students: 156, revenue: '€1,245.30', payment: '€541.70' },
-  { name: 'Bob Johnson', classes: 18, students: 124, revenue: '€987.60', payment: '€429.50' },
-  { name: 'Charlie Wilson', classes: 15, students: 98, revenue: '€756.40', payment: '€329.03' },
-  { name: 'Diana Garcia', classes: 12, students: 87, revenue: '€634.20', payment: '€275.88' },
-  { name: 'Eva Martinez', classes: 20, students: 145, revenue: '€1,123.80', payment: '€488.85' },
-]
-const bgmPayments = [
-  { source: 'Group Classes', revenue: '€3,456.78', pct: '30%', payment: '€1,037.03' },
-  { source: 'Private Sessions', revenue: '€1,598.40', pct: '15%', payment: '€239.76' },
-  { source: 'Semi-Private', revenue: '€234.50', pct: '15%', payment: '€35.18' },
-]
-const managementPayments = [
-  { source: 'Group Classes', revenue: '€3,456.78', pct: '8.5%', payment: '€293.83' },
-  { source: 'Private Sessions', revenue: '€1,598.40', pct: '5%', payment: '€79.92' },
-  { source: 'Other Revenue', revenue: '€234.50', pct: '0%', payment: '€0.00' },
-]
-const exceptions = [
-  { customer: 'John Smith', issue: 'Free Session', original: '€15.00', override: '€0.00', reason: 'Promotional class', action: 'Approved' },
-  { customer: 'Sarah Wilson', issue: 'Refund Applied', original: '€112.20', override: '€0.00', reason: 'Package refunded', action: 'Pending' },
-  { customer: 'Mike Garcia', issue: 'Discount', original: '€89.50', override: '€67.13', reason: 'Student discount', action: 'Review' },
-]
-
 const tabs = [
   { label: 'Coach Payments' },
   { label: 'BGM Payments' },
@@ -34,18 +11,22 @@ const tabs = [
 
 const PaymentCalculator: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0)
-  const [processingMonth, setProcessingMonth] = useState(() => {
-    const now = new Date()
-    return now.toISOString().slice(0, 10)
-  })
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
   const handleCalculate = async () => {
     try {
-      const d = new Date(processingMonth)
-      const month = d.getUTCMonth() + 1
-      const year = d.getUTCFullYear()
-      const res = await apiService.calculatePayments({ month, year })
+      const payload: any = {}
+      if (fromDate || toDate) {
+        payload.fromDate = fromDate || undefined
+        payload.toDate = toDate || undefined
+      } else {
+        const now = new Date()
+        payload.month = now.getUTCMonth() + 1
+        payload.year = now.getUTCFullYear()
+      }
+      const res = await apiService.calculatePayments(payload)
       if (res.success) {
         setCalcResult(res)
         toast.success('Calculation completed')
@@ -65,12 +46,22 @@ const PaymentCalculator: React.FC = () => {
       </div>
       <div className="flex flex-col md:flex-row md:items-center gap-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg text-gray-900 dark:text-white">Processing Month:</span>
+          <span className="font-semibold text-lg text-gray-900 dark:text-white">From:</span>
           <input
             type="date"
             className="border rounded px-2 py-1 text-base"
-            value={processingMonth}
-            onChange={e => setProcessingMonth(e.target.value)}
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
+            style={{ minWidth: 140 }}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-lg text-gray-900 dark:text-white">To:</span>
+          <input
+            type="date"
+            className="border rounded px-2 py-1 text-base"
+            value={toDate}
+            onChange={e => setToDate(e.target.value)}
             style={{ minWidth: 140 }}
           />
         </div>
@@ -117,122 +108,16 @@ const PaymentCalculator: React.FC = () => {
         </div>
         {/* Tab Content */}
         {activeTab === 0 && (
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Coach Payment Summary</h2>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-              <table className="min-w-full text-sm text-left">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach Name</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Classes Taught</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Total Students</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Gross Revenue</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach Payment</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {coachPayments.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.name}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.classes}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.students}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.revenue}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.payment}</td>
-                      <td className="px-3 py-2 border-b"><button className="btn-secondary">View Details</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <div className="text-gray-600 dark:text-gray-300 text-sm">Coach payments breakdown will appear here once rules are applied.</div>
         )}
         {activeTab === 1 && (
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">BGM (Landlord) Payment Summary</h2>
-            <div className="text-xl font-bold text-primary-700 dark:text-primary-300 mb-2">Total BGM Payment for May 2025: €1,276.89</div>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-              <table className="min-w-full text-sm text-left">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Revenue Source</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Total Revenue</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">BGM Percentage</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">BGM Payment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bgmPayments.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.source}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.revenue}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.pct}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.payment}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <div className="text-gray-600 dark:text-gray-300 text-sm">BGM payments breakdown will appear here once rules are applied.</div>
         )}
         {activeTab === 2 && (
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Management Payment Summary</h2>
-            <div className="text-xl font-bold text-primary-700 dark:text-primary-300 mb-2">Total Management Payment for May 2025: €361.78</div>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-              <table className="min-w-full text-sm text-left">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Revenue Source</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Total Revenue</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Management %</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Management Payment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {managementPayments.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.source}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.revenue}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.pct}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.payment}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <div className="text-gray-600 dark:text-gray-300 text-sm">Management payments breakdown will appear here once rules are applied.</div>
         )}
         {activeTab === 3 && (
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Exceptions & Manual Overrides</h2>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-              <table className="min-w-full text-sm text-left">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Customer</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Issue Type</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Original Amount</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Override Amount</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Reason</th>
-                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {exceptions.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.customer}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.issue}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.original}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.override}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.reason}</td>
-                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.action}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <div className="text-gray-600 dark:text-gray-300 text-sm">Exceptions and manual overrides will be listed here.</div>
         )}
       </div>
     </div>

@@ -186,10 +186,10 @@ class ApiService {
   }
 
   // Payments calculation
-  async calculatePayments(payload: { month?: number; year?: number }) {
+  async calculatePayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
     return this.request<{
       success: boolean;
-      filters: { month: number | null; year: number | null };
+      filters: { month: number | null; year: number | null; fromDate: string | null; toDate: string | null };
       counts: {
         attendanceTotal: number;
         groupSessions: number;
