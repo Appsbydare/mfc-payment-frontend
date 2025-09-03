@@ -85,10 +85,31 @@ const PaymentCalculator: React.FC = () => {
               <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
               <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
               <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Group Revenue: €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Private Revenue: €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
             </div>
             <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
               <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
               <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
+            </div>
+          </div>
+          {/* Splits */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Group Splits</div>
+              <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.splits.group.revenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits.group.coach || 0).toFixed(2)} ({calcResult.splits.group.percentage.coach}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">BGM: €{Number(calcResult.splits.group.bgm || 0).toFixed(2)} ({calcResult.splits.group.percentage.bgm}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">Management: €{Number(calcResult.splits.group.management || 0).toFixed(2)} ({calcResult.splits.group.percentage.management}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">MFC: €{Number(calcResult.splits.group.mfc || 0).toFixed(2)} ({calcResult.splits.group.percentage.mfc}%)</div>
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Private Splits</div>
+              <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.splits.private.revenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits.private.coach || 0).toFixed(2)} ({calcResult.splits.private.percentage.coach}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">Landlord: €{Number(calcResult.splits.private.landlord || 0).toFixed(2)} ({calcResult.splits.private.percentage.landlord}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">Management: €{Number(calcResult.splits.private.management || 0).toFixed(2)} ({calcResult.splits.private.percentage.management}%)</div>
+              <div className="text-gray-900 dark:text-gray-100">MFC: €{Number(calcResult.splits.private.mfc || 0).toFixed(2)} ({calcResult.splits.private.percentage.mfc}%)</div>
             </div>
           </div>
         </div>
