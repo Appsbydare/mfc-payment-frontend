@@ -206,13 +206,80 @@ const PaymentCalculator: React.FC = () => {
           </div>
         )}
         {activeTab === 1 && (
-          <div className="text-gray-600 dark:text-gray-300 text-sm">BGM payments breakdown will appear here once rules are applied.</div>
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+            <table className="min-w-full text-sm text-left">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Group Gross</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Private Gross</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">BGM Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(calcResult?.coachBreakdown || []).map((row: any) => (
+                  <tr key={`bgm-${row.coach}`}>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.coach}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.groupGross || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.privateGross || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100 font-semibold">€{Number(row.bgmPayment || 0).toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">Total</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.groupGross || 0), 0)).toFixed(2)}</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.privateGross || 0), 0)).toFixed(2)}</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.bgmPayment || 0), 0)).toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
         {activeTab === 2 && (
-          <div className="text-gray-600 dark:text-gray-300 text-sm">Management payments breakdown will appear here once rules are applied.</div>
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+            <table className="min-w-full text-sm text-left">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Group Gross</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Private Gross</th>
+                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Management Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(calcResult?.coachBreakdown || []).map((row: any) => (
+                  <tr key={`mgmt-${row.coach}`}>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.coach}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.groupGross || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.privateGross || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100 font-semibold">€{Number(row.managementPayment || 0).toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">Total</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.groupGross || 0), 0)).toFixed(2)}</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.privateGross || 0), 0)).toFixed(2)}</td>
+                  <td className="px-3 py-2 border-t font-semibold text-gray-900 dark:text-gray-100">€{Number((calcResult?.coachBreakdown || []).reduce((s: number, r: any) => s + (r.managementPayment || 0), 0)).toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
         {activeTab === 3 && (
-          <div className="text-gray-600 dark:text-gray-300 text-sm">Exceptions and manual overrides will be listed here.</div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 text-sm text-gray-900 dark:text-gray-100">
+            <div className="font-semibold mb-2">Discounts</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+                <div>Full Discounts: {calcResult?.discounts?.fullCount ?? 0} (ignored)</div>
+                <div>Partial Discounts: {calcResult?.discounts?.partialCount ?? 0} (included)</div>
+              </div>
+              <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+                <div className="font-semibold">Manual Overrides</div>
+                <div>No overrides applied yet.</div>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-gray-600 dark:text-gray-300">Exceptions and manual overrides will appear here once flagged or entered.</div>
+          </div>
         )}
       </div>
     </div>
