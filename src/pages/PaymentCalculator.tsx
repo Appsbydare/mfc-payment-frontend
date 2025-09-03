@@ -38,6 +38,49 @@ const PaymentCalculator: React.FC = () => {
     }
   }
 
+  const handleExport = () => {
+    try {
+      if (!calcResult || !Array.isArray(calcResult.coachBreakdown)) {
+        toast.error('Nothing to export')
+        return
+      }
+      const rows = calcResult.coachBreakdown as any[]
+      const headers = [
+        'Coach',
+        'GroupAttendances',
+        'PrivateAttendances',
+        'GroupGross',
+        'PrivateGross',
+        'GroupPayment',
+        'PrivatePayment',
+        'TotalPayment',
+        'BgmPayment',
+        'ManagementPayment',
+        'MfcRetained',
+      ]
+      const escape = (v: any) => {
+        const s = String(v ?? '')
+        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+          return '"' + s.replace(/"/g, '""') + '"'
+        }
+        return s
+      }
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => escape((r as any)[h.charAt(0).toLowerCase() + h.slice(1)] ?? '')).join(',')),
+      ].join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `payment_summary_${calcResult.calcId || 'latest'}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      toast.error(e?.message || 'Export failed')
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -67,7 +110,7 @@ const PaymentCalculator: React.FC = () => {
         </div>
         <div className="flex-1 flex justify-end gap-2">
           <button className="btn-primary" onClick={handleCalculate}>Calculate All Payments</button>
-          <button className="btn-secondary">Export Results</button>
+          <button className="btn-secondary" onClick={handleExport}>Export Results</button>
         </div>
       </div>
       {calcResult && (
