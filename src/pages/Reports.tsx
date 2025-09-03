@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { apiService } from '../services/api'
 
 const coaches = ['All Coaches', 'Alice Smith', 'Bob Johnson', 'Charlie Wilson', 'Diana Garcia', 'Eva Martinez']
 const reportHistory = [
@@ -15,10 +16,24 @@ const Reports: React.FC = () => {
   const [saveToLocal, setSaveToLocal] = useState(true)
   const [status, setStatus] = useState('Ready to generate reports.')
 
-  // Mock handlers
-  const handleGenerate = (type: string) => {
-    setStatus(`Generating ${type}... (mock)`)
-    setTimeout(() => setStatus(`${type} generated successfully!`), 1200)
+  // Generate report via backend
+  const handleGenerate = async (type: string) => {
+    try {
+      setStatus(`Generating ${type}...`)
+      const now = new Date()
+      const filters = {
+        month: now.getUTCMonth() + 1,
+        year: now.getUTCFullYear(),
+      }
+      const res = await apiService.generateReport(type, filters)
+      if ((res as any).success !== false) {
+        setStatus(`${type} generated successfully!`)
+      } else {
+        setStatus(`Failed to generate ${type}`)
+      }
+    } catch (e: any) {
+      setStatus(`Error: ${e?.message || 'Failed to generate report'}`)
+    }
   }
 
   return (
