@@ -184,6 +184,27 @@ class ApiService {
       body: JSON.stringify({ reportType, filters }),
     });
   }
+
+  // Payments calculation
+  async calculatePayments(payload: { month?: number; year?: number }) {
+    return this.request<{
+      success: boolean;
+      filters: { month: number | null; year: number | null };
+      counts: {
+        attendanceTotal: number;
+        groupSessions: number;
+        privateSessions: number;
+        paymentsCount: number;
+        discountPayments: number;
+      };
+      revenue: { totalPayments: number };
+      splits: any;
+      notes?: string;
+    }>('/payments/calculate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 export const apiService = new ApiService();

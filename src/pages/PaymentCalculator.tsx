@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { apiService } from '../services/api'
+import toast from 'react-hot-toast'
 
 const coachPayments = [
   { name: 'Alice Smith', classes: 23, students: 156, revenue: '€1,245.30', payment: '€541.70' },
@@ -36,6 +38,24 @@ const PaymentCalculator: React.FC = () => {
     const now = new Date()
     return now.toISOString().slice(0, 10)
   })
+  const [calcResult, setCalcResult] = useState<any | null>(null)
+
+  const handleCalculate = async () => {
+    try {
+      const d = new Date(processingMonth)
+      const month = d.getUTCMonth() + 1
+      const year = d.getUTCFullYear()
+      const res = await apiService.calculatePayments({ month, year })
+      if (res.success) {
+        setCalcResult(res)
+        toast.success('Calculation completed')
+      } else {
+        toast.error('Calculation failed')
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Calculation failed')
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -55,10 +75,33 @@ const PaymentCalculator: React.FC = () => {
           />
         </div>
         <div className="flex-1 flex justify-end gap-2">
-          <button className="btn-primary">Calculate All Payments</button>
+          <button className="btn-primary" onClick={handleCalculate}>Calculate All Payments</button>
           <button className="btn-secondary">Export Results</button>
         </div>
       </div>
+      {calcResult && (
+        <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+          <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Calculation Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Attendance</div>
+              <div className="text-gray-900 dark:text-gray-100">Total: {calcResult.counts.attendanceTotal}</div>
+              <div className="text-gray-900 dark:text-gray-100">Group: {calcResult.counts.groupSessions}</div>
+              <div className="text-gray-900 dark:text-gray-100">Private: {calcResult.counts.privateSessions}</div>
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Payments</div>
+              <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
+              <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
+              <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
+              <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Tabs */}
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
         <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
