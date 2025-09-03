@@ -87,6 +87,12 @@ const PaymentCalculator: React.FC = () => {
               <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
               <div className="text-gray-900 dark:text-gray-100">Group Revenue: €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
               <div className="text-gray-900 dark:text-gray-100">Private Revenue: €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
+              {calcResult.discounts && (
+                <div className="mt-2 text-gray-900 dark:text-gray-100">
+                  <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
+                  <div>Partial Discounts: {calcResult.discounts.partialCount} (included)</div>
+                </div>
+              )}
             </div>
             <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
               <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>

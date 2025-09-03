@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
         color: 'text-red-500',
         border: 'border-red-400',
         icon: Users,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
       {
         name: 'Total Revenue',
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
         color: 'text-green-500',
         border: 'border-green-400',
         icon: DollarSign,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
       {
         name: 'Coaches to Pay',
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
         color: 'text-sky-500',
         border: 'border-sky-400',
         icon: UserCheck,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
       {
         name: 'Pending Calculations',
@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
         color: 'text-yellow-500',
         border: 'border-yellow-400',
         icon: AlertTriangle,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
       {
         name: 'BGM Payment',
@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
         color: 'text-purple-500',
         border: 'border-purple-400',
         icon: CreditCard,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
       {
         name: 'Management Pay',
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
         color: 'text-teal-500',
         border: 'border-teal-400',
         icon: Briefcase,
-        labelClass: 'text-2xl font-extrabold',
+        labelClass: 'text-5xl',
       },
     ]
   }, [calcResult])
@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
               <stat.icon className={`h-10 w-10 mr-3 ${stat.color}`} />
               <span className="text-xl font-bold text-gray-700 dark:text-gray-200">{stat.name}</span>
             </div>
-            <div className={`${stat.labelClass} ${stat.color}`}>{stat.value}</div>
+            <div className={`${stat.labelClass} ${stat.color}`} style={{ fontFamily: 'Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif', fontWeight: 400 }}>{stat.value}</div>
           </div>
         ))}
       </div>
