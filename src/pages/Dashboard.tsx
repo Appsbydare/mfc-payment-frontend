@@ -1,79 +1,129 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Users, DollarSign, UserCheck, AlertTriangle, CreditCard, Briefcase } from 'lucide-react'
+import { apiService } from '../services/api'
+import toast from 'react-hot-toast'
 
 const Dashboard: React.FC = () => {
-  // Processing month state
-  const [processingMonth, setProcessingMonth] = useState<string>(() => {
+  // Date range (defaults: From = first day of current month, To = today)
+  const [fromDate, setFromDate] = useState<string>(() => {
     const now = new Date()
-    return now.toISOString().slice(0, 10)
+    const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    return first.toISOString().slice(0, 10)
   })
+  const [toDate, setToDate] = useState<string>(() => {
+    const now = new Date()
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().slice(0, 10)
+  })
+  const [calcResult, setCalcResult] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  // Stat cards data
-  const stats = [
-    {
-      name: 'Total Attendances',
-      value: '287',
-      color: 'text-red-500',
-      border: 'border-red-400',
-      icon: Users,
-      labelClass: 'text-2xl font-extrabold',
-    },
-    {
-      name: 'Total Revenue',
-      value: '€4,256.30',
-      color: 'text-green-500',
-      border: 'border-green-400',
-      icon: DollarSign,
-      labelClass: 'text-2xl font-extrabold',
-    },
-    {
-      name: 'Coaches to Pay',
-      value: '11',
-      color: 'text-sky-500',
-      border: 'border-sky-400',
-      icon: UserCheck,
-      labelClass: 'text-2xl font-extrabold',
-    },
-    {
-      name: 'Pending Calculations',
-      value: '23',
-      color: 'text-yellow-500',
-      border: 'border-yellow-400',
-      icon: AlertTriangle,
-      labelClass: 'text-2xl font-extrabold',
-    },
-    {
-      name: 'BGM Payment',
-      value: '€1,276.89',
-      color: 'text-purple-500',
-      border: 'border-purple-400',
-      icon: CreditCard,
-      labelClass: 'text-2xl font-extrabold',
-    },
-    {
-      name: 'Management Pay',
-      value: '€361.78',
-      color: 'text-teal-500',
-      border: 'border-teal-400',
-      icon: Briefcase,
-      labelClass: 'text-2xl font-extrabold',
-    },
-  ]
+  const euro = (n: number) => `€${Number(n || 0).toFixed(2)}`
+
+  // Fetch calculation summary for the selected range
+  const fetchSummary = async () => {
+    try {
+      setIsLoading(true)
+      const res = await apiService.calculatePayments({ fromDate, toDate })
+      if (res.success) {
+        setCalcResult(res)
+      } else {
+        toast.error('Failed to load dashboard summary')
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to load dashboard summary')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSummary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate])
+
+  // Stat cards data derived from calculation result
+  const stats = useMemo(() => {
+    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0
+    const totalRevenue = calcResult?.revenue?.totalPayments ?? 0
+    const bgmPayment = (calcResult?.splits?.group?.bgm ?? 0) + (calcResult?.splits?.private?.landlord ?? 0)
+    const managementPayment = (calcResult?.splits?.group?.management ?? 0) + (calcResult?.splits?.private?.management ?? 0)
+    return [
+      {
+        name: 'Total Attendances',
+        value: String(attendanceTotal),
+        color: 'text-red-500',
+        border: 'border-red-400',
+        icon: Users,
+        labelClass: 'text-2xl font-extrabold',
+      },
+      {
+        name: 'Total Revenue',
+        value: euro(totalRevenue),
+        color: 'text-green-500',
+        border: 'border-green-400',
+        icon: DollarSign,
+        labelClass: 'text-2xl font-extrabold',
+      },
+      {
+        name: 'Coaches to Pay',
+        value: '—',
+        color: 'text-sky-500',
+        border: 'border-sky-400',
+        icon: UserCheck,
+        labelClass: 'text-2xl font-extrabold',
+      },
+      {
+        name: 'Pending Calculations',
+        value: '—',
+        color: 'text-yellow-500',
+        border: 'border-yellow-400',
+        icon: AlertTriangle,
+        labelClass: 'text-2xl font-extrabold',
+      },
+      {
+        name: 'BGM Payment',
+        value: euro(bgmPayment),
+        color: 'text-purple-500',
+        border: 'border-purple-400',
+        icon: CreditCard,
+        labelClass: 'text-2xl font-extrabold',
+      },
+      {
+        name: 'Management Pay',
+        value: euro(managementPayment),
+        color: 'text-teal-500',
+        border: 'border-teal-400',
+        icon: Briefcase,
+        labelClass: 'text-2xl font-extrabold',
+      },
+    ]
+  }, [calcResult])
 
   return (
     <div className="space-y-6">
-      {/* Processing Month Selector */}
+      {/* Date Range Selector */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg text-gray-700 dark:text-gray-200">Current Processing Month</span>
+          <span className="font-semibold text-lg text-gray-700 dark:text-gray-200">From</span>
           <input
             type="date"
             className="border rounded px-2 py-1 text-base"
-            value={processingMonth}
-            onChange={e => setProcessingMonth(e.target.value)}
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
             style={{ minWidth: 140 }}
           />
+          <span className="font-semibold text-lg text-gray-700 dark:text-gray-200">To</span>
+          <input
+            type="date"
+            className="border rounded px-2 py-1 text-base"
+            value={toDate}
+            onChange={e => setToDate(e.target.value)}
+            style={{ minWidth: 140 }}
+          />
+          <button className="btn-secondary ml-2" onClick={fetchSummary} disabled={isLoading}>
+            {isLoading ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
       </div>
 
