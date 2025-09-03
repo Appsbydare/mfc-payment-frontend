@@ -85,8 +85,8 @@ const PaymentCalculator: React.FC = () => {
               <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
               <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
               <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Group Revenue: €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Private Revenue: €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Group Revenue (allocated): €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Private Revenue (allocated): €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
               {calcResult.discounts && (
                 <div className="mt-2 text-gray-900 dark:text-gray-100">
                   <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
