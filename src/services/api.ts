@@ -87,6 +87,14 @@ class ApiService {
     });
   }
 
+  // Payments verification
+  async verifyPayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
+    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/payments/verify`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async getGlobalRules() {
     return this.request<{
       success: boolean;

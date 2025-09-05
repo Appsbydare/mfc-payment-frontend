@@ -53,7 +53,7 @@ const PaymentCalculator: React.FC = () => {
         payload.month = now.getUTCMonth() + 1
         payload.year = now.getUTCFullYear()
       }
-      const res = await apiService.request<any>('/payments/verify', { method: 'POST', body: JSON.stringify(payload) })
+      const res = await apiService.verifyPayments(payload)
       if (res.success) {
         setVerifyResult({ rows: res.rows || [], summary: res.summary || {} })
         toast.success('Verification complete')
