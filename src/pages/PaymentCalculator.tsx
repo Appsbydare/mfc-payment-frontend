@@ -164,7 +164,7 @@ const PaymentCalculator: React.FC = () => {
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
           <div className="overflow-x-auto">
             <div className="max-h-[560px] overflow-y-auto">
-              <table className="min-w-[1100px] w-full table-fixed text-sm text-left">
+              <table className="min-w-[1800px] w-full table-fixed text-sm text-left">
                 <colgroup>
                   <col className="w-28" />
                   <col className="w-48" />
@@ -174,6 +174,12 @@ const PaymentCalculator: React.FC = () => {
                   <col className="w-24" />
                   <col className="w-32" />
                   <col className="w-28" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-28" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-36" />
                   <col className="w-32" />
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200">
@@ -202,12 +208,12 @@ const PaymentCalculator: React.FC = () => {
                       <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.Instructors}>{r.Instructors}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">{r.Verified ? 'Yes' : 'No'}</td>
                       <td className="px-3 py-2 border-b truncate" title={r.Category}>{r.Category}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">{r.Invoice || ''}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
                     </tr>
