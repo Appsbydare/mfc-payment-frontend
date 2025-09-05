@@ -161,36 +161,58 @@ const PaymentCalculator: React.FC = () => {
             <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
           </div>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-          <table className="min-w-full text-sm text-left">
-            <thead>
-              <tr>
-                {['Date','Customer','Membership','ClassType','Instructors','Verified','Category','UnitPrice','EffectiveAmount'].map(h => (
-                  <th key={h} onClick={() => { setSortKey(h); setSortDir(d => d==='asc'?'desc':'asc') }} className="cursor-pointer select-none px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">
-                    {h}{sortKey===h? (sortDir==='asc'?' ▲':' ▼'):''}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedFilteredRows.map((r: any, idx: number) => (
-                <tr key={idx}>
-                  <td className="px-3 py-2 border-b">{r.Date}</td>
-                  <td className="px-3 py-2 border-b">{r.Customer}</td>
-                  <td className="px-3 py-2 border-b">{r.Membership}</td>
-                  <td className="px-3 py-2 border-b">{r.ClassType}</td>
-                  <td className="px-3 py-2 border-b">{r.Instructors}</td>
-                  <td className="px-3 py-2 border-b">{r.Verified ? 'Yes' : 'No'}</td>
-                  <td className="px-3 py-2 border-b">{r.Category}</td>
-                  <td className="px-3 py-2 border-b">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
-                  <td className="px-3 py-2 border-b">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
-                </tr>
-              ))}
-              {!verifyResult && (
-                <tr><td className="px-3 py-4 text-gray-500" colSpan={9}>Click Verify Payments to load rows.</td></tr>
-              )}
-            </tbody>
-          </table>
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+          <div className="overflow-x-auto">
+            <div className="max-h-[560px] overflow-y-auto">
+              <table className="min-w-[1100px] w-full table-fixed text-sm text-left">
+                <colgroup>
+                  <col className="w-28" />
+                  <col className="w-48" />
+                  <col className="w-[360px]" />
+                  <col className="w-[240px]" />
+                  <col className="w-44" />
+                  <col className="w-24" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-32" />
+                </colgroup>
+                <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200">
+                  <tr>
+                    {['Date','Customer','Membership','ClassType','Instructors','Verified','Category','UnitPrice','EffectiveAmount'].map(h => (
+                      <th
+                        key={h}
+                        onClick={() => { setSortKey(h); setSortDir(d => d==='asc'?'desc':'asc') }}
+                        className="cursor-pointer select-none px-3 py-2 font-semibold border-b border-primary-200 dark:border-primary-700"
+                      >
+                        {h}{sortKey===h? (sortDir==='asc'?' ▲':' ▼'):''}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedFilteredRows.map((r: any, idx: number) => (
+                    <tr
+                      key={idx}
+                      className={`${r.Verified ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
+                    >
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.Date}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.Customer}>{r.Customer}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.Membership}>{r.Membership}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.ClassType}>{r.ClassType}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.Instructors}>{r.Instructors}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.Verified ? 'Yes' : 'No'}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.Category}>{r.Category}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  {!verifyResult && (
+                    <tr><td className="px-3 py-4 text-gray-500" colSpan={9}>Click Verify Payments to load rows.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
       {calcResult && (
