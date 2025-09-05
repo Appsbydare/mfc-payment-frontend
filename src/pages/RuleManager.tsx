@@ -188,7 +188,6 @@ const RuleManager: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {loading && <div className="text-sm text-gray-600 dark:text-gray-300">Saving...</div>}
       {/* Left Panel: Membership Types */}
       <div className="w-full lg:w-1/3 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
         <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Membership Types</h2>

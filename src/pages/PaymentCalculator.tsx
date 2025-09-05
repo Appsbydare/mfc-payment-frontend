@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -14,6 +14,10 @@ const PaymentCalculator: React.FC = () => {
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
   const [calcResult, setCalcResult] = useState<any | null>(null)
+  const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
+  const [sortKey, setSortKey] = useState<string>('Date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [filter, setFilter] = useState<string>('')
 
   const handleCalculate = async () => {
     try {
@@ -37,6 +41,41 @@ const PaymentCalculator: React.FC = () => {
       toast.error(e?.message || 'Calculation failed')
     }
   }
+
+  const handleVerify = async () => {
+    try {
+      const payload: any = {}
+      if (fromDate || toDate) {
+        payload.fromDate = fromDate || undefined
+        payload.toDate = toDate || undefined
+      } else {
+        const now = new Date()
+        payload.month = now.getUTCMonth() + 1
+        payload.year = now.getUTCFullYear()
+      }
+      const res = await apiService.request<any>('/payments/verify', { method: 'POST', body: JSON.stringify(payload) })
+      if (res.success) {
+        setVerifyResult({ rows: res.rows || [], summary: res.summary || {} })
+        toast.success('Verification complete')
+      } else {
+        toast.error('Verification failed')
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Verification failed')
+    }
+  }
+
+  const sortedFilteredRows = useMemo(() => {
+    return (verifyResult?.rows || [])
+      .filter((r: any) => !filter || JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()))
+      .sort((a: any, b: any) => {
+        const av = a[sortKey] ?? ''
+        const bv = b[sortKey] ?? ''
+        if (av < bv) return sortDir === 'asc' ? -1 : 1
+        if (av > bv) return sortDir === 'asc' ? 1 : -1
+        return 0
+      })
+  }, [verifyResult, sortKey, sortDir, filter])
 
   const handleExport = () => {
     try {
@@ -110,7 +149,48 @@ const PaymentCalculator: React.FC = () => {
         </div>
         <div className="flex-1 flex justify-end gap-2">
           <button className="btn-primary" onClick={handleCalculate}>Calculate All Payments</button>
+          <button className="btn-secondary" onClick={handleVerify}>Verify Payments</button>
           <button className="btn-secondary" onClick={handleExport}>Export Results</button>
+        </div>
+      </div>
+      {/* Verification Table */}
+      <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm text-gray-700 dark:text-gray-300">Verification {verifyResult ? `(rows: ${verifyResult.rows.length})` : ''}</div>
+          <div className="flex items-center gap-2">
+            <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
+          </div>
+        </div>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+          <table className="min-w-full text-sm text-left">
+            <thead>
+              <tr>
+                {['Date','Customer','Membership','ClassType','Instructors','Verified','Category','UnitPrice','EffectiveAmount'].map(h => (
+                  <th key={h} onClick={() => { setSortKey(h); setSortDir(d => d==='asc'?'desc':'asc') }} className="cursor-pointer select-none px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">
+                    {h}{sortKey===h? (sortDir==='asc'?' ▲':' ▼'):''}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedFilteredRows.map((r: any, idx: number) => (
+                <tr key={idx}>
+                  <td className="px-3 py-2 border-b">{r.Date}</td>
+                  <td className="px-3 py-2 border-b">{r.Customer}</td>
+                  <td className="px-3 py-2 border-b">{r.Membership}</td>
+                  <td className="px-3 py-2 border-b">{r.ClassType}</td>
+                  <td className="px-3 py-2 border-b">{r.Instructors}</td>
+                  <td className="px-3 py-2 border-b">{r.Verified ? 'Yes' : 'No'}</td>
+                  <td className="px-3 py-2 border-b">{r.Category}</td>
+                  <td className="px-3 py-2 border-b">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
+                  <td className="px-3 py-2 border-b">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                </tr>
+              ))}
+              {!verifyResult && (
+                <tr><td className="px-3 py-4 text-gray-500" colSpan={9}>Click Verify Payments to load rows.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
       {calcResult && (
