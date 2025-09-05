@@ -29,6 +29,7 @@ const defaultRule = {
   category: '',
   price: '',
   sessions: '',
+  unitPrice: '',
   coachPct: '',
   bgmPct: '',
   mgmtPct: '',
@@ -128,6 +129,8 @@ const RuleManager: React.FC = () => {
         session_type: rule.privateSession ? 'private' : 'group',
         price: rule.price,
         sessions: rule.sessions,
+        sessions_per_pack: rule.sessions,
+        unit_price: rule.unitPrice || calcUnitPrice(rule.price, rule.sessions),
         coach_percentage: rule.coachPct,
         bgm_percentage: rule.bgmPct,
         management_percentage: rule.mgmtPct,
@@ -251,6 +254,10 @@ const RuleManager: React.FC = () => {
             <div>
               <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">Number of Sessions</label>
               <input name="sessions" value={rule.sessions} onChange={handleInput} className="input-field" type="number" min="1" />
+            </div>
+            <div>
+              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">Session Price</label>
+              <input name="unitPrice" value={(rule.unitPrice || calcUnitPrice(rule.price, rule.sessions)) as any} onChange={handleInput} className="input-field" type="number" min="0" step="0.01" />
             </div>
           </div>
 
