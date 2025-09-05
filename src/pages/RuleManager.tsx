@@ -56,7 +56,7 @@ const RuleManager: React.FC = () => {
   // State for rule form
   const [rule, setRule] = useState(defaultRule)
   const [rulesList, setRulesList] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
 
   useEffect(() => {
     refreshRules()
