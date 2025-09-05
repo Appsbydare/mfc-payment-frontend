@@ -178,7 +178,7 @@ const PaymentCalculator: React.FC = () => {
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200">
                   <tr>
-                    {['Date','Customer','Membership','ClassType','Instructors','Verified','Category','UnitPrice','EffectiveAmount'].map(h => (
+                    {['Date','Customer','Membership','ClassType','Instructors','Verified','Category','UnitPrice','EffectiveAmount','CoachAmount','BgmAmount','ManagementAmount','MfcAmount','Invoice','PaymentDate'].map(h => (
                       <th
                         key={h}
                         onClick={() => { setSortKey(h); setSortDir(d => d==='asc'?'desc':'asc') }}
@@ -204,10 +204,16 @@ const PaymentCalculator: React.FC = () => {
                       <td className="px-3 py-2 border-b truncate" title={r.Category}>{r.Category}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.Invoice || ''}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
                     </tr>
                   ))}
                   {!verifyResult && (
-                    <tr><td className="px-3 py-4 text-gray-500" colSpan={9}>Click Verify Payments to load rows.</td></tr>
+                    <tr><td className="px-3 py-4 text-gray-500" colSpan={15}>Click Verify Payments to load rows.</td></tr>
                   )}
                 </tbody>
               </table>
