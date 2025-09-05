@@ -335,38 +335,4 @@ const RuleManager: React.FC = () => {
     </div>
   )
 }
-
-async function refreshRules(this: any) {
-  try {
-    const res = await apiService.listRules()
-    if (res.success) {
-      // @ts-ignore - set in outer scope via closure
-      ;(setRulesList as any)(res.data || [])
-    }
-  } catch (e) {
-    // noop
-  }
-}
-
-function loadToForm(r: any) {
-  const form = {
-    ...(defaultRule as any),
-    id: r.id,
-    name: r.rule_name || r.package_name || '',
-    category: r.session_type === 'private' ? 'Private Sessions' : 'Group Classes',
-    price: r.price || '',
-    sessions: r.sessions || '',
-    coachPct: r.coach_percentage || '',
-    bgmPct: r.bgm_percentage || '',
-    mgmtPct: r.management_percentage || '',
-    mfcPct: r.mfc_percentage || '',
-    privateSession: String(r.session_type).toLowerCase() === 'private',
-    allowDiscounts: String(r.allow_discounts || '').toLowerCase() === 'true',
-    taxExempt: false,
-    notes: r.notes || '',
-  }
-  // @ts-ignore - set in outer scope via closure
-  ;(setRule as any)(form)
-}
-
 export default RuleManager 
