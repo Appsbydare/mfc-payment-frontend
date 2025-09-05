@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { apiService } from '../services/api'
 import { ChevronDown, ChevronRight, Plus, Trash2, Save, RefreshCw } from 'lucide-react'
 
+function calcUnitPrice(price: any, sessions: any) {
+  const p = parseFloat(String(price ?? ''))
+  const s = parseFloat(String(sessions ?? ''))
+  if (!isFinite(p) || !isFinite(s) || s <= 0) return ''
+  return (p / s).toFixed(2)
+}
+
 // Mock data for membership types
 const initialMemberships = [
   {
@@ -136,7 +143,6 @@ const RuleManager: React.FC = () => {
         management_percentage: rule.mgmtPct,
         mfc_percentage: rule.mfcPct,
         pricing_type: '',
-        sessions_per_pack: '',
         per_week: '',
         fixed_rate: '',
         allow_discounts: rule.allowDiscounts,
