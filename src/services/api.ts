@@ -56,6 +56,37 @@ class ApiService {
     }>('/payments/rules');
   }
 
+  // Rule Manager (Sheets-based)
+  async listRules() {
+    return this.request<{ success: boolean; data: any[] }>('/rules');
+  }
+
+  async getRule(id: string | number) {
+    return this.request<{ success: boolean; data: any }>(`/rules/${id}`);
+  }
+
+  async saveRule(ruleData: any) {
+    return this.request<{ success: boolean; data: any }>(`/rules`, {
+      method: 'POST',
+      body: JSON.stringify(ruleData),
+    });
+  }
+
+  async deleteRuleById(id: string | number) {
+    return this.request<{ success: boolean }>(`/rules/${id}`, { method: 'DELETE' });
+  }
+
+  async listSettings() {
+    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/all`);
+  }
+
+  async upsertSettings(settings: any | any[]) {
+    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/upsert`, {
+      method: 'POST',
+      body: JSON.stringify(settings),
+    });
+  }
+
   async getGlobalRules() {
     return this.request<{
       success: boolean;

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { apiService } from '../services/api'
 import { ChevronDown, ChevronRight, Plus, Trash2, Save, RefreshCw } from 'lucide-react'
 
 // Mock data for membership types
@@ -46,6 +47,12 @@ const RuleManager: React.FC = () => {
   const [search, setSearch] = useState('')
   // State for rule form
   const [rule, setRule] = useState(defaultRule)
+  const [rulesList, setRulesList] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    refreshRules()
+  }, [])
 
   // Handlers
   const handleExpand = (cat: string) => setExpanded(e => ({ ...e, [cat]: !e[cat] }))
@@ -80,15 +87,53 @@ const RuleManager: React.FC = () => {
     setSelected(null)
     setRule(defaultRule)
   }
-  const handleSave = () => {
-    // Save logic (mock)
-    alert('Rules saved (mock)!')
+  const handleSave = async () => {
+    try {
+      setLoading(true)
+      const payload = {
+        id: '',
+        rule_name: rule.name,
+        package_name: rule.name,
+        session_type: rule.privateSession ? 'private' : 'group',
+        price: rule.price,
+        sessions: rule.sessions,
+        coach_percentage: rule.coachPct,
+        bgm_percentage: rule.bgmPct,
+        management_percentage: rule.mgmtPct,
+        mfc_percentage: rule.mfcPct,
+        pricing_type: '',
+        sessions_per_pack: '',
+        per_week: '',
+        fixed_rate: '',
+        allow_discounts: rule.allowDiscounts,
+        notes: rule.notes,
+      }
+      await apiService.saveRule(payload)
+      await refreshRules()
+      alert('Rule saved')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to save')
+    } finally {
+      setLoading(false)
+    }
   }
-  const handleDelete = () => {
-    // Delete logic (mock)
-    setSelected(null)
-    setRule(defaultRule)
-    alert('Membership deleted (mock)!')
+  const handleDelete = async () => {
+    try {
+      if (!rule || !(rule as any).id) {
+        alert('Select a saved rule to delete')
+        return
+      }
+      setLoading(true)
+      await apiService.deleteRuleById((rule as any).id)
+      setSelected(null)
+      setRule(defaultRule)
+      await refreshRules()
+      alert('Deleted')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to delete')
+    } finally {
+      setLoading(false)
+    }
   }
   const handleReset = () => {
     if (selected) handleSelect(selected.category, selected.type)
@@ -103,6 +148,7 @@ const RuleManager: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
+      {loading && <div className="text-sm text-gray-600 dark:text-gray-300">Saving...</div>}
       {/* Left Panel: Membership Types */}
       <div className="w-full lg:w-1/3 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
         <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Membership Types</h2>
@@ -150,6 +196,9 @@ const RuleManager: React.FC = () => {
       {/* Right Panel: Membership Rules Configuration */}
       <div className="w-full lg:w-2/3 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
         <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Membership Rules Configuration</h2>
+        <div className="mb-4">
+          <button type="button" className="btn-secondary" onClick={() => refreshRules()}>Refresh Rules</button>
+        </div>
         <form className="space-y-4">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -221,9 +270,72 @@ const RuleManager: React.FC = () => {
             <button type="button" className="btn-secondary flex items-center gap-2 ml-auto" onClick={handleReset}><RefreshCw className="w-4 h-4" /> Reset Changes</button>
           </div>
         </form>
+        {/* Existing Rules (from Sheets) */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Existing Rules</h3>
+          <div className="max-h-64 overflow-y-auto border rounded">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="px-2 py-1 text-left">ID</th>
+                  <th className="px-2 py-1 text-left">Name</th>
+                  <th className="px-2 py-1 text-left">Type</th>
+                  <th className="px-2 py-1 text-left">Price</th>
+                  <th className="px-2 py-1 text-left">Sessions</th>
+                  <th className="px-2 py-1 text-left">Coach %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rulesList.map((r: any) => (
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => loadToForm(r)}>
+                    <td className="px-2 py-1">{r.id}</td>
+                    <td className="px-2 py-1">{r.rule_name || r.package_name}</td>
+                    <td className="px-2 py-1">{r.session_type}</td>
+                    <td className="px-2 py-1">{r.price}</td>
+                    <td className="px-2 py-1">{r.sessions}</td>
+                    <td className="px-2 py-1">{r.coach_percentage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   )
+}
+
+async function refreshRules(this: any) {
+  try {
+    const res = await apiService.listRules()
+    if (res.success) {
+      // @ts-ignore - set in outer scope via closure
+      ;(setRulesList as any)(res.data || [])
+    }
+  } catch (e) {
+    // noop
+  }
+}
+
+function loadToForm(r: any) {
+  const form = {
+    ...(defaultRule as any),
+    id: r.id,
+    name: r.rule_name || r.package_name || '',
+    category: r.session_type === 'private' ? 'Private Sessions' : 'Group Classes',
+    price: r.price || '',
+    sessions: r.sessions || '',
+    coachPct: r.coach_percentage || '',
+    bgmPct: r.bgm_percentage || '',
+    mgmtPct: r.management_percentage || '',
+    mfcPct: r.mfc_percentage || '',
+    privateSession: String(r.session_type).toLowerCase() === 'private',
+    allowDiscounts: String(r.allow_discounts || '').toLowerCase() === 'true',
+    taxExempt: false,
+    notes: r.notes || '',
+  }
+  // @ts-ignore - set in outer scope via closure
+  ;(setRule as any)(form)
 }
 
 export default RuleManager 
