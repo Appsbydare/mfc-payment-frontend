@@ -54,6 +54,37 @@ const RuleManager: React.FC = () => {
     refreshRules()
   }, [])
 
+  const refreshRules = async () => {
+    try {
+      const res = await apiService.listRules()
+      if ((res as any).success) {
+        setRulesList((res as any).data || [])
+      }
+    } catch (e) {
+      // noop
+    }
+  }
+
+  const loadToForm = (r: any) => {
+    const form = {
+      ...(defaultRule as any),
+      id: r.id,
+      name: r.rule_name || r.package_name || '',
+      category: String(r.session_type).toLowerCase() === 'private' ? 'Private Sessions' : 'Group Classes',
+      price: r.price || '',
+      sessions: r.sessions || '',
+      coachPct: r.coach_percentage || '',
+      bgmPct: r.bgm_percentage || '',
+      mgmtPct: r.management_percentage || '',
+      mfcPct: r.mfc_percentage || '',
+      privateSession: String(r.session_type).toLowerCase() === 'private',
+      allowDiscounts: String(r.allow_discounts || '').toLowerCase() === 'true',
+      taxExempt: false,
+      notes: r.notes || '',
+    }
+    setRule(form as any)
+  }
+
   // Handlers
   const handleExpand = (cat: string) => setExpanded(e => ({ ...e, [cat]: !e[cat] }))
   const handleSelect = (category: string, type: string) => {
