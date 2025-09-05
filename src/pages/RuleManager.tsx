@@ -9,27 +9,8 @@ function calcUnitPrice(price: any, sessions: any) {
   return (p / s).toFixed(2)
 }
 
-// Mock data for membership types
-const initialMemberships = [
-  {
-    category: 'Group Classes',
-    types: [
-      'Adult 10 Pack Pay As You Go',
-      'Adult 5 Pack Pay As You Go',
-      'Monthly Unlimited Adult',
-      'Student 10 Pack',
-      'Youth Boxing (13-17)'
-    ]
-  },
-  {
-    category: 'Private Sessions',
-    types: [
-      '1-on-1 Training',
-      'Semi-Private (2 people)',
-      'Personal Training Package'
-    ]
-  }
-]
+// Membership categories will be derived from the rules list
+const initialMemberships: { category: string; types: string[] }[] = []
 
 const defaultRule = {
   name: '',
@@ -49,7 +30,7 @@ const defaultRule = {
 
 const RuleManager: React.FC = () => {
   // State for memberships and selection
-  const [memberships] = useState(initialMemberships)
+  const [memberships, setMemberships] = useState(initialMemberships)
   const [expanded, setExpanded] = useState<{ [cat: string]: boolean }>({})
   const [selected, setSelected] = useState<{ category: string, type: string } | null>(null)
   const [search, setSearch] = useState('')
@@ -66,7 +47,18 @@ const RuleManager: React.FC = () => {
     try {
       const res = await apiService.listRules()
       if ((res as any).success) {
-        setRulesList((res as any).data || [])
+        const list = ((res as any).data || []) as any[]
+        setRulesList(list)
+        // Build categories -> types from rules
+        const byCat: Record<string, string[]> = {}
+        list.forEach(r => {
+          const cat = String(r.session_type).toLowerCase() === 'private' ? 'Private Sessions' : 'Group Classes'
+          const name = r.rule_name || r.package_name
+          if (!name) return
+          if (!byCat[cat]) byCat[cat] = []
+          if (!byCat[cat].includes(name)) byCat[cat].push(name)
+        })
+        setMemberships(Object.keys(byCat).map(category => ({ category, types: byCat[category].sort() })))
       }
     } catch (e) {
       // noop
@@ -97,21 +89,13 @@ const RuleManager: React.FC = () => {
   const handleExpand = (cat: string) => setExpanded(e => ({ ...e, [cat]: !e[cat] }))
   const handleSelect = (category: string, type: string) => {
     setSelected({ category, type })
-    setRule({
-      ...defaultRule,
-      name: type,
-      category,
-      price: '112.20',
-      sessions: '10',
-      coachPct: '43.50',
-      bgmPct: '30.00',
-      mgmtPct: '8.50',
-      mfcPct: '18.00',
-      privateSession: false,
-      allowDiscounts: true,
-      taxExempt: false,
-      notes: 'Standard adult group class package. 10 sessions valid for 3 months.'
-    })
+    // Try load from existing rule directly
+    const match = rulesList.find(r => (r.rule_name || r.package_name) === type)
+    if (match) {
+      loadToForm(match)
+      return
+    }
+    setRule({ ...defaultRule, name: type, category })
   }
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
