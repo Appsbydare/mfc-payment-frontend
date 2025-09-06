@@ -17,7 +17,41 @@ const PaymentCalculator: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0)
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
+  const [defaultDatesSet, setDefaultDatesSet] = useState(false)
   const [calcResult, setCalcResult] = useState<any | null>(null)
+
+  // Set default dates on component mount
+  React.useEffect(() => {
+    const setDefaultDates = async () => {
+      if (!defaultDatesSet) {
+        try {
+          // Get attendance data to find earliest date
+          const attendanceData = await apiService.getAttendanceData()
+          if (attendanceData && attendanceData.length > 0) {
+            // Find earliest date
+            const dates = attendanceData.map((row: any) => new Date(row.Date)).filter(date => !isNaN(date.getTime()))
+            if (dates.length > 0) {
+              const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())))
+              const today = new Date()
+              
+              setFromDate(earliestDate.toISOString().split('T')[0])
+              setToDate(today.toISOString().split('T')[0])
+            }
+          }
+          setDefaultDatesSet(true)
+        } catch (error) {
+          // If we can't get attendance data, set to current month
+          const today = new Date()
+          const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+          setFromDate(firstDayOfMonth.toISOString().split('T')[0])
+          setToDate(today.toISOString().split('T')[0])
+          setDefaultDatesSet(true)
+        }
+      }
+    }
+    
+    setDefaultDates()
+  }, [defaultDatesSet])
   const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
   const [verificationSummary, setVerificationSummary] = useState<any | null>(null)
   const [sortKey, setSortKey] = useState<string>('Date')
@@ -29,28 +63,6 @@ const PaymentCalculator: React.FC = () => {
   const [showPaymentCategorization, setShowPaymentCategorization] = useState(false)
   const [paymentData, setPaymentData] = useState<any[]>([])
 
-  const handleCalculate = async () => {
-    try {
-      const payload: any = {}
-      if (fromDate || toDate) {
-        payload.fromDate = fromDate || undefined
-        payload.toDate = toDate || undefined
-      } else {
-        const now = new Date()
-        payload.month = now.getUTCMonth() + 1
-        payload.year = now.getUTCFullYear()
-      }
-      const res = await apiService.calculatePayments(payload)
-      if (res.success) {
-        setCalcResult(res)
-        toast.success('Calculation completed')
-      } else {
-        toast.error('Calculation failed')
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Calculation failed')
-    }
-  }
 
   const handleVerify = async () => {
     try {
@@ -63,9 +75,21 @@ const PaymentCalculator: React.FC = () => {
         payload.month = now.getUTCMonth() + 1
         payload.year = now.getUTCFullYear()
       }
-      const res = await apiService.verifyPayments(payload)
-      if (res.success) {
-        setVerifyResult({ rows: res.rows || [], summary: res.summary || {} })
+      
+      // First perform calculation
+      const calcRes = await apiService.calculatePayments(payload)
+      if (calcRes.success) {
+        setCalcResult(calcRes)
+        toast.success('Calculation complete')
+      } else {
+        toast.error('Calculation failed')
+        return
+      }
+      
+      // Then perform verification
+      const verifyRes = await apiService.verifyPayments(payload)
+      if (verifyRes.success) {
+        setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
         toast.success('Verification complete')
       } else {
         toast.error('Verification failed')
@@ -250,78 +274,22 @@ const PaymentCalculator: React.FC = () => {
           />
         </div>
         <div className="flex-1 flex justify-end gap-2">
-          <button className="btn-primary" onClick={handleCalculate}>Calculate All Payments</button>
-          <button className="btn-secondary" onClick={handleVerify}>Verify Payments</button>
+          <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
           <button className="btn-secondary" onClick={handleExport}>Export Results</button>
         </div>
       </div>
-      {calcResult && (
-        <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-          <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Calculation Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Attendance</div>
-              <div className="text-gray-900 dark:text-gray-100">Total: {calcResult.counts.attendanceTotal}</div>
-              <div className="text-gray-900 dark:text-gray-100">Group: {calcResult.counts.groupSessions}</div>
-              <div className="text-gray-900 dark:text-gray-100">Private: {calcResult.counts.privateSessions}</div>
-            </div>
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Payments</div>
-              <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
-              <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
-              <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Group Revenue (allocated): €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Private Revenue (allocated): €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
-              {calcResult.discounts && (
-                <div className="mt-2 text-gray-900 dark:text-gray-100">
-                  <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
-                  <div>Partial Discounts: {calcResult.discounts.partialCount} (included)</div>
-                </div>
-              )}
-            </div>
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
-              <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
-            </div>
-          </div>
-          {/* Splits */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Group Splits</div>
-              <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.splits.group.revenue || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits.group.coach || 0).toFixed(2)} ({calcResult.splits.group.percentage.coach}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">BGM: €{Number(calcResult.splits.group.bgm || 0).toFixed(2)} ({calcResult.splits.group.percentage.bgm}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">Management: €{Number(calcResult.splits.group.management || 0).toFixed(2)} ({calcResult.splits.group.percentage.management}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">MFC: €{Number(calcResult.splits.group.mfc || 0).toFixed(2)} ({calcResult.splits.group.percentage.mfc}%)</div>
-            </div>
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Private Splits</div>
-              <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.splits.private.revenue || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits.private.coach || 0).toFixed(2)} ({calcResult.splits.private.percentage.coach}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">Landlord: €{Number(calcResult.splits.private.landlord || 0).toFixed(2)} ({calcResult.splits.private.percentage.landlord}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">Management: €{Number(calcResult.splits.private.management || 0).toFixed(2)} ({calcResult.splits.private.percentage.management}%)</div>
-              <div className="text-gray-900 dark:text-gray-100">MFC: €{Number(calcResult.splits.private.mfc || 0).toFixed(2)} ({calcResult.splits.private.percentage.mfc}%)</div>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Tabs */}
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-        <div className="flex mb-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+        <div className="flex mb-4 gap-2">
           {tabs.map((tab, i) => (
             <button
               key={tab.label}
               onClick={() => setActiveTab(i)}
-              className={`relative px-6 py-3 font-medium transition-all duration-200 ${
+              className={`px-4 py-2 font-medium rounded-lg transition-all duration-200 ${
                 activeTab === i 
-                  ? 'bg-white dark:bg-gray-900 text-primary-700 dark:text-primary-300 border-t-2 border-l-2 border-r-2 border-primary-600 rounded-t-lg shadow-sm z-10' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
-              style={{
-                clipPath: activeTab === i ? 'none' : 'polygon(0 0, calc(100% - 8px) 0, 100% 100%, 8px 100%)',
-                marginRight: activeTab === i ? '0' : '-8px',
-                zIndex: activeTab === i ? 10 : 1
-              }}
             >
               {tab.label}
             </button>

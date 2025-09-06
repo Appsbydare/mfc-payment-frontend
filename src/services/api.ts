@@ -47,6 +47,11 @@ class ApiService {
     }>('/health');
   }
 
+  // Get attendance data
+  async getAttendanceData() {
+    return this.request<any[]>('/api/data/attendance');
+  }
+
   // Payment rules
   async getPaymentRules() {
     return this.request<{
@@ -89,7 +94,7 @@ class ApiService {
 
   // Payments verification
   async verifyPayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
-    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/payments/verify`, {
+    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/api/payments/verify`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
