@@ -300,9 +300,6 @@ const PaymentCalculator: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification</h2>
-              <div className="flex items-center gap-2">
-                <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
-              </div>
             </div>
             
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
