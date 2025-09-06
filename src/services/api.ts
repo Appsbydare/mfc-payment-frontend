@@ -44,7 +44,7 @@ class ApiService {
       timestamp: string;
       environment: string;
       version: string;
-    }>('/health');
+    }>('/api/health');
   }
 
   // Get attendance data
@@ -58,35 +58,35 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/payments/rules');
+    }>('/api/payments/rules');
   }
 
   // Rule Manager (Sheets-based)
   async listRules() {
-    return this.request<{ success: boolean; data: any[] }>('/rules');
+    return this.request<{ success: boolean; data: any[] }>('/api/rules');
   }
 
   async getRule(id: string | number) {
-    return this.request<{ success: boolean; data: any }>(`/rules/${id}`);
+    return this.request<{ success: boolean; data: any }>(`/api/rules/${id}`);
   }
 
   async saveRule(ruleData: any) {
-    return this.request<{ success: boolean; data: any }>(`/rules`, {
+    return this.request<{ success: boolean; data: any }>(`/api/rules`, {
       method: 'POST',
       body: JSON.stringify(ruleData),
     });
   }
 
   async deleteRuleById(id: string | number) {
-    return this.request<{ success: boolean }>(`/rules/${id}`, { method: 'DELETE' });
+    return this.request<{ success: boolean }>(`/api/rules/${id}`, { method: 'DELETE' });
   }
 
   async listSettings() {
-    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/all`);
+    return this.request<{ success: boolean; data: any[] }>(`/api/rules/settings/all`);
   }
 
   async upsertSettings(settings: any | any[]) {
-    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/upsert`, {
+    return this.request<{ success: boolean; data: any[] }>(`/api/rules/settings/upsert`, {
       method: 'POST',
       body: JSON.stringify(settings),
     });
@@ -105,7 +105,7 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/payments/rules/global');
+    }>('/api/payments/rules/global');
   }
 
   async createRule(ruleData: any) {
@@ -113,7 +113,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/payments/rules', {
+    }>('/api/payments/rules', {
       method: 'POST',
       body: JSON.stringify(ruleData),
     });
@@ -145,14 +145,14 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/payments/settings');
+    }>('/api/payments/settings');
   }
 
   async updateGlobalSettings(settings: any[]) {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/payments/settings', {
+    }>('/api/payments/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
@@ -223,7 +223,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/reports/generate', {
+    }>('/api/reports/generate', {
       method: 'POST',
       body: JSON.stringify({ reportType, filters }),
     });
@@ -244,7 +244,7 @@ class ApiService {
       revenue: { totalPayments: number };
       splits: any;
       notes?: string;
-    }>('/payments/calculate', {
+    }>('/api/payments/calculate', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -306,7 +306,7 @@ class ApiService {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/verification/manual-verify-attendance', {
+    }>('/api/verification/manual-verify-attendance', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -316,7 +316,7 @@ class ApiService {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/verification/update-payment-category', {
+    }>('/api/verification/update-payment-category', {
       method: 'POST',
       body: JSON.stringify(data),
     });
