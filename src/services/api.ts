@@ -244,6 +244,99 @@ class ApiService {
       body: JSON.stringify(payload),
     });
   }
+
+  // Verification system
+  async getVerificationSummary(params: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params.month) queryParams.append('month', params.month.toString());
+    if (params.year) queryParams.append('year', params.year.toString());
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    if (params.toDate) queryParams.append('toDate', params.toDate);
+    
+    return this.request<{
+      success: boolean;
+      summary: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        manuallyVerifiedRecords: number;
+        totalDiscountedAmount: number;
+        totalTaxAmount: number;
+        totalFuturePaymentsMFC: number;
+        totalVerifiedAmount: number;
+        totalUnverifiedAmount: number;
+        verificationCompletionRate: number;
+        mfcRetentionRate: number;
+        categoryBreakdown: {
+          verified: number;
+          pending: number;
+          manuallyVerified: number;
+        };
+      };
+      message: string;
+    }>(`/verification/summary?${queryParams.toString()}`);
+  }
+
+  async getUnverifiedInvoices(customer: string) {
+    return this.request<{
+      success: boolean;
+      customer: string;
+      invoiceOptions: Array<{
+        invoice: string;
+        totalAmount: number;
+        paymentCount: number;
+        payments: Array<{
+          id: string;
+          amount: number;
+          date: string;
+          memo: string;
+          category: string;
+        }>;
+      }>;
+      message: string;
+    }>(`/verification/unverified-invoices/${encodeURIComponent(customer)}`);
+  }
+
+  async manuallyVerifyAttendance(data: { attendanceId: string; invoiceNumber: string; customer: string }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>('/verification/manual-verify-attendance', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePaymentCategory(data: { paymentId: string; category: string; customer?: string; invoice?: string }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>('/verification/update-payment-category', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInvoiceStatus(invoice: string) {
+    return this.request<{
+      success: boolean;
+      invoice: string;
+      status: 'not_found' | 'fully_verified' | 'unverified' | 'partially_verified';
+      totalAmount: number;
+      verifiedAmount: number;
+      unverifiedAmount: number;
+      paymentCount: number;
+      payments: Array<{
+        id: string;
+        amount: number;
+        date: string;
+        customer: string;
+        memo: string;
+        category: string;
+        isVerified: boolean;
+      }>;
+    }>(`/verification/invoice-status/${encodeURIComponent(invoice)}`);
+  }
 }
 
 export const apiService = new ApiService();
