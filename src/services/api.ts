@@ -49,7 +49,12 @@ class ApiService {
 
   // Get attendance data
   async getAttendanceData() {
-    return this.request<any[]>('/api/data/attendance');
+    return this.request<{
+      success: boolean;
+      data: any[];
+      count: number;
+      message: string;
+    }>('/api/data/attendance');
   }
 
   // Payment rules

@@ -26,10 +26,10 @@ const PaymentCalculator: React.FC = () => {
       if (!defaultDatesSet) {
         try {
           // Get attendance data to find earliest date
-          const attendanceData = await apiService.getAttendanceData()
-          if (attendanceData && attendanceData.length > 0) {
+          const response = await apiService.getAttendanceData()
+          if (response && response.success && response.data && response.data.length > 0) {
             // Find earliest date
-            const dates = attendanceData.map((row: any) => new Date(row.Date)).filter(date => !isNaN(date.getTime()))
+            const dates = response.data.map((row: any) => new Date(row.Date)).filter(date => !isNaN(date.getTime()))
             if (dates.length > 0) {
               const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())))
               const today = new Date()
@@ -302,76 +302,76 @@ const PaymentCalculator: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification</h2>
             </div>
             
-            <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm text-gray-700 dark:text-gray-300">Verification {verifyResult ? `(rows: ${verifyResult.rows.length})` : ''}</div>
-                <div className="flex items-center gap-2">
-                  <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
-                </div>
-              </div>
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-                <div className="overflow-x-auto">
-                  <div className="max-h-[560px] overflow-y-auto">
+      <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm text-gray-700 dark:text-gray-300">Verification {verifyResult ? `(rows: ${verifyResult.rows.length})` : ''}</div>
+          <div className="flex items-center gap-2">
+            <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
+          </div>
+        </div>
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+          <div className="overflow-x-auto">
+            <div className="max-h-[560px] overflow-y-auto">
                     <table className="min-w-[1840px] w-full table-fixed text-sm text-left">
-                      <colgroup>
-                        <col className="w-28" />
-                        <col className="w-48" />
-                        <col className="w-[360px]" />
-                        <col className="w-[240px]" />
-                        <col className="w-44" />
-                        <col className="w-24" />
-                        <col className="w-32" />
-                        <col className="w-28" />
-                        <col className="w-32" />
-                        <col className="w-28" />
-                        <col className="w-28" />
-                        <col className="w-32" />
-                        <col className="w-28" />
-                        <col className="w-36" />
-                        <col className="w-32" />
+                <colgroup>
+                  <col className="w-28" />
+                  <col className="w-48" />
+                  <col className="w-[360px]" />
+                  <col className="w-[240px]" />
+                  <col className="w-44" />
+                  <col className="w-24" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-28" />
+                  <col className="w-32" />
+                  <col className="w-28" />
+                  <col className="w-36" />
+                  <col className="w-32" />
                         <col className="w-40" />
-                      </colgroup>
-                      <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200">
-                        <tr>
-                          {[
-                            { key: 'Date', label: 'Date' },
-                            { key: 'Customer', label: 'Customer' },
-                            { key: 'Membership', label: 'Membership' },
-                            { key: 'ClassType', label: 'ClassType' },
-                            { key: 'Instructors', label: 'Instructors' },
-                            { key: 'Verified', label: 'Verified' },
-                            { key: 'Category', label: 'Category' },
-                            { key: 'UnitPrice', label: 'Unit Price' },
-                            { key: 'EffectiveAmount', label: 'Effective Amount' },
-                            { key: 'CoachAmount', label: 'Coach Amount' },
-                            { key: 'BgmAmount', label: 'BGM Amount' },
-                            { key: 'ManagementAmount', label: 'Management Amount' },
-                            { key: 'MfcAmount', label: 'MFC Amount' },
-                            { key: 'Invoice', label: 'Invoice' },
-                            { key: 'PaymentDate', label: 'Payment Date' },
+                </colgroup>
+                <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200">
+                  <tr>
+                    {[
+                      { key: 'Date', label: 'Date' },
+                      { key: 'Customer', label: 'Customer' },
+                      { key: 'Membership', label: 'Membership' },
+                      { key: 'ClassType', label: 'ClassType' },
+                      { key: 'Instructors', label: 'Instructors' },
+                      { key: 'Verified', label: 'Verified' },
+                      { key: 'Category', label: 'Category' },
+                      { key: 'UnitPrice', label: 'Unit Price' },
+                      { key: 'EffectiveAmount', label: 'Effective Amount' },
+                      { key: 'CoachAmount', label: 'Coach Amount' },
+                      { key: 'BgmAmount', label: 'BGM Amount' },
+                      { key: 'ManagementAmount', label: 'Management Amount' },
+                      { key: 'MfcAmount', label: 'MFC Amount' },
+                      { key: 'Invoice', label: 'Invoice' },
+                      { key: 'PaymentDate', label: 'Payment Date' },
                             { key: 'Actions', label: 'Actions' },
-                          ].map(col => (
-                            <th
-                              key={col.key}
-                              onClick={() => { setSortKey(col.key); setSortDir(d => d==='asc'?'desc':'asc') }}
-                              className="cursor-pointer select-none px-3 py-2 font-semibold border-b border-primary-200 dark:border-primary-700"
-                            >
-                              {col.label}{sortKey===col.key? (sortDir==='asc'?' ▲':' ▼'):''}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedFilteredRows.map((r: any, idx: number) => (
-                          <tr
-                            key={idx}
-                            className={`${r.Verified ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
-                          >
-                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.Date}</td>
-                            <td className="px-3 py-2 border-b truncate" title={r.Customer}>{r.Customer}</td>
-                            <td className="px-3 py-2 border-b truncate" title={r.Membership}>{r.Membership}</td>
-                            <td className="px-3 py-2 border-b truncate" title={r.ClassType}>{r.ClassType}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.Instructors}>{r.Instructors}</td>
+                    ].map(col => (
+                      <th
+                        key={col.key}
+                        onClick={() => { setSortKey(col.key); setSortDir(d => d==='asc'?'desc':'asc') }}
+                        className="cursor-pointer select-none px-3 py-2 font-semibold border-b border-primary-200 dark:border-primary-700"
+                      >
+                        {col.label}{sortKey===col.key? (sortDir==='asc'?' ▲':' ▼'):''}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedFilteredRows.map((r: any, idx: number) => (
+                    <tr
+                      key={idx}
+                      className={`${r.Verified ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
+                    >
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.Date}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.Customer}>{r.Customer}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.Membership}>{r.Membership}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.ClassType}>{r.ClassType}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.Instructors}>{r.Instructors}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 r.Verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
@@ -389,12 +389,12 @@ const PaymentCalculator: React.FC = () => {
                                 {r.Category || 'Pending'}
                               </span>
                             </td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">
                               {editingRow === idx ? (
                                 <div className="flex flex-col gap-1">
@@ -429,7 +429,7 @@ const PaymentCalculator: React.FC = () => {
                                 <span className="text-sm">{r.Invoice || ''}</span>
                               )}
                             </td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">
                               {!r.Verified && r.Category !== 'Manually Verified' && (
                                 <button
@@ -440,17 +440,17 @@ const PaymentCalculator: React.FC = () => {
                                 </button>
                               )}
                             </td>
-                          </tr>
-                        ))}
-                        {!verifyResult && (
+                    </tr>
+                  ))}
+                  {!verifyResult && (
                           <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>Click Verify Payments to load rows.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
+        </div>
+      </div>
           </div>
         )}
         
@@ -471,47 +471,47 @@ const PaymentCalculator: React.FC = () => {
             {/* Combined Calculation and Verification Summary */}
             <div className="space-y-6">
               {/* Calculation Summary */}
-              {calcResult && (
-                <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+      {calcResult && (
+        <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
                   <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Calculation Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-                      <div className="font-semibold text-gray-700 dark:text-gray-200">Attendance</div>
-                      <div className="text-gray-900 dark:text-gray-100">Total: {calcResult.counts.attendanceTotal}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Group: {calcResult.counts.groupSessions}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Private: {calcResult.counts.privateSessions}</div>
-                    </div>
-                    <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-                      <div className="font-semibold text-gray-700 dark:text-gray-200">Payments</div>
-                      <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Group Revenue (allocated): €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
-                      <div className="text-gray-900 dark:text-gray-100">Private Revenue (allocated): €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
-                      {calcResult.discounts && (
-                        <div className="mt-2 text-gray-900 dark:text-gray-100">
-                          <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
-                          <div>Partial Discounts: {calcResult.discounts.partialCount} (included)</div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-                      <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
-                      <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Attendance</div>
+              <div className="text-gray-900 dark:text-gray-100">Total: {calcResult.counts.attendanceTotal}</div>
+              <div className="text-gray-900 dark:text-gray-100">Group: {calcResult.counts.groupSessions}</div>
+              <div className="text-gray-900 dark:text-gray-100">Private: {calcResult.counts.privateSessions}</div>
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Payments</div>
+              <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
+              <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
+              <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Group Revenue (allocated): €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
+              <div className="text-gray-900 dark:text-gray-100">Private Revenue (allocated): €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
+              {calcResult.discounts && (
+                <div className="mt-2 text-gray-900 dark:text-gray-100">
+                  <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
+                  <div>Partial Discounts: {calcResult.discounts.partialCount} (included)</div>
+                </div>
+              )}
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
+              <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
+            </div>
+          </div>
                   
                   {/* Revenue Splits */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
                       <div className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Group Splits</div>
                       <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
                       <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits?.group?.coach || 0).toFixed(2)} (43.5%)</div>
                       <div className="text-gray-900 dark:text-gray-100">BGM: €{Number(calcResult.splits?.group?.bgm || 0).toFixed(2)} (30%)</div>
                       <div className="text-gray-900 dark:text-gray-100">Management: €{Number(calcResult.splits?.group?.management || 0).toFixed(2)} (8.5%)</div>
                       <div className="text-gray-900 dark:text-gray-100">MFC: €{Number(calcResult.splits?.group?.mfc || 0).toFixed(2)} (18%)</div>
-                    </div>
-                    <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
+            </div>
+            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
                       <div className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Private Splits</div>
                       <div className="text-gray-900 dark:text-gray-100">Revenue: €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
                       <div className="text-gray-900 dark:text-gray-100">Coach: €{Number(calcResult.splits?.private?.coach || 0).toFixed(2)} (80%)</div>
@@ -771,10 +771,10 @@ const PaymentCalculator: React.FC = () => {
                     </table>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
         
         {activeTab === 1 && (
           <div className="space-y-6">
@@ -790,7 +790,7 @@ const PaymentCalculator: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+      <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -837,7 +837,7 @@ const PaymentCalculator: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-2 px-3">
-                            <button
+            <button
                               onClick={() => {
                                 setPaymentData(paymentData);
                                 setShowPaymentCategorization(true);
@@ -845,7 +845,7 @@ const PaymentCalculator: React.FC = () => {
                               className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
                             >
                               Edit Category
-                            </button>
+            </button>
                           </td>
                         </tr>
                       );
@@ -857,7 +857,7 @@ const PaymentCalculator: React.FC = () => {
                 </table>
               </div>
             </div>
-          </div>
+        </div>
         )}
         
         {activeTab === 3 && (
