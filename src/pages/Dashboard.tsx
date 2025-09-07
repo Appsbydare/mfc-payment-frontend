@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Users, DollarSign, UserCheck, AlertTriangle, CreditCard, Briefcase } from 'lucide-react'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
+import DateSelector from '../components/DateSelector'
 
 const Dashboard: React.FC = () => {
   // Date range (defaults: From = first day of current month, To = today)
@@ -100,28 +101,18 @@ const Dashboard: React.FC = () => {
   }, [calcResult])
 
   return (
-    <div className="space-y-6">
-      {/* Date Range Selector */}
+    <div className="space-y-4">
+      {/* Page title + date controls */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg text-gray-700 dark:text-gray-200">From</span>
-          <input
-            type="date"
-            className="border rounded px-2 py-1 text-base"
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-            style={{ minWidth: 140 }}
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <DateSelector
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
           />
-          <span className="font-semibold text-lg text-gray-700 dark:text-gray-200">To</span>
-          <input
-            type="date"
-            className="border rounded px-2 py-1 text-base"
-            value={toDate}
-            onChange={e => setToDate(e.target.value)}
-            style={{ minWidth: 140 }}
-          />
-          <button className="btn-secondary ml-2" onClick={fetchSummary} disabled={isLoading}>
+          <button className="btn-secondary" onClick={fetchSummary} disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
