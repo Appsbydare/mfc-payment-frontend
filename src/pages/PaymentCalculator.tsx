@@ -48,6 +48,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const [selectedInvoice, setSelectedInvoice] = useState<string>('')
   const [showPaymentCategorization, setShowPaymentCategorization] = useState(false)
   const [paymentData, setPaymentData] = useState<any[]>([])
+  const [hasUnverifiedData, setHasUnverifiedData] = useState(false)
 
 
   const handleVerify = async () => {
@@ -77,6 +78,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       if (verifyRes.success) {
         setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
         toast.success('Verification complete')
+        setHasUnverifiedData(false)
       } else {
         toast.error('Verification failed')
       }
@@ -84,6 +86,33 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       toast.error(e?.message || 'Verification failed')
     }
   }
+
+  // Auto-load persisted verification results and check unverified indicator
+  useEffect(() => {
+    const loadPersisted = async () => {
+      try {
+        const [persisted, settings] = await Promise.all([
+          apiService.getAttendanceVerification().catch(() => ({ success: false } as any)),
+          apiService.getSettingsSheet().catch(() => ({ success: false } as any)),
+        ])
+        if ((persisted as any).success) {
+          const rows = (persisted as any).data || []
+          if (rows.length > 0) {
+            setVerifyResult({ rows, summary: {} })
+          }
+        }
+        if ((settings as any).success) {
+          const map = new Map((settings as any).data.map((r: any) => [String((r.key ?? r.Key) || '').toLowerCase(), r]))
+          const flag: any = map.get('has_unverified_data')
+          const flagVal = flag ? (flag.value ?? flag.Value ?? flag['Value'] ?? flag['value']) : undefined
+          setHasUnverifiedData(String(flagVal || '').toLowerCase() === 'true')
+        }
+      } catch {}
+    }
+    if (activeTab === 0) {
+      loadPersisted()
+    }
+  }, [activeTab])
 
   const handleLoadVerificationSummary = async () => {
     try {
@@ -427,6 +456,11 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification</h2>
+              {hasUnverifiedData && (
+                <div className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                  There are unverified data. Click "Verify Payments" to verify.
+                </div>
+              )}
             </div>
             
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
@@ -448,6 +482,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                   <col className="w-44" />
                   <col className="w-24" />
                   <col className="w-32" />
+                  <col className="w-40" />
                   <col className="w-28" />
                   <col className="w-32" />
                   <col className="w-28" />
@@ -456,7 +491,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                   <col className="w-28" />
                   <col className="w-36" />
                   <col className="w-32" />
-                        <col className="w-40" />
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
                   <tr>
@@ -468,6 +502,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       { key: 'Instructors', label: 'Instructors' },
                       { key: 'Verified', label: 'Verified' },
                       { key: 'Category', label: 'Category' },
+                      { key: 'Actions', label: 'Actions' },
                       { key: 'UnitPrice', label: 'Unit Price' },
                       { key: 'EffectiveAmount', label: 'Effective Amount' },
                       { key: 'CoachAmount', label: 'Coach Amount' },
@@ -476,7 +511,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       { key: 'MfcAmount', label: 'MFC Amount' },
                       { key: 'Invoice', label: 'Invoice' },
                       { key: 'PaymentDate', label: 'Payment Date' },
-                            { key: 'Actions', label: 'Actions' },
                     ].map(col => (
                       <th
                         key={col.key}
@@ -513,8 +547,18 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                                 r.Category === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                                 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                               }`}>
-                                {r.Category || 'Pending'}
+                                {r.Category === 'info_mismatch' ? 'No payment record' : (r.Category || 'Pending')}
                               </span>
+                            </td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap">
+                              {!r.Verified && r.Category !== 'Manually Verified' && (
+                                <button
+                                  onClick={() => handleStartManualVerification(r, idx)}
+                                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                >
+                                  Verify
+                                </button>
+                              )}
                             </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>

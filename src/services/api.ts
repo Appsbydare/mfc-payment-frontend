@@ -117,6 +117,16 @@ class ApiService {
     });
   }
 
+  // Read persisted attendance verification results
+  async getAttendanceVerification() {
+    return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=attendance_verification`);
+  }
+
+  // Read settings to detect unverified state
+  async getSettingsSheet() {
+    return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=settings`);
+  }
+
   async getGlobalRules() {
     return this.request<{
       success: boolean;
