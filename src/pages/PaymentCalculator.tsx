@@ -364,12 +364,10 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 backdrop-blur-md">
-        <div className="flex-1 flex justify-end gap-2">
-          <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
-          <button className="btn-secondary" onClick={handleExport}>Export Results</button>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
+        <button className="btn-secondary" onClick={handleExport}>Export Results</button>
       </div>
       {/* Tabs */}
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
