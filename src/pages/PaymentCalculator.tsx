@@ -140,8 +140,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
         toast.success('Attendance manually verified')
         
         // Update the local state immediately
-        if (calcResult && calcResult.attendance) {
-          const updatedAttendance = calcResult.attendance.map((item: any) => {
+        if (verifyResult && verifyResult.rows) {
+          const updatedRows = verifyResult.rows.map((item: any) => {
             if (item.Date === row.Date && item.Customer === row.Customer && item.ClassType === row.ClassType) {
               return {
                 ...item,
@@ -153,9 +153,9 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             return item
           })
           
-          setCalcResult({
-            ...calcResult,
-            attendance: updatedAttendance
+          setVerifyResult({
+            ...verifyResult,
+            rows: updatedRows
           })
         }
         
