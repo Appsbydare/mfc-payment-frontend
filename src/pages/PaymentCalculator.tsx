@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
 import PaymentCategorization from '../components/PaymentCategorization'
@@ -52,6 +52,14 @@ const PaymentCalculator: React.FC = () => {
     
     setDefaultDates()
   }, [defaultDatesSet])
+
+  // Auto-load payment data when Payment Verification tab is clicked
+  useEffect(() => {
+    if (activeTab === 1 && paymentData.length === 0) {
+      handleLoadPaymentData()
+    }
+  }, [activeTab])
+
   const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
   const [verificationSummary, setVerificationSummary] = useState<any | null>(null)
   const [sortKey, setSortKey] = useState<string>('Date')
@@ -176,7 +184,7 @@ const PaymentCalculator: React.FC = () => {
       const res = await apiService.getSheetData('payments')
       if (res.success) {
         setPaymentData(res.data)
-        setShowPaymentCategorization(true)
+        // Remove setShowPaymentCategorization(true) to prevent interface issues
       } else {
         toast.error('Failed to load payment data')
       }
@@ -619,19 +627,12 @@ const PaymentCalculator: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payment Verification</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLoadPaymentData}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Load Payment Data
-                </button>
-              </div>
             </div>
             
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <div className="max-h-[600px] overflow-y-auto">
+                  <table className="min-w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th className="text-left py-2 px-3 font-semibold text-gray-700 dark:text-gray-200">Date</th>
@@ -690,10 +691,11 @@ const PaymentCalculator: React.FC = () => {
                       );
                     })}
                     {paymentData.length === 0 && (
-                      <tr><td className="px-3 py-4 text-gray-500" colSpan={8}>Click "Load Payment Data" to view payments.</td></tr>
+                      <tr><td className="px-3 py-4 text-gray-500" colSpan={8}>Loading payment data...</td></tr>
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
         </div>
