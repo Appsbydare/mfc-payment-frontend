@@ -1,11 +1,23 @@
 // API service for MFC Payment System
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://mfc-payment-system.vercel.app';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://mfc-payment-backend.vercel.app';
+
+// Normalize provided base URL to avoid double prefixes or trailing segments
+// - trims whitespace
+// - removes trailing slashes
+// - strips a trailing "/api" if present (case-insensitive)
+const normalizeBaseURL = (url: string): string => {
+  if (!url) return '';
+  let out = String(url).trim();
+  out = out.replace(/\/+$/, '');
+  out = out.replace(/\/api$/i, '');
+  return out;
+};
 
 class ApiService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = normalizeBaseURL(API_BASE_URL);
   }
 
   private async request<T>(
@@ -44,7 +56,7 @@ class ApiService {
       timestamp: string;
       environment: string;
       version: string;
-    }>('/api/health');
+    }>('/health');
   }
 
   // Get attendance data
@@ -54,7 +66,7 @@ class ApiService {
       data: any[];
       count: number;
       message: string;
-    }>('/api/data/attendance');
+    }>('/data/attendance');
   }
 
   // Payment rules
@@ -63,35 +75,35 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/rules');
+    }>('/payments/rules');
   }
 
   // Rule Manager (Sheets-based)
   async listRules() {
-    return this.request<{ success: boolean; data: any[] }>('/api/rules');
+    return this.request<{ success: boolean; data: any[] }>('/rules');
   }
 
   async getRule(id: string | number) {
-    return this.request<{ success: boolean; data: any }>(`/api/rules/${id}`);
+    return this.request<{ success: boolean; data: any }>(`/rules/${id}`);
   }
 
   async saveRule(ruleData: any) {
-    return this.request<{ success: boolean; data: any }>(`/api/rules`, {
+    return this.request<{ success: boolean; data: any }>(`/rules`, {
       method: 'POST',
       body: JSON.stringify(ruleData),
     });
   }
 
   async deleteRuleById(id: string | number) {
-    return this.request<{ success: boolean }>(`/api/rules/${id}`, { method: 'DELETE' });
+    return this.request<{ success: boolean }>(`/rules/${id}`, { method: 'DELETE' });
   }
 
   async listSettings() {
-    return this.request<{ success: boolean; data: any[] }>(`/api/rules/settings/all`);
+    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/all`);
   }
 
   async upsertSettings(settings: any | any[]) {
-    return this.request<{ success: boolean; data: any[] }>(`/api/rules/settings/upsert`, {
+    return this.request<{ success: boolean; data: any[] }>(`/rules/settings/upsert`, {
       method: 'POST',
       body: JSON.stringify(settings),
     });
@@ -99,7 +111,7 @@ class ApiService {
 
   // Payments verification
   async verifyPayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
-    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/api/payments/verify`, {
+    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/payments/verify`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -110,7 +122,7 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/rules/global');
+    }>('/payments/rules/global');
   }
 
   async createRule(ruleData: any) {
@@ -118,7 +130,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/api/payments/rules', {
+    }>('/payments/rules', {
       method: 'POST',
       body: JSON.stringify(ruleData),
     });
@@ -150,14 +162,14 @@ class ApiService {
       success: boolean;
       data: any[];
       message: string;
-    }>('/api/payments/settings');
+    }>('/payments/settings');
   }
 
   async updateGlobalSettings(settings: any[]) {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/api/payments/settings', {
+    }>('/payments/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
@@ -228,7 +240,7 @@ class ApiService {
       success: boolean;
       data: any;
       message: string;
-    }>('/api/reports/generate', {
+    }>('/reports/generate', {
       method: 'POST',
       body: JSON.stringify({ reportType, filters }),
     });
@@ -249,7 +261,7 @@ class ApiService {
       revenue: { totalPayments: number };
       splits: any;
       notes?: string;
-    }>('/api/payments/calculate', {
+    }>('/payments/calculate', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -311,7 +323,7 @@ class ApiService {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/api/verification/manual-verify-attendance', {
+    }>('/verification/manual-verify-attendance', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -321,7 +333,7 @@ class ApiService {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/api/verification/update-payment-category', {
+    }>('/verification/update-payment-category', {
       method: 'POST',
       body: JSON.stringify(data),
     });
