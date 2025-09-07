@@ -22,7 +22,17 @@ interface PaymentCalculatorProps {
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate }) => {
   const [activeTab, setActiveTab] = useState(0)
   
-  // Load dates from localStorage or use props
+  // Load dates from localStorage or use defaults (first day of year to today)
+  const getDefaultFromDate = () => {
+    const now = new Date()
+    return `${now.getFullYear()}-01-01`
+  }
+  
+  const getDefaultToDate = () => {
+    const now = new Date()
+    return now.toISOString().split('T')[0]
+  }
+  
   const getStoredDate = (key: string, fallback: string) => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(key) || fallback
@@ -30,8 +40,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     return fallback
   }
   
-  const [localFromDate, setLocalFromDate] = useState(() => getStoredDate('mfc-fromDate', fromDate))
-  const [localToDate, setLocalToDate] = useState(() => getStoredDate('mfc-toDate', toDate))
+  const [localFromDate, setLocalFromDate] = useState(() => getStoredDate('mfc-fromDate', fromDate || getDefaultFromDate()))
+  const [localToDate, setLocalToDate] = useState(() => getStoredDate('mfc-toDate', toDate || getDefaultToDate()))
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
   // Save dates to localStorage when they change
@@ -72,7 +82,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const [selectedInvoice, setSelectedInvoice] = useState<string>('')
   const [showPaymentCategorization, setShowPaymentCategorization] = useState(false)
   const [paymentData, setPaymentData] = useState<any[]>([])
-  const [hasUnverifiedData, setHasUnverifiedData] = useState(false)
 
 
   const handleVerify = async () => {
@@ -102,7 +111,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       if (verifyRes.success) {
         setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
         toast.success('Verification complete')
-        setHasUnverifiedData(false)
       } else {
         toast.error('Verification failed')
       }
@@ -111,53 +119,48 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
   }
 
-  // Auto-load persisted verification results and check unverified indicator
-  const loadPersisted = async () => {
-    try {
-      const [persisted, settings] = await Promise.all([
-        apiService.getAttendanceVerification().catch(() => ({ success: false } as any)),
-        apiService.getSettingsSheet().catch(() => ({ success: false } as any)),
-      ])
-      if ((persisted as any).success) {
-        const rows = (persisted as any).data || []
-        if (rows.length > 0) {
-          // Filter rows by current date range
-          const filteredRows = rows.filter((row: any) => {
-            if (!row.Date) return false
-            const rowDate = new Date(row.Date)
-            if (localFromDate && rowDate < new Date(localFromDate)) return false
-            if (localToDate && rowDate > new Date(localToDate)) return false
-            return true
-          })
-          if (filteredRows.length > 0) {
-            setVerifyResult({ rows: filteredRows, summary: {} })
-          }
+  // Auto-verify on component mount with current date range
+  useEffect(() => {
+    // Auto-run verification when component mounts to show data by default
+    const autoVerify = async () => {
+      try {
+        const payload: any = {}
+        if (localFromDate || localToDate) {
+          payload.fromDate = localFromDate || undefined
+          payload.toDate = localToDate || undefined
+        } else {
+          const now = new Date()
+          payload.month = now.getUTCMonth() + 1
+          payload.year = now.getUTCFullYear()
         }
+        
+        // First perform calculation
+        const calcRes = await apiService.calculatePayments(payload)
+        if (calcRes.success) {
+          setCalcResult(calcRes)
+        }
+        
+        // Then perform verification
+        const verifyRes = await apiService.verifyPayments(payload)
+        if (verifyRes.success) {
+          setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
+        }
+      } catch (e) {
+        // Silent fail - user can manually verify if needed
+        console.log('Auto-verification failed, user can manually verify')
       }
-      if ((settings as any).success) {
-        const map = new Map((settings as any).data.map((r: any) => [String((r.key ?? r.Key) || '').toLowerCase(), r]))
-        const flag: any = map.get('has_unverified_data')
-        const flagVal = flag ? (flag.value ?? flag.Value ?? flag['Value'] ?? flag['value']) : undefined
-        setHasUnverifiedData(String(flagVal || '').toLowerCase() === 'true')
-      }
-    } catch {}
-  }
-
-  // Load persisted data on component mount
-  useEffect(() => {
-    loadPersisted()
-  }, [])
-
-  // Also load when switching to Attendance Verification tab
-  useEffect(() => {
-    if (activeTab === 0) {
-      loadPersisted()
     }
-  }, [activeTab])
+    
+    // Run auto-verification after a short delay to let component settle
+    const timer = setTimeout(autoVerify, 500)
+    return () => clearTimeout(timer)
+  }, []) // Only run on mount
 
-  // Re-load when date range changes
+  // Re-run verification when date range changes
   useEffect(() => {
-    loadPersisted()
+    if (localFromDate && localToDate) {
+      handleVerify()
+    }
   }, [localFromDate, localToDate])
 
   const handleLoadVerificationSummary = async () => {
@@ -502,11 +505,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification</h2>
-              {hasUnverifiedData && (
-                <div className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                  There are unverified data. Click "Verify Payments" to verify.
-                </div>
-              )}
             </div>
             
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
