@@ -213,24 +213,6 @@ const PaymentCalculator: React.FC = () => {
 
   const handleExport = () => {
     try {
-      if (!calcResult || !Array.isArray(calcResult.coachBreakdown)) {
-        toast.error('Nothing to export')
-        return
-      }
-      const rows = calcResult.coachBreakdown as any[]
-      const headers = [
-        'Coach',
-        'GroupAttendances',
-        'PrivateAttendances',
-        'GroupGross',
-        'PrivateGross',
-        'GroupPayment',
-        'PrivatePayment',
-        'TotalPayment',
-        'BgmPayment',
-        'ManagementPayment',
-        'MfcRetained',
-      ]
       const escape = (v: any) => {
         const s = String(v ?? '')
         if (s.includes(',') || s.includes('"') || s.includes('\n')) {
@@ -238,17 +220,171 @@ const PaymentCalculator: React.FC = () => {
         }
         return s
       }
-      const csv = [
+
+      let csv = ''
+      let filename = ''
+      let headers: string[] = []
+      let rows: any[] = []
+
+      switch (activeTab) {
+        case 0: // Attendance Verification
+          if (!verifyResult || !Array.isArray(verifyResult.rows)) {
+            toast.error('No attendance verification data to export')
+            return
+          }
+          rows = verifyResult.rows
+          headers = [
+            'Date',
+            'Customer',
+            'Membership',
+            'ClassType',
+            'Instructors',
+            'Verified',
+            'Category',
+            'UnitPrice',
+            'EffectiveAmount',
+            'CoachAmount',
+            'BgmAmount',
+            'ManagementAmount',
+            'MfcAmount',
+            'Invoice',
+            'PaymentDate'
+          ]
+          filename = `attendance_verification_${new Date().toISOString().split('T')[0]}.csv`
+          break
+
+        case 1: // Payment Verification
+          if (!paymentData || paymentData.length === 0) {
+            toast.error('No payment data to export')
+            return
+          }
+          rows = paymentData
+          headers = [
+            'Date',
+            'Customer',
+            'Amount',
+            'Invoice',
+            'Memo',
+            'Category',
+            'IsVerified'
+          ]
+          filename = `payment_verification_${new Date().toISOString().split('T')[0]}.csv`
+          break
+
+        case 2: // Verification Summary
+          if (!verificationSummary) {
+            toast.error('No verification summary data to export')
+            return
+          }
+          // Export verification summary as a single row with summary data
+          rows = [verificationSummary]
+          headers = [
+            'TotalRecords',
+            'VerifiedCount',
+            'UnverifiedCount',
+            'PendingCount',
+            'VerifiedPercentage',
+            'LastUpdated'
+          ]
+          filename = `verification_summary_${new Date().toISOString().split('T')[0]}.csv`
+          break
+
+        case 3: // Coach Payments
+          if (!calcResult || !Array.isArray(calcResult.coachBreakdown)) {
+            toast.error('No coach payment data to export')
+            return
+          }
+          rows = calcResult.coachBreakdown
+          headers = [
+            'Coach',
+            'GroupAttendances',
+            'PrivateAttendances',
+            'GroupGross',
+            'PrivateGross',
+            'GroupPayment',
+            'PrivatePayment',
+            'TotalPayment',
+            'BgmPayment',
+            'ManagementPayment',
+            'MfcRetained'
+          ]
+          filename = `coach_payments_${calcResult.calcId || 'latest'}.csv`
+          break
+
+        case 4: // BGM Payments
+          if (!calcResult || !Array.isArray(calcResult.bgmBreakdown)) {
+            toast.error('No BGM payment data to export')
+            return
+          }
+          rows = calcResult.bgmBreakdown
+          headers = [
+            'BgmName',
+            'TotalAmount',
+            'PaymentDate',
+            'Status'
+          ]
+          filename = `bgm_payments_${calcResult.calcId || 'latest'}.csv`
+          break
+
+        case 5: // Management Payments
+          if (!calcResult || !Array.isArray(calcResult.managementBreakdown)) {
+            toast.error('No management payment data to export')
+            return
+          }
+          rows = calcResult.managementBreakdown
+          headers = [
+            'ManagementName',
+            'TotalAmount',
+            'PaymentDate',
+            'Status'
+          ]
+          filename = `management_payments_${calcResult.calcId || 'latest'}.csv`
+          break
+
+        case 6: // Exceptions
+          if (!calcResult || !Array.isArray(calcResult.exceptions)) {
+            toast.error('No exception data to export')
+            return
+          }
+          rows = calcResult.exceptions
+          headers = [
+            'Type',
+            'Description',
+            'Amount',
+            'Date',
+            'Status'
+          ]
+          filename = `exceptions_${calcResult.calcId || 'latest'}.csv`
+          break
+
+        default:
+          toast.error('No data available for export')
+          return
+      }
+
+      if (rows.length === 0) {
+        toast.error('No data to export')
+        return
+      }
+
+      csv = [
         headers.join(','),
-        ...rows.map(r => headers.map(h => escape((r as any)[h.charAt(0).toLowerCase() + h.slice(1)] ?? '')).join(',')),
+        ...rows.map(r => headers.map(h => {
+          // Handle different property naming conventions
+          const propertyName = h.charAt(0).toLowerCase() + h.slice(1)
+          return escape((r as any)[propertyName] ?? (r as any)[h] ?? '')
+        }).join(','))
       ].join('\n')
+
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `payment_summary_${calcResult.calcId || 'latest'}.csv`
+      a.download = filename
       a.click()
       URL.revokeObjectURL(url)
+      
+      toast.success(`Exported ${rows.length} records to ${filename}`)
     } catch (e: any) {
       toast.error(e?.message || 'Export failed')
     }
