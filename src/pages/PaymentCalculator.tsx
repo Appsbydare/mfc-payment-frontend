@@ -458,7 +458,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                   <col className="w-32" />
                         <col className="w-40" />
                 </colgroup>
-                <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/70 text-primary-800 dark:text-primary-200">
+                <thead className="sticky top-0 z-10 bg-primary-50/90 dark:bg-primary-900/10 text-primary-800 dark:text-primary-200">
                   <tr>
                     {[
                       { key: 'Date', label: 'Date' },
