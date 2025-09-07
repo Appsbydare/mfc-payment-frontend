@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
+import DateSelector from '../components/DateSelector'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
 import PaymentCategorization from '../components/PaymentCategorization'
@@ -18,10 +19,7 @@ interface PaymentCalculatorProps {
   toDate: string
 }
 
-const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
-  fromDate,
-  toDate
-}) => {
+const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate }) => {
   const [activeTab, setActiveTab] = useState(0)
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
@@ -365,9 +363,21 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
-        <button className="btn-secondary" onClick={handleExport}>Export Results</button>
+      {/* Window title + local date controls */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Monthly Payment Calculator</h1>
+        <div className="flex items-center gap-4">
+          <DateSelector
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={() => {}}
+            onToDateChange={() => {}}
+          />
+          <div className="flex gap-2">
+            <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
+            <button className="btn-secondary" onClick={handleExport}>Export Results</button>
+          </div>
+        </div>
       </div>
       {/* Tabs */}
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
