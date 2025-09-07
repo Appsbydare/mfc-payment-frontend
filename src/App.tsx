@@ -5,7 +5,7 @@ import Layout from '@components/layout/Layout'
 import Dashboard from '@pages/Dashboard'
 import DataImport from '@pages/DataImport'
 import RuleManager from '@pages/RuleManager'
-import PaymentCalculator from '@pages/PaymentCalculator'
+import PaymentCalculatorWrapper from '@components/PaymentCalculatorWrapper'
 import Reports from '@pages/Reports'
 import Settings from '@pages/Settings'
 import { RootState } from '@store/index'
@@ -29,7 +29,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/data-import" element={<DataImport />} />
           <Route path="/rule-manager" element={<RuleManager />} />
-          <Route path="/payment-calculator" element={<PaymentCalculator />} />
+          <Route path="/payment-calculator" element={<PaymentCalculatorWrapper />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

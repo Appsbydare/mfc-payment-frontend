@@ -4,12 +4,27 @@ import Sidebar from './Sidebar'
 
 interface LayoutProps {
   children: React.ReactNode
+  fromDate?: string
+  toDate?: string
+  onFromDateChange?: (date: string) => void
+  onToDateChange?: (date: string) => void
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  fromDate, 
+  toDate, 
+  onFromDateChange, 
+  onToDateChange 
+}) => {
   return (
     <div className="min-h-screen w-full bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/back1.png')" }}>
-      <Header />
+      <Header 
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromDateChange={onFromDateChange}
+        onToDateChange={onToDateChange}
+      />
       <div className="flex flex-row w-full pt-4 px-4 gap-4">
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-300 ease-in-out">

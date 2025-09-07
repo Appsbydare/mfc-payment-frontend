@@ -13,45 +13,22 @@ const tabs = [
   { label: 'Exceptions' },
 ]
 
-const PaymentCalculator: React.FC = () => {
+interface PaymentCalculatorProps {
+  fromDate: string
+  toDate: string
+  onFromDateChange: (date: string) => void
+  onToDateChange: (date: string) => void
+}
+
+const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
+  fromDate,
+  toDate,
+  onFromDateChange,
+  onToDateChange
+}) => {
   const [activeTab, setActiveTab] = useState(0)
-  const [fromDate, setFromDate] = useState<string>('')
-  const [toDate, setToDate] = useState<string>('')
-  const [defaultDatesSet, setDefaultDatesSet] = useState(false)
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
-  // Set default dates on component mount
-  React.useEffect(() => {
-    const setDefaultDates = async () => {
-      if (!defaultDatesSet) {
-        try {
-          // Get attendance data to find earliest date
-          const response = await apiService.getAttendanceData()
-          if (response && response.success && response.data && response.data.length > 0) {
-            // Find earliest date
-            const dates = response.data.map((row: any) => new Date(row.Date)).filter(date => !isNaN(date.getTime()))
-            if (dates.length > 0) {
-              const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())))
-              const today = new Date()
-              
-              setFromDate(earliestDate.toISOString().split('T')[0])
-              setToDate(today.toISOString().split('T')[0])
-            }
-          }
-          setDefaultDatesSet(true)
-        } catch (error) {
-          // If we can't get attendance data, set to current month
-          const today = new Date()
-          const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-          setFromDate(firstDayOfMonth.toISOString().split('T')[0])
-          setToDate(today.toISOString().split('T')[0])
-          setDefaultDatesSet(true)
-        }
-      }
-    }
-    
-    setDefaultDates()
-  }, [defaultDatesSet])
 
   // Auto-load payment data when Payment Verification tab is clicked
   useEffect(() => {
@@ -391,32 +368,8 @@ const PaymentCalculator: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Monthly Payment Calculator</h1>
-        <p className="text-gray-600 dark:text-gray-400">Calculation Controls</p>
-      </div>
-      <div className="flex flex-col md:flex-row md:items-center gap-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg text-gray-900 dark:text-white">From:</span>
-          <input
-            type="date"
-            className="border rounded px-2 py-1 text-base"
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-            style={{ minWidth: 140 }}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg text-gray-900 dark:text-white">To:</span>
-          <input
-            type="date"
-            className="border rounded px-2 py-1 text-base"
-            value={toDate}
-            onChange={e => setToDate(e.target.value)}
-            style={{ minWidth: 140 }}
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center gap-4 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 backdrop-blur-md">
         <div className="flex-1 flex justify-end gap-2">
           <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
           <button className="btn-secondary" onClick={handleExport}>Export Results</button>

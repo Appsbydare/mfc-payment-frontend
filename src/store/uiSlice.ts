@@ -7,8 +7,19 @@ interface UIState {
   currentPage: string
 }
 
+// Load theme from localStorage on initialization
+const getInitialTheme = (): boolean => {
+  if (typeof window !== 'undefined') {
+    const savedTheme = localStorage.getItem('mfc-theme')
+    if (savedTheme !== null) {
+      return savedTheme === 'dark'
+    }
+  }
+  return false
+}
+
 const initialState: UIState = {
-  isDarkMode: false,
+  isDarkMode: getInitialTheme(),
   sidebarOpen: true,
   loading: false,
   currentPage: 'dashboard',
@@ -20,9 +31,17 @@ const uiSlice = createSlice({
   reducers: {
     toggleDarkMode: (state) => {
       state.isDarkMode = !state.isDarkMode
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mfc-theme', state.isDarkMode ? 'dark' : 'light')
+      }
     },
     setDarkMode: (state, action: PayloadAction<boolean>) => {
       state.isDarkMode = action.payload
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mfc-theme', state.isDarkMode ? 'dark' : 'light')
+      }
     },
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen
