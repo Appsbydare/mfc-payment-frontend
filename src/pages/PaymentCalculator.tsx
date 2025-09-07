@@ -547,14 +547,14 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       { key: 'Verified', label: 'Verified' },
                       { key: 'Category', label: 'Category' },
                       { key: 'Actions', label: 'Actions' },
+                      { key: 'Invoice', label: 'Invoice' },
+                      { key: 'PaymentDate', label: 'Payment Date' },
                       { key: 'UnitPrice', label: 'Unit Price' },
                       { key: 'EffectiveAmount', label: 'Effective Amount' },
                       { key: 'CoachAmount', label: 'Coach Amount' },
                       { key: 'BgmAmount', label: 'BGM Amount' },
                       { key: 'ManagementAmount', label: 'Management Amount' },
                       { key: 'MfcAmount', label: 'MFC Amount' },
-                      { key: 'Invoice', label: 'Invoice' },
-                      { key: 'PaymentDate', label: 'Payment Date' },
                     ].map(col => (
                       <th
                         key={col.key}
@@ -604,12 +604,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                                 </button>
                               )}
                             </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">
                               {editingRow === idx ? (
                                 <div className="flex flex-col gap-1">
@@ -645,6 +639,12 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                               )}
                             </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
                     </tr>
                   ))}
                   {!verifyResult && (
