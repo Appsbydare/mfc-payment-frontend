@@ -44,58 +44,68 @@ const Dashboard: React.FC = () => {
 
   // Stat cards data derived from calculation result
   const stats = useMemo(() => {
-    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0
+    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0 // Now shows verified attendance only
+    const attendanceRaw = calcResult?.counts?.attendanceTotalRaw ?? 0 // Raw attendance count
     const totalRevenue = calcResult?.revenue?.totalPayments ?? 0
     const bgmPayment = (calcResult?.splits?.group?.bgm ?? 0) + (calcResult?.splits?.private?.landlord ?? 0)
     const managementPayment = (calcResult?.splits?.group?.management ?? 0) + (calcResult?.splits?.private?.management ?? 0)
+    const coachesCount = calcResult?.coachBreakdown?.length ?? 0
+    const verificationRate = attendanceRaw > 0 ? ((attendanceTotal / attendanceRaw) * 100).toFixed(1) : '0'
+    
     return [
       {
-        name: 'Total Attendances',
+        name: 'Verified Attendances',
         value: String(attendanceTotal),
-        color: 'text-red-500',
-        border: 'border-red-400',
-        icon: Users,
-        labelClass: 'text-5xl',
-      },
-      {
-        name: 'Total Revenue',
-        value: euro(totalRevenue),
+        subtitle: `${verificationRate}% of ${attendanceRaw} total`,
         color: 'text-green-500',
         border: 'border-green-400',
+        icon: Users,
+        labelClass: 'text-4xl',
+      },
+      {
+        name: 'Verified Revenue',
+        value: euro(totalRevenue),
+        subtitle: 'Excludes fees & full discounts',
+        color: 'text-blue-500',
+        border: 'border-blue-400',
         icon: DollarSign,
-        labelClass: 'text-5xl',
+        labelClass: 'text-4xl',
       },
       {
         name: 'Coaches to Pay',
-        value: '—',
+        value: String(coachesCount),
+        subtitle: 'Active coaches this period',
         color: 'text-sky-500',
         border: 'border-sky-400',
         icon: UserCheck,
-        labelClass: 'text-5xl',
+        labelClass: 'text-4xl',
       },
       {
-        name: 'Pending Calculations',
-        value: '—',
-        color: 'text-yellow-500',
-        border: 'border-yellow-400',
-        icon: AlertTriangle,
-        labelClass: 'text-5xl',
+        name: 'Group Sessions',
+        value: String(calcResult?.counts?.groupSessions ?? 0),
+        subtitle: 'Verified group classes',
+        color: 'text-orange-500',
+        border: 'border-orange-400',
+        icon: Users,
+        labelClass: 'text-4xl',
       },
       {
         name: 'BGM Payment',
         value: euro(bgmPayment),
+        subtitle: 'Landlord share (30% + 15%)',
         color: 'text-purple-500',
         border: 'border-purple-400',
         icon: CreditCard,
-        labelClass: 'text-5xl',
+        labelClass: 'text-4xl',
       },
       {
         name: 'Management Pay',
         value: euro(managementPayment),
+        subtitle: 'Management share (8.5%)',
         color: 'text-teal-500',
         border: 'border-teal-400',
         icon: Briefcase,
-        labelClass: 'text-5xl',
+        labelClass: 'text-4xl',
       },
     ]
   }, [calcResult])
@@ -130,6 +140,11 @@ const Dashboard: React.FC = () => {
               <span className="text-xl font-bold text-gray-700 dark:text-gray-200">{stat.name}</span>
             </div>
             <div className={`${stat.labelClass} ${stat.color}`} style={{ fontFamily: 'Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif', fontWeight: 400 }}>{stat.value}</div>
+            {stat.subtitle && (
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+                {stat.subtitle}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -827,29 +827,89 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
 
               {/* Verification Summary */}
               {verificationSummary ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Record Counts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Attendance Verification */}
                   <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
                     <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      📊 Verification Counts
+                      📋 Attendance Data
                     </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Total Records:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.totalRecords}</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.totalAttendanceRecords || verificationSummary.totalRecords}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Verified:</span>
-                        <span className="font-semibold text-green-600 dark:text-green-400">{verificationSummary.verifiedRecords}</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{verificationSummary.verifiedAttendanceRecords || verificationSummary.verifiedRecords}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Pending:</span>
-                        <span className="font-semibold text-yellow-600 dark:text-yellow-400">{verificationSummary.unverifiedRecords}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Unverified:</span>
+                        <span className="font-semibold text-red-600 dark:text-red-400">{verificationSummary.unverifiedAttendanceRecords || verificationSummary.unverifiedRecords}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Manual:</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{verificationSummary.manuallyVerifiedRecords}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Verification %:</span>
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">{(verificationSummary.attendanceVerificationRate || verificationSummary.verificationCompletionRate || 0).toFixed(1)}%</span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Verification */}
+                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
+                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+                      💳 Payment Data
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Total Records:</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.totalPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Verified:</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{verificationSummary.verifiedPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Unverified:</span>
+                        <span className="font-semibold text-red-600 dark:text-red-400">{verificationSummary.unverifiedPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Verification %:</span>
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">{(verificationSummary.paymentVerificationRate || 0).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Categories */}
+                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
+                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+                      🏷️ Payment Categories
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      {verificationSummary.paymentCategoryBreakdown ? (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Payment:</span>
+                            <span className="font-semibold text-green-600">{verificationSummary.paymentCategoryBreakdown.payment || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">100% Discount:</span>
+                            <span className="font-semibold text-pink-600">{verificationSummary.paymentCategoryBreakdown.fullDiscount || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Tax:</span>
+                            <span className="font-semibold text-purple-600">{verificationSummary.paymentCategoryBreakdown.tax || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Discount:</span>
+                            <span className="font-semibold text-red-600">{verificationSummary.paymentCategoryBreakdown.discount || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Refund:</span>
+                            <span className="font-semibold text-orange-600">{verificationSummary.paymentCategoryBreakdown.refund || 0}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-gray-500">No category data available</div>
+                      )}
                     </div>
                   </div>
 
