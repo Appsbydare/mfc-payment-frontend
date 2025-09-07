@@ -171,7 +171,11 @@ const RuleManager: React.FC = () => {
   })).filter(cat => cat.types.length > 0)
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
+    <div className="space-y-4">
+      {/* Page title */}
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rule Manager</h1>
+      
+      <div className="flex flex-col lg:flex-row gap-8">
       {/* Left Panel: Membership Types */}
       <div className="w-full lg:w-1/3 bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
         <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Membership Types</h2>
@@ -327,6 +331,7 @@ const RuleManager: React.FC = () => {
             </table>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
