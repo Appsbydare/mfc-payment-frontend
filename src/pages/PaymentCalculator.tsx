@@ -16,15 +16,11 @@ const tabs = [
 interface PaymentCalculatorProps {
   fromDate: string
   toDate: string
-  onFromDateChange: (date: string) => void
-  onToDateChange: (date: string) => void
 }
 
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
   fromDate,
-  toDate,
-  onFromDateChange,
-  onToDateChange
+  toDate
 }) => {
   const [activeTab, setActiveTab] = useState(0)
   const [calcResult, setCalcResult] = useState<any | null>(null)

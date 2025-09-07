@@ -42,8 +42,6 @@ const PaymentCalculatorWrapper: React.FC = () => {
       <PaymentCalculator 
         fromDate={fromDate}
         toDate={toDate}
-        onFromDateChange={setFromDate}
-        onToDateChange={setToDate}
       />
     </Layout>
   )
