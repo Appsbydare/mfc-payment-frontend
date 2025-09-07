@@ -5,13 +5,15 @@ import Layout from '@components/layout/Layout'
 import Dashboard from '@pages/Dashboard'
 import DataImport from '@pages/DataImport'
 import RuleManager from '@pages/RuleManager'
-import PaymentCalculatorWrapper from '@components/PaymentCalculatorWrapper'
+import PaymentCalculator from '@pages/PaymentCalculator'
 import Reports from '@pages/Reports'
 import Settings from '@pages/Settings'
 import { RootState } from '@store/index'
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.ui.isDarkMode)
+  const [fromDate, setFromDate] = React.useState<string>('')
+  const [toDate, setToDate] = React.useState<string>('')
 
   React.useEffect(() => {
     if (isDarkMode) {
@@ -21,15 +23,31 @@ function App() {
     }
   }, [isDarkMode])
 
+  // Initialize default dates once on app start
+  React.useEffect(() => {
+    const today = new Date()
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    setFromDate(firstDayOfMonth.toISOString().split('T')[0])
+    setToDate(today.toISOString().split('T')[0])
+  }, [])
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Layout>
+      <Layout
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromDateChange={setFromDate}
+        onToDateChange={setToDate}
+      >
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/data-import" element={<DataImport />} />
           <Route path="/rule-manager" element={<RuleManager />} />
-          <Route path="/payment-calculator" element={<PaymentCalculatorWrapper />} />
+          <Route
+            path="/payment-calculator"
+            element={<PaymentCalculator fromDate={fromDate} toDate={toDate} />}
+          />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
