@@ -21,14 +21,31 @@ interface PaymentCalculatorProps {
 
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate }) => {
   const [activeTab, setActiveTab] = useState(0)
-  const [localFromDate, setLocalFromDate] = useState(fromDate)
-  const [localToDate, setLocalToDate] = useState(toDate)
+  
+  // Load dates from localStorage or use props
+  const getStoredDate = (key: string, fallback: string) => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key) || fallback
+    }
+    return fallback
+  }
+  
+  const [localFromDate, setLocalFromDate] = useState(() => getStoredDate('mfc-fromDate', fromDate))
+  const [localToDate, setLocalToDate] = useState(() => getStoredDate('mfc-toDate', toDate))
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
-  // Sync local state with props when they change
+  // Save dates to localStorage when they change
   useEffect(() => {
-    setLocalFromDate(fromDate)
-    setLocalToDate(toDate)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mfc-fromDate', localFromDate)
+      localStorage.setItem('mfc-toDate', localToDate)
+    }
+  }, [localFromDate, localToDate])
+
+  // Sync local state with props when they change (only if props are provided)
+  useEffect(() => {
+    if (fromDate) setLocalFromDate(fromDate)
+    if (toDate) setLocalToDate(toDate)
   }, [fromDate, toDate])
 
   // Auto-load payment data when Payment Verification tab is clicked or on mount
@@ -630,16 +647,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                               )}
                             </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap">
-                              {!r.Verified && r.Category !== 'Manually Verified' && (
-                                <button
-                                  onClick={() => handleStartManualVerification(r, idx)}
-                                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                                >
-                                  Verify
-                                </button>
-                              )}
-                            </td>
                     </tr>
                   ))}
                   {!verifyResult && (
