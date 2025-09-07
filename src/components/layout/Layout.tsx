@@ -1,16 +1,12 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
 import Header from './Header'
 import Sidebar from './Sidebar'
-import { RootState } from '@store/index'
 
 interface LayoutProps {
   children: React.ReactNode
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const sidebarOpen = useSelector((state: RootState) => state.ui.sidebarOpen)
-
   return (
     <div className="min-h-screen w-full bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/back1.png')" }}>
       <Header />
