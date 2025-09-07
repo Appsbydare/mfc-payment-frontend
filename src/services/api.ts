@@ -127,6 +127,14 @@ class ApiService {
     return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=settings`);
   }
 
+  // Update payment verification status
+  async updatePaymentVerification(payments: any[]) {
+    return this.request<{ success: boolean; message: string }>(`/verification/update-payments`, {
+      method: 'POST',
+      body: JSON.stringify({ payments }),
+    });
+  }
+
   async getGlobalRules() {
     return this.request<{
       success: boolean;

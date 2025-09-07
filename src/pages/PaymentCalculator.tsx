@@ -309,6 +309,62 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
   }
 
+  const handleVerifyPaymentData = async () => {
+    try {
+      // Apply verification logic to payment data
+      const verifiedPayments = paymentData.map(payment => {
+        let category = payment.Category || 'Payment'
+        let isVerified = payment.IsVerified === 'true' || payment.IsVerified === true
+
+        // Rule 1: If Memo contains "Fee", categorize as "Tax"
+        if (payment.Memo && payment.Memo.toLowerCase().includes('fee')) {
+          category = 'Tax'
+          isVerified = true
+        }
+
+        // Rule 2: Check for 100% Discount (same day, same customer, same amount with opposite signs)
+        const sameRecords = paymentData.filter(p => 
+          p.Date === payment.Date && 
+          p.Customer === payment.Customer && 
+          Math.abs(parseFloat(p.Amount || '0')) === Math.abs(parseFloat(payment.Amount || '0'))
+        )
+
+        if (sameRecords.length >= 2) {
+          // Check if we have positive and negative amounts (indicating discount)
+          const amounts = sameRecords.map(p => parseFloat(p.Amount || '0'))
+          const hasPositive = amounts.some(a => a > 0)
+          const hasNegative = amounts.some(a => a < 0)
+          
+          if (hasPositive && hasNegative) {
+            category = '100% Discount'
+            isVerified = true
+          }
+        }
+
+        return {
+          ...payment,
+          Category: category,
+          IsVerified: isVerified
+        }
+      })
+
+      // Update the local state
+      setPaymentData(verifiedPayments)
+
+      // Send updates to backend
+      try {
+        await apiService.updatePaymentVerification(verifiedPayments)
+        toast.success('Payment verification completed')
+      } catch (updateError) {
+        console.log('Failed to update backend:', updateError)
+        toast.success('Payment verification completed (local only)')
+      }
+
+    } catch (e: any) {
+      toast.error(e?.message || 'Payment verification failed')
+    }
+  }
+
   const handlePaymentCategorizationUpdate = () => {
     // Refresh verification data when payment categories are updated
     handleVerify()
@@ -865,13 +921,19 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payment Verification</h2>
+              <button 
+                className="btn-primary"
+                onClick={handleVerifyPaymentData}
+              >
+                Verify Payments
+              </button>
             </div>
             
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
               <div className="overflow-x-auto">
                 <div className="max-h-[600px] overflow-y-auto">
                   <table className="min-w-full text-sm">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md">
                     <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th className="text-left py-2 px-3 font-semibold text-gray-700 dark:text-gray-200">Date</th>
                       <th className="text-left py-2 px-3 font-semibold text-gray-700 dark:text-gray-200">Customer</th>
@@ -897,6 +959,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                           <td className="py-2 px-3">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               payment.Category === 'Discount' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                              payment.Category === '100% Discount' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200' :
                               payment.Category === 'Tax' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
                               payment.Category === 'Refund' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
                               payment.Category === 'Fee' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
