@@ -25,7 +25,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   // Load dates from localStorage or use defaults (first day of year to today)
   const getDefaultFromDate = () => {
     const now = new Date()
-    return `${now.getFullYear()}-01-01`
+    const year = now.getFullYear()
+    return `${year}-01-01`
   }
   
   const getDefaultToDate = () => {
@@ -40,7 +41,13 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     return fallback
   }
   
-  const [localFromDate, setLocalFromDate] = useState(() => getStoredDate('mfc-fromDate', fromDate || getDefaultFromDate()))
+  // Force default dates if not provided in props
+  const [localFromDate, setLocalFromDate] = useState(() => {
+    const defaultFrom = getDefaultFromDate()
+    const stored = getStoredDate('mfc-fromDate', fromDate || defaultFrom)
+    // Always use current year's first day if no specific fromDate provided
+    return fromDate || stored.startsWith('2025') ? stored : defaultFrom
+  })
   const [localToDate, setLocalToDate] = useState(() => getStoredDate('mfc-toDate', toDate || getDefaultToDate()))
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
@@ -119,7 +126,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
   }
 
-  // Auto-verify on component mount with current date range
+  // Auto-verify on component mount with current date range (silent)
   useEffect(() => {
     // Auto-run verification when component mounts to show data by default
     const autoVerify = async () => {
@@ -134,16 +141,23 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           payload.year = now.getUTCFullYear()
         }
         
-        // First perform calculation
-        const calcRes = await apiService.calculatePayments(payload)
-        if (calcRes.success) {
-          setCalcResult(calcRes)
+        // Silent verification - no toast messages
+        try {
+          const calcRes = await apiService.calculatePayments(payload)
+          if (calcRes.success) {
+            setCalcResult(calcRes)
+          }
+        } catch (calcError) {
+          console.log('Auto-calculation failed:', calcError)
         }
         
-        // Then perform verification
-        const verifyRes = await apiService.verifyPayments(payload)
-        if (verifyRes.success) {
-          setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
+        try {
+          const verifyRes = await apiService.verifyPayments(payload)
+          if (verifyRes.success) {
+            setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
+          }
+        } catch (verifyError) {
+          console.log('Auto-verification failed:', verifyError)
         }
       } catch (e) {
         // Silent fail - user can manually verify if needed
@@ -152,14 +166,41 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
     
     // Run auto-verification after a short delay to let component settle
-    const timer = setTimeout(autoVerify, 500)
+    const timer = setTimeout(autoVerify, 1000)
     return () => clearTimeout(timer)
   }, []) // Only run on mount
 
-  // Re-run verification when date range changes
+  // Re-run verification when date range changes (silent)
   useEffect(() => {
     if (localFromDate && localToDate) {
-      handleVerify()
+      const silentVerify = async () => {
+        try {
+          const payload: any = {}
+          payload.fromDate = localFromDate || undefined
+          payload.toDate = localToDate || undefined
+          
+          try {
+            const calcRes = await apiService.calculatePayments(payload)
+            if (calcRes.success) {
+              setCalcResult(calcRes)
+            }
+          } catch (calcError) {
+            console.log('Silent calculation failed:', calcError)
+          }
+          
+          try {
+            const verifyRes = await apiService.verifyPayments(payload)
+            if (verifyRes.success) {
+              setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
+            }
+          } catch (verifyError) {
+            console.log('Silent verification failed:', verifyError)
+          }
+        } catch (e) {
+          console.log('Silent verification failed')
+        }
+      }
+      silentVerify()
     }
   }, [localFromDate, localToDate])
 
