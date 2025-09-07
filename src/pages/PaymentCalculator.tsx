@@ -31,12 +31,19 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     setLocalToDate(toDate)
   }, [fromDate, toDate])
 
-  // Auto-load payment data when Payment Verification tab is clicked
+  // Auto-load payment data when Payment Verification tab is clicked or on mount
   useEffect(() => {
     if (activeTab === 1 && paymentData.length === 0) {
       handleLoadPaymentData()
     }
   }, [activeTab])
+
+  // Also load payment data on component mount
+  useEffect(() => {
+    if (paymentData.length === 0) {
+      handleLoadPaymentData()
+    }
+  }, [])
 
   const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
   const [verificationSummary, setVerificationSummary] = useState<any | null>(null)
@@ -88,27 +95,34 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   }
 
   // Auto-load persisted verification results and check unverified indicator
+  const loadPersisted = async () => {
+    try {
+      const [persisted, settings] = await Promise.all([
+        apiService.getAttendanceVerification().catch(() => ({ success: false } as any)),
+        apiService.getSettingsSheet().catch(() => ({ success: false } as any)),
+      ])
+      if ((persisted as any).success) {
+        const rows = (persisted as any).data || []
+        if (rows.length > 0) {
+          setVerifyResult({ rows, summary: {} })
+        }
+      }
+      if ((settings as any).success) {
+        const map = new Map((settings as any).data.map((r: any) => [String((r.key ?? r.Key) || '').toLowerCase(), r]))
+        const flag: any = map.get('has_unverified_data')
+        const flagVal = flag ? (flag.value ?? flag.Value ?? flag['Value'] ?? flag['value']) : undefined
+        setHasUnverifiedData(String(flagVal || '').toLowerCase() === 'true')
+      }
+    } catch {}
+  }
+
+  // Load persisted data on component mount
   useEffect(() => {
-    const loadPersisted = async () => {
-      try {
-        const [persisted, settings] = await Promise.all([
-          apiService.getAttendanceVerification().catch(() => ({ success: false } as any)),
-          apiService.getSettingsSheet().catch(() => ({ success: false } as any)),
-        ])
-        if ((persisted as any).success) {
-          const rows = (persisted as any).data || []
-          if (rows.length > 0) {
-            setVerifyResult({ rows, summary: {} })
-          }
-        }
-        if ((settings as any).success) {
-          const map = new Map((settings as any).data.map((r: any) => [String((r.key ?? r.Key) || '').toLowerCase(), r]))
-          const flag: any = map.get('has_unverified_data')
-          const flagVal = flag ? (flag.value ?? flag.Value ?? flag['Value'] ?? flag['value']) : undefined
-          setHasUnverifiedData(String(flagVal || '').toLowerCase() === 'true')
-        }
-      } catch {}
-    }
+    loadPersisted()
+  }, [])
+
+  // Also load when switching to Attendance Verification tab
+  useEffect(() => {
     if (activeTab === 0) {
       loadPersisted()
     }
