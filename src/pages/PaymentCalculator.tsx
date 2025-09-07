@@ -138,11 +138,30 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       
       if (res.success) {
         toast.success('Attendance manually verified')
+        
+        // Update the local state immediately
+        if (calcResult && calcResult.attendance) {
+          const updatedAttendance = calcResult.attendance.map((item: any) => {
+            if (item.Date === row.Date && item.Customer === row.Customer && item.ClassType === row.ClassType) {
+              return {
+                ...item,
+                Verified: true,
+                Category: 'Manually Verified',
+                Invoice: selectedInvoice
+              }
+            }
+            return item
+          })
+          
+          setCalcResult({
+            ...calcResult,
+            attendance: updatedAttendance
+          })
+        }
+        
         setEditingRow(null)
         setSelectedInvoice('')
         setUnverifiedInvoices([])
-        // Refresh verification data
-        handleVerify()
       } else {
         toast.error('Failed to verify attendance')
       }
@@ -509,7 +528,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                                   <select
                                     value={selectedInvoice}
                                     onChange={(e) => setSelectedInvoice(e.target.value)}
-                                    className="text-xs border rounded px-1 py-0.5"
+                                    className="text-xs border rounded px-1 py-0.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500"
                                   >
                                     <option value="">Select Invoice</option>
                                     {unverifiedInvoices.map((inv: any) => (
