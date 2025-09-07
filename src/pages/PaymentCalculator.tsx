@@ -21,8 +21,15 @@ interface PaymentCalculatorProps {
 
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate }) => {
   const [activeTab, setActiveTab] = useState(0)
+  const [localFromDate, setLocalFromDate] = useState(fromDate)
+  const [localToDate, setLocalToDate] = useState(toDate)
   const [calcResult, setCalcResult] = useState<any | null>(null)
 
+  // Sync local state with props when they change
+  useEffect(() => {
+    setLocalFromDate(fromDate)
+    setLocalToDate(toDate)
+  }, [fromDate, toDate])
 
   // Auto-load payment data when Payment Verification tab is clicked
   useEffect(() => {
@@ -46,9 +53,9 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const handleVerify = async () => {
     try {
       const payload: any = {}
-      if (fromDate || toDate) {
-        payload.fromDate = fromDate || undefined
-        payload.toDate = toDate || undefined
+      if (localFromDate || localToDate) {
+        payload.fromDate = localFromDate || undefined
+        payload.toDate = localToDate || undefined
       } else {
         const now = new Date()
         payload.month = now.getUTCMonth() + 1
@@ -368,10 +375,10 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Monthly Payment Calculator</h1>
         <div className="flex items-center gap-4">
           <DateSelector
-            fromDate={fromDate}
-            toDate={toDate}
-            onFromDateChange={() => {}}
-            onToDateChange={() => {}}
+            fromDate={localFromDate}
+            toDate={localToDate}
+            onFromDateChange={setLocalFromDate}
+            onToDateChange={setLocalToDate}
           />
           <div className="flex gap-2">
             <button className="btn-primary" onClick={handleVerify}>Verify Payments</button>
