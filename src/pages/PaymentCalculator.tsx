@@ -104,7 +104,17 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       if ((persisted as any).success) {
         const rows = (persisted as any).data || []
         if (rows.length > 0) {
-          setVerifyResult({ rows, summary: {} })
+          // Filter rows by current date range
+          const filteredRows = rows.filter((row: any) => {
+            if (!row.Date) return false
+            const rowDate = new Date(row.Date)
+            if (localFromDate && rowDate < new Date(localFromDate)) return false
+            if (localToDate && rowDate > new Date(localToDate)) return false
+            return true
+          })
+          if (filteredRows.length > 0) {
+            setVerifyResult({ rows: filteredRows, summary: {} })
+          }
         }
       }
       if ((settings as any).success) {
@@ -127,6 +137,11 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
       loadPersisted()
     }
   }, [activeTab])
+
+  // Re-load when date range changes
+  useEffect(() => {
+    loadPersisted()
+  }, [localFromDate, localToDate])
 
   const handleLoadVerificationSummary = async () => {
     try {
