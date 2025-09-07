@@ -1,6 +1,5 @@
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useLocation } from 'react-router-dom'
 import { Moon, Sun, Bell, User } from 'lucide-react'
 import { toggleDarkMode } from '@store/uiSlice'
 import { RootState } from '@store/index'
@@ -9,7 +8,6 @@ import { RootState } from '@store/index'
 const Header: React.FC = () => {
   const dispatch = useDispatch()
   const isDarkMode = useSelector((state: RootState) => state.ui.isDarkMode)
-  const location = useLocation()
 
   // Header keeps brand only; page titles live within their own windows
 
