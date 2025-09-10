@@ -8,6 +8,7 @@ const tabs = [
   { label: 'Attendance Verification' },
   { label: 'Payment Verification' },
   { label: 'Verification Summary' },
+  { label: 'Discount Information' },
   { label: 'Coach Payments' },
   { label: 'BGM Payments' },
   { label: 'Management Payments' },
@@ -586,7 +587,13 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           {tabs.map((tab, i) => (
             <button
               key={tab.label}
-              onClick={() => setActiveTab(i)}
+              onClick={() => {
+                setActiveTab(i)
+                // Auto-load verification summary when switching to that tab
+                if (i === 2 && !verificationSummary) {
+                  handleLoadVerificationSummary()
+                }
+              }}
               className={`px-4 py-2 font-medium rounded-lg transition-all duration-200 ${
                 activeTab === i 
                   ? 'bg-emerald-600 text-white shadow-md' 
@@ -760,47 +767,194 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Verification Summary</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLoadVerificationSummary}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  Load Summary
-                </button>
-              </div>
             </div>
             
-            {/* Combined Calculation and Verification Summary */}
+            {/* Enhanced Verification Summary Layout */}
             <div className="space-y-6">
-              {/* Calculation Summary */}
-      {calcResult && (
-        <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-                  <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Calculation Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Attendance</div>
-              <div className="text-gray-900 dark:text-gray-100">Total: {calcResult.counts.attendanceTotal}</div>
-              <div className="text-gray-900 dark:text-gray-100">Group: {calcResult.counts.groupSessions}</div>
-              <div className="text-gray-900 dark:text-gray-100">Private: {calcResult.counts.privateSessions}</div>
-            </div>
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Payments</div>
-              <div className="text-gray-900 dark:text-gray-100">Count: {calcResult.counts.paymentsCount}</div>
-              <div className="text-gray-900 dark:text-gray-100">Discount-tagged: {calcResult.counts.discountPayments}</div>
-              <div className="text-gray-900 dark:text-gray-100">Total: €{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Group Revenue (allocated): €{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</div>
-              <div className="text-gray-900 dark:text-gray-100">Private Revenue (allocated): €{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</div>
-              {calcResult.discounts && (
-                <div className="mt-2 text-gray-900 dark:text-gray-100">
-                  <div>Full Discounts: {calcResult.discounts.fullCount} (ignored)</div>
-                  <div>Partial Discounts: {calcResult.discounts.partialCount} (included)</div>
+              {/* Verification Summary Cards - Moved to top */}
+              {verificationSummary && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Attendance Verification */}
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-2xl shadow-lg border border-green-200 dark:border-green-700 p-6">
+                    <h3 className="text-lg font-bold mb-4 text-green-800 dark:text-green-200 flex items-center">
+                      <span className="mr-2">📋</span> Attendance Data
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-green-700 dark:text-green-300">Total Records:</span>
+                        <span className="font-bold text-green-900 dark:text-green-100">{verificationSummary.totalAttendanceRecords || verificationSummary.totalRecords}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-700 dark:text-green-300">Verified:</span>
+                        <span className="font-bold text-green-600">{verificationSummary.verifiedAttendanceRecords || verificationSummary.verifiedRecords}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-700 dark:text-green-300">Unverified:</span>
+                        <span className="font-bold text-red-600">{verificationSummary.unverifiedAttendanceRecords || verificationSummary.unverifiedRecords}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-green-200 dark:border-green-700 pt-2">
+                        <span className="text-green-700 dark:text-green-300 font-semibold">Verification %:</span>
+                        <span className="font-bold text-blue-600 text-lg">{(verificationSummary.attendanceVerificationRate || verificationSummary.verificationCompletionRate || 0).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Verification */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl shadow-lg border border-blue-200 dark:border-blue-700 p-6">
+                    <h3 className="text-lg font-bold mb-4 text-blue-800 dark:text-blue-200 flex items-center">
+                      <span className="mr-2">💳</span> Payment Data
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-blue-700 dark:text-blue-300">Total Records:</span>
+                        <span className="font-bold text-blue-900 dark:text-blue-100">{verificationSummary.totalPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700 dark:text-blue-300">Verified:</span>
+                        <span className="font-bold text-green-600">{verificationSummary.verifiedPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-700 dark:text-blue-300">Unverified:</span>
+                        <span className="font-bold text-red-600">{verificationSummary.unverifiedPaymentRecords || 0}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-blue-200 dark:border-blue-700 pt-2">
+                        <span className="text-blue-700 dark:text-blue-300 font-semibold">Verification %:</span>
+                        <span className="font-bold text-blue-600 text-lg">{(verificationSummary.paymentVerificationRate || 0).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Categories */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl shadow-lg border border-purple-200 dark:border-purple-700 p-6">
+                    <h3 className="text-lg font-bold mb-4 text-purple-800 dark:text-purple-200 flex items-center">
+                      <span className="mr-2">🏷️</span> Payment Categories
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      {verificationSummary.paymentCategoryBreakdown ? (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-purple-700 dark:text-purple-300">Payment:</span>
+                            <span className="font-bold text-green-600">{verificationSummary.paymentCategoryBreakdown.payment || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-purple-700 dark:text-purple-300">100% Discount:</span>
+                            <span className="font-bold text-pink-600">{verificationSummary.paymentCategoryBreakdown.fullDiscount || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-purple-700 dark:text-purple-300">Tax:</span>
+                            <span className="font-bold text-purple-600">{verificationSummary.paymentCategoryBreakdown.tax || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-purple-700 dark:text-purple-300">Discount:</span>
+                            <span className="font-bold text-red-600">{verificationSummary.paymentCategoryBreakdown.discount || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-purple-700 dark:text-purple-300">Refund:</span>
+                            <span className="font-bold text-orange-600">{verificationSummary.paymentCategoryBreakdown.refund || 0}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-purple-500">No category data available</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Financial Metrics */}
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-2xl shadow-lg border border-amber-200 dark:border-amber-700 p-6">
+                    <h3 className="text-lg font-bold mb-4 text-amber-800 dark:text-amber-200 flex items-center">
+                      <span className="mr-2">💰</span> Financial Metrics
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-amber-700 dark:text-amber-300">Verified Amount:</span>
+                        <span className="font-bold text-green-600">€{(verificationSummary.totalVerifiedAmount || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-amber-700 dark:text-amber-300">Tax Amount:</span>
+                        <span className="font-bold text-purple-600">€{(verificationSummary.totalTaxAmount || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-amber-700 dark:text-amber-300">Discounted:</span>
+                        <span className="font-bold text-red-600">€{(verificationSummary.totalDiscountedAmount || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-amber-200 dark:border-amber-700 pt-2">
+                        <span className="text-amber-700 dark:text-amber-300 font-semibold">MFC Retention:</span>
+                        <span className="font-bold text-amber-600 text-lg">{(verificationSummary.mfcRetentionRate || 0).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-            <div className="p-3 rounded border border-gray-200 dark:border-gray-700">
-              <div className="font-semibold text-gray-700 dark:text-gray-200">Notes</div>
-              <div className="text-gray-900 dark:text-gray-100">{calcResult.notes}</div>
-            </div>
+
+              {/* Calculation Summary - Redesigned */}
+              {calcResult && (
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center">
+                    <span className="mr-2">📊</span> Calculation Summary
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Attendance Summary */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                      <div className="font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                        <span className="mr-2">👥</span> Attendance
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Total Verified:</span>
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">{calcResult.counts.attendanceTotal}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Group Sessions:</span>
+                          <span className="font-semibold text-blue-600">{calcResult.counts.groupSessions}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Private Sessions:</span>
+                          <span className="font-semibold text-purple-600">{calcResult.counts.privateSessions}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Summary */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                      <div className="font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                        <span className="mr-2">💰</span> Revenue
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Total Verified:</span>
+                          <span className="font-semibold text-green-600">€{Number(calcResult.revenue.totalPayments || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Group Revenue:</span>
+                          <span className="font-semibold text-blue-600">€{Number(calcResult.revenue.groupRevenue || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Private Revenue:</span>
+                          <span className="font-semibold text-purple-600">€{Number(calcResult.revenue.privateRevenue || 0).toFixed(2)}</span>
+                        </div>
+                        {calcResult.discounts && (
+                          <div className="flex justify-between text-xs pt-1 border-t border-gray-200 dark:border-gray-600">
+                            <span className="text-gray-500">Full Discounts Excluded:</span>
+                            <span className="text-red-500">{calcResult.discounts.fullCount}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status Summary */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                      <div className="font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                        <span className="mr-2">ℹ️</span> Status
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="mb-2">✅ Using verified data only</div>
+                        <div className="mb-2">🚫 Fees excluded from revenue</div>
+                        <div className="mb-2">📊 Coach payments calculated</div>
+                        <div className="text-xs text-green-600 font-medium mt-3">
+                          {calcResult.notes}
+                        </div>
+                      </div>
+                    </div>
           </div>
                   
                   {/* Revenue Splits */}
@@ -825,154 +979,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                 </div>
               )}
 
-              {/* Verification Summary */}
-              {verificationSummary ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Attendance Verification */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      📋 Attendance Data
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Total Records:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.totalAttendanceRecords || verificationSummary.totalRecords}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Verified:</span>
-                        <span className="font-semibold text-green-600 dark:text-green-400">{verificationSummary.verifiedAttendanceRecords || verificationSummary.verifiedRecords}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Unverified:</span>
-                        <span className="font-semibold text-red-600 dark:text-red-400">{verificationSummary.unverifiedAttendanceRecords || verificationSummary.unverifiedRecords}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Verification %:</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{(verificationSummary.attendanceVerificationRate || verificationSummary.verificationCompletionRate || 0).toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Payment Verification */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      💳 Payment Data
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Total Records:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.totalPaymentRecords || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Verified:</span>
-                        <span className="font-semibold text-green-600 dark:text-green-400">{verificationSummary.verifiedPaymentRecords || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Unverified:</span>
-                        <span className="font-semibold text-red-600 dark:text-red-400">{verificationSummary.unverifiedPaymentRecords || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Verification %:</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{(verificationSummary.paymentVerificationRate || 0).toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Payment Categories */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      🏷️ Payment Categories
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      {verificationSummary.paymentCategoryBreakdown ? (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Payment:</span>
-                            <span className="font-semibold text-green-600">{verificationSummary.paymentCategoryBreakdown.payment || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">100% Discount:</span>
-                            <span className="font-semibold text-pink-600">{verificationSummary.paymentCategoryBreakdown.fullDiscount || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Tax:</span>
-                            <span className="font-semibold text-purple-600">{verificationSummary.paymentCategoryBreakdown.tax || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Discount:</span>
-                            <span className="font-semibold text-red-600">{verificationSummary.paymentCategoryBreakdown.discount || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Refund:</span>
-                            <span className="font-semibold text-orange-600">{verificationSummary.paymentCategoryBreakdown.refund || 0}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-gray-500">No category data available</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Financial Metrics */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      💰 Financial Metrics
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Discounted:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">€{verificationSummary.totalDiscountedAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Tax Amount:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">€{verificationSummary.totalTaxAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">MFC Future:</span>
-                        <span className="font-semibold text-purple-600 dark:text-purple-400">€{verificationSummary.totalFuturePaymentsMFC.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Verified:</span>
-                        <span className="font-semibold text-green-600 dark:text-green-400">€{verificationSummary.totalVerifiedAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Unverified:</span>
-                        <span className="font-semibold text-red-600 dark:text-red-400">€{verificationSummary.totalUnverifiedAmount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Performance Metrics */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-                    <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-                      📈 Performance Metrics
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Completion Rate:</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{verificationSummary.verificationCompletionRate.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">MFC Retention:</span>
-                        <span className="font-semibold text-purple-600 dark:text-purple-400">{verificationSummary.mfcRetentionRate.toFixed(1)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4">
-                        <div 
-                          className="bg-primary-600 h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${verificationSummary.verificationCompletionRate}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                        Verification Progress
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 backdrop-blur-md text-center">
-                  <p className="text-gray-600 dark:text-gray-400">Click "Load Summary" to view verification metrics</p>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -1064,34 +1070,75 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
         
         
         {activeTab === 3 && (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-            <table className="min-w-full text-sm text-left">
-              <thead>
-                <tr>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Group Units</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Private Units</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Group Payment</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Private Payment</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(calcResult?.coachBreakdown || []).map((row: any) => (
-                  <tr key={row.coach}>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.coach}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.groupAttendances}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{row.privateAttendances}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.groupPayment || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(row.privatePayment || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100 font-semibold">€{Number(row.totalPayment || 0).toFixed(2)}</td>
+          <div className="space-y-4">
+            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Discount Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  <div className="text-sm text-blue-600 dark:text-blue-400">Total Discounts Applied</div>
+                  <div className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                    {calcResult?.summary?.discountBreakdown?.totalDiscounts || 0}
+                  </div>
+                </div>
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                  <div className="text-sm text-yellow-600 dark:text-yellow-400">Partial Discounts</div>
+                  <div className="text-xl font-bold text-yellow-900 dark:text-yellow-100">
+                    {calcResult?.summary?.discountBreakdown?.partialDiscounts || 0}
+                  </div>
+                </div>
+                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                  <div className="text-sm text-red-600 dark:text-red-400">Free Classes</div>
+                  <div className="text-xl font-bold text-red-900 dark:text-red-100">
+                    {calcResult?.summary?.discountBreakdown?.freeDiscounts || 0}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+              <table className="min-w-full text-sm text-left">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Customer</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Date</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Discount Name</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Type</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Original Amount</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Discount Amount</th>
+                    <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Effective Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(calcResult?.discountDetails || []).map((discount: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{discount.customer}</td>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{discount.date}</td>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{discount.discountName}</td>
+                      <td className="px-3 py-2 border-b">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          discount.coachPaymentType === 'full' ? 'bg-green-100 text-green-800' :
+                          discount.coachPaymentType === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {discount.coachPaymentType}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(discount.totalAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{Number(discount.discountAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100 font-semibold">€{Number(discount.effectiveAmount || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {(!calcResult?.discountDetails || calcResult.discountDetails.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  No discount information available for the selected period.
+                </div>
+              )}
+            </div>
           </div>
         )}
-        {activeTab === 4 && (
+        {activeTab === 5 && (
           <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
             <table className="min-w-full text-sm text-left">
               <thead>
@@ -1121,7 +1168,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             </table>
           </div>
         )}
-        {activeTab === 5 && (
+        {activeTab === 7 && (
           <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
             <table className="min-w-full text-sm text-left">
               <thead>
@@ -1151,7 +1198,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             </table>
           </div>
         )}
-        {activeTab === 6 && (
+        {activeTab === 7 && (
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 text-sm text-gray-900 dark:text-gray-100">
             <div className="font-semibold mb-2">Discounts</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

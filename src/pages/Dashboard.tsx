@@ -5,10 +5,10 @@ import toast from 'react-hot-toast'
 import DateSelector from '../components/DateSelector'
 
 const Dashboard: React.FC = () => {
-  // Date range (defaults: From = first day of current month, To = today)
+  // Date range (defaults: From = first day of current year, To = today)
   const [fromDate, setFromDate] = useState<string>(() => {
     const now = new Date()
-    const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    const first = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)) // First day of current year
     return first.toISOString().slice(0, 10)
   })
   const [toDate, setToDate] = useState<string>(() => {
@@ -42,15 +42,16 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate])
 
-  // Stat cards data derived from calculation result
+  // Stat cards data derived from calculation result (using verified data calculations)
   const stats = useMemo(() => {
-    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0 // Now shows verified attendance only
+    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0 // Verified attendance only
     const attendanceRaw = calcResult?.counts?.attendanceTotalRaw ?? 0 // Raw attendance count
-    const totalRevenue = calcResult?.revenue?.totalPayments ?? 0
+    const totalRevenue = calcResult?.revenue?.totalPayments ?? 0 // Verified revenue (excludes fees)
     const bgmPayment = (calcResult?.splits?.group?.bgm ?? 0) + (calcResult?.splits?.private?.landlord ?? 0)
     const managementPayment = (calcResult?.splits?.group?.management ?? 0) + (calcResult?.splits?.private?.management ?? 0)
     const coachesCount = calcResult?.coachBreakdown?.length ?? 0
     const verificationRate = attendanceRaw > 0 ? ((attendanceTotal / attendanceRaw) * 100).toFixed(1) : '0'
+    const totalCoachPayments = calcResult?.coachBreakdown?.reduce((sum: number, coach: any) => sum + (coach.totalPayment || 0), 0) ?? 0
     
     return [
       {
@@ -72,18 +73,18 @@ const Dashboard: React.FC = () => {
         labelClass: 'text-4xl',
       },
       {
-        name: 'Coaches to Pay',
-        value: String(coachesCount),
-        subtitle: 'Active coaches this period',
+        name: 'Total Coach Payments',
+        value: euro(totalCoachPayments),
+        subtitle: `${coachesCount} active coaches`,
         color: 'text-sky-500',
         border: 'border-sky-400',
         icon: UserCheck,
         labelClass: 'text-4xl',
       },
       {
-        name: 'Group Sessions',
-        value: String(calcResult?.counts?.groupSessions ?? 0),
-        subtitle: 'Verified group classes',
+        name: 'Private Sessions',
+        value: String(calcResult?.counts?.privateSessions ?? 0),
+        subtitle: 'Verified private sessions',
         color: 'text-orange-500',
         border: 'border-orange-400',
         icon: Users,

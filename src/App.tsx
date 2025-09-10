@@ -5,6 +5,7 @@ import Layout from '@components/layout/Layout'
 import Dashboard from '@pages/Dashboard'
 import DataImport from '@pages/DataImport'
 import RuleManager from '@pages/RuleManager'
+import DiscountManager from '@pages/DiscountManager'
 import PaymentCalculator from '@pages/PaymentCalculator'
 import Reports from '@pages/Reports'
 import Settings from '@pages/Settings'
@@ -39,6 +40,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/data-import" element={<DataImport />} />
           <Route path="/rule-manager" element={<RuleManager />} />
+          <Route path="/discount-manager" element={<DiscountManager />} />
           <Route
             path="/payment-calculator"
             element={<PaymentCalculator fromDate={fromDate} toDate={toDate} />}
