@@ -639,6 +639,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                   <col className="w-28" />
                   <col className="w-36" />
                   <col className="w-32" />
+                  <col className="w-48" />
+                  <col className="w-28" />
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
                   <tr>
@@ -659,6 +661,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       { key: 'BgmAmount', label: 'BGM Amount' },
                       { key: 'ManagementAmount', label: 'Management Amount' },
                       { key: 'MfcAmount', label: 'MFC Amount' },
+                      { key: 'DiscountName', label: 'Discount Name' },
+                      { key: 'ApplicablePercentage', label: 'Discount %' },
                     ].map(col => (
                       <th
                         key={col.key}
@@ -749,10 +753,25 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 border-b truncate" title={r.DiscountName || ''}>
+                        {r.DiscountName ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            r.CoachPaymentType === 'full' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                            r.CoachPaymentType === 'partial' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                            r.CoachPaymentType === 'free' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                          }`}>
+                            {r.DiscountName}
+                          </span>
+                        ) : ''}
+                      </td>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
+                        {r.ApplicablePercentage ? `${Number(r.ApplicablePercentage).toFixed(1)}%` : ''}
+                      </td>
                     </tr>
                   ))}
                   {!verifyResult && (
-                          <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>Click Verify Payments to load rows.</td></tr>
+                          <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>Click Verify Payments to load rows.</td></tr>
                   )}
                 </tbody>
               </table>

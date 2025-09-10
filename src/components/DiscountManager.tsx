@@ -46,7 +46,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/discounts');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/discounts`);
       const data = await response.json();
       
       if (data.success) {
@@ -65,9 +66,10 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     e.preventDefault();
     
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingDiscount 
-        ? `/api/discounts/${editingDiscount.id}`
-        : '/api/discounts';
+        ? `${apiUrl}/api/discounts/${editingDiscount.id}`
+        : `${apiUrl}/api/discounts`;
       
       const method = editingDiscount ? 'PUT' : 'POST';
       
@@ -115,7 +117,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     }
     
     try {
-      const response = await fetch(`/api/discounts/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/discounts/${id}`, {
         method: 'DELETE',
       });
       
@@ -139,7 +142,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       setTesting(true);
-      const response = await fetch('/api/discounts/classify', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/discounts/classify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,13 +211,13 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   }
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Discount Manager</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Discount Manager</h2>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add Discount
@@ -222,26 +226,26 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
         <input
           type="text"
           placeholder="Search discounts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
         />
       </div>
 
       {/* Test Match Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">Test Discount Matching</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">Test Discount Matching</h3>
         <div className="flex gap-2">
           <input
             type="text"
             placeholder="Enter memo text to test..."
             value={testMemo}
             onChange={(e) => setTestMemo(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
           <button
             onClick={handleTestMatch}
@@ -254,16 +258,16 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
         </div>
         
         {testResult && (
-          <div className="mt-3 p-3 rounded-lg border">
+          <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
             {testResult.error ? (
-              <div className="text-red-600">Error: {testResult.error}</div>
+              <div className="text-red-600 dark:text-red-400">Error: {testResult.error}</div>
             ) : testResult ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">Match Found!</span>
+                  <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Match Found!</span>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <div><strong>Discount:</strong> {testResult.discount.name}</div>
                   <div><strong>Code:</strong> {testResult.discount.discount_code}</div>
                   <div><strong>Type:</strong> {testResult.discount.coach_payment_type}</div>
@@ -271,7 +275,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <X className="h-4 w-4" />
                 <span>No match found</span>
               </div>
@@ -414,44 +418,44 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       )}
 
       {/* Discounts List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Discount Code
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Percentage
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Payment Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Match Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredDiscounts.map((discount) => (
-                <tr key={discount.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={discount.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                     {discount.discount_code}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {discount.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {discount.applicable_percentage}%
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -492,7 +496,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
         </div>
         
         {filteredDiscounts.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {searchTerm ? 'No discounts found matching your search.' : 'No discounts found.'}
           </div>
         )}
