@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, TestTube, Check, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, TestTube, Check, X, RefreshCw } from 'lucide-react';
 import { API_URL } from '../config/env';
 
 interface Discount {
@@ -54,11 +54,36 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
         setDiscounts(data.data);
       } else {
         console.error('Failed to fetch discounts:', data.message);
+        // If no discounts found, try to initialize
+        if (data.data && data.data.length === 0) {
+          await initializeDiscounts();
+        }
       }
     } catch (error) {
       console.error('Error fetching discounts:', error);
+      // Try to initialize discounts if fetch fails
+      await initializeDiscounts();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const initializeDiscounts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/discounts/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setDiscounts(data.data);
+        console.log('Discounts initialized successfully');
+      }
+    } catch (error) {
+      console.error('Error initializing discounts:', error);
     }
   };
 
@@ -212,13 +237,23 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Discount Manager</h2>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Discount
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchDiscounts}
+            disabled={loading}
+            className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Discount
+          </button>
+        </div>
       </div>
 
       {/* Search */}
