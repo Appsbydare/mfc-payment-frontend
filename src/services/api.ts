@@ -1,5 +1,7 @@
 // API service for MFC Payment System
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://mfc-payment-backend.vercel.app';
+import { API_URL } from '../config/env';
+
+const API_BASE_URL = API_URL;
 
 // Normalize provided base URL to avoid double prefixes or trailing segments
 // - trims whitespace

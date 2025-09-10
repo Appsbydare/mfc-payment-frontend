@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, TestTube, Check, X } from 'lucide-react';
+import { API_URL } from '../config/env';
 
 interface Discount {
   id: number;
@@ -46,8 +47,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/discounts`);
+      const response = await fetch(`${API_URL}/api/discounts`);
       const data = await response.json();
       
       if (data.success) {
@@ -66,10 +66,9 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     e.preventDefault();
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingDiscount 
-        ? `${apiUrl}/api/discounts/${editingDiscount.id}`
-        : `${apiUrl}/api/discounts`;
+        ? `${API_URL}/api/discounts/${editingDiscount.id}`
+        : `${API_URL}/api/discounts`;
       
       const method = editingDiscount ? 'PUT' : 'POST';
       
@@ -117,8 +116,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     }
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/discounts/${id}`, {
+      const response = await fetch(`${API_URL}/api/discounts/${id}`, {
         method: 'DELETE',
       });
       
@@ -142,8 +140,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       setTesting(true);
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/discounts/classify`, {
+      const response = await fetch(`${API_URL}/api/discounts/classify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
