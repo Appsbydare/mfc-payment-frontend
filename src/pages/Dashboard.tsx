@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Users, DollarSign, UserCheck, AlertTriangle, CreditCard, Briefcase } from 'lucide-react'
+import { Users, DollarSign, UserCheck, CreditCard, Briefcase } from 'lucide-react'
 import { apiService } from '../services/api'
 import toast from 'react-hot-toast'
 import DateSelector from '../components/DateSelector'
