@@ -116,7 +116,7 @@ const RuleManager: React.FC = () => {
     try {
       setLoading(true)
       const payload = {
-        id: '',
+        id: (rule as any).id || '',
         rule_name: rule.name,
         package_name: rule.name,
         session_type: rule.privateSession ? 'private' : 'group',
