@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { apiService } from '../services/api'
 import { ChevronDown, ChevronRight, Plus, Trash2, Save, RefreshCw } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 function calcUnitPrice(price: any, sessions: any) {
   const p = parseFloat(String(price ?? ''))
@@ -72,7 +73,8 @@ const RuleManager: React.FC = () => {
       name: r.rule_name || r.package_name || '',
       category: String(r.session_type).toLowerCase() === 'private' ? 'Private Sessions' : 'Group Classes',
       price: r.price || '',
-      sessions: r.sessions || '',
+      sessions: r.sessions || r.sessions_per_pack || '',
+      unitPrice: r.unit_price || calcUnitPrice(r.price, r.sessions || r.sessions_per_pack),
       coachPct: r.coach_percentage || '',
       bgmPct: r.bgm_percentage || '',
       mgmtPct: r.management_percentage || '',
@@ -134,9 +136,9 @@ const RuleManager: React.FC = () => {
       }
       await apiService.saveRule(payload)
       await refreshRules()
-      alert('Rule saved')
+      toast.success('Rule saved successfully!')
     } catch (e: any) {
-      alert(e?.message || 'Failed to save')
+      toast.error(e?.message || 'Failed to save')
     } finally {
       setLoading(false)
     }
@@ -144,7 +146,7 @@ const RuleManager: React.FC = () => {
   const handleDelete = async () => {
     try {
       if (!rule || !(rule as any).id) {
-        alert('Select a saved rule to delete')
+        toast.error('Select a saved rule to delete')
         return
       }
       setLoading(true)
@@ -152,9 +154,9 @@ const RuleManager: React.FC = () => {
       setSelected(null)
       setRule(defaultRule)
       await refreshRules()
-      alert('Deleted')
+      toast.success('Rule deleted successfully!')
     } catch (e: any) {
-      alert(e?.message || 'Failed to delete')
+      toast.error(e?.message || 'Failed to delete')
     } finally {
       setLoading(false)
     }
