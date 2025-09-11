@@ -1010,7 +1010,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                 className="btn-primary"
                 onClick={handleVerifyPaymentData}
               >
-                Verify Payments
+                Categorize Payments
               </button>
             </div>
             
