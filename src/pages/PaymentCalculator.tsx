@@ -23,11 +23,11 @@ interface PaymentCalculatorProps {
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate }) => {
   const [activeTab, setActiveTab] = useState(0)
   
-  // Load dates from localStorage or use defaults (first day of year to today)
+  // Load dates from localStorage or use defaults (12 months ago to today)
   const getDefaultFromDate = () => {
     const now = new Date()
-    const year = now.getFullYear()
-    return `${year}-01-01`
+    const twelveMonthsAgo = new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()))
+    return twelveMonthsAgo.toISOString().slice(0, 10)
   }
   
   const getDefaultToDate = () => {
@@ -46,8 +46,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const [localFromDate, setLocalFromDate] = useState(() => {
     const defaultFrom = getDefaultFromDate()
     const stored = getStoredDate('mfc-fromDate', fromDate || defaultFrom)
-    // Always use current year's first day if no specific fromDate provided
-    return fromDate || stored.startsWith('2025') ? stored : defaultFrom
+    // Use provided fromDate, or stored date, or default (12 months ago)
+    return fromDate || stored
   })
   const [localToDate, setLocalToDate] = useState(() => getStoredDate('mfc-toDate', toDate || getDefaultToDate()))
   const [calcResult, setCalcResult] = useState<any | null>(null)

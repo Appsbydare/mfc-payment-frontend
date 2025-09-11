@@ -5,11 +5,11 @@ import toast from 'react-hot-toast'
 import DateSelector from '../components/DateSelector'
 
 const Dashboard: React.FC = () => {
-  // Date range (defaults: From = first day of current year, To = today)
+  // Date range (defaults: From = 12 months ago, To = today)
   const [fromDate, setFromDate] = useState<string>(() => {
     const now = new Date()
-    const first = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)) // First day of current year
-    return first.toISOString().slice(0, 10)
+    const twelveMonthsAgo = new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()))
+    return twelveMonthsAgo.toISOString().slice(0, 10)
   })
   const [toDate, setToDate] = useState<string>(() => {
     const now = new Date()

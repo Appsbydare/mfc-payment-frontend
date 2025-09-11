@@ -11,8 +11,11 @@ const getApiUrl = (): string => {
     console.warn('import.meta.env not available, using fallback');
   }
   
-  // Temporarily force localhost for development testing
-  return 'http://localhost:5000';
+  // Default fallback - in production, use the deployed backend
+  const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+  return isProduction 
+    ? 'https://mfc-payment-backend-bvz3kl21y-darshanas-projects-d30d0377.vercel.app'
+    : 'http://localhost:5000';
 };
 
 export const API_URL = getApiUrl();
