@@ -15,21 +15,18 @@ const Dashboard: React.FC = () => {
     const now = new Date()
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().slice(0, 10)
   })
-  const [calcResult, setCalcResult] = useState<any | null>(null)
+  const [summary, setSummary] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const euro = (n: number) => `€${Number(n || 0).toFixed(2)}`
 
-  // Fetch calculation summary for the selected range
+  // Fetch verification summary for the selected range
   const fetchSummary = async () => {
     try {
       setIsLoading(true)
-      const res = await apiService.calculatePayments({ fromDate, toDate })
-      if (res.success) {
-        setCalcResult(res)
-      } else {
-        toast.error('Failed to load dashboard summary')
-      }
+      const res = await apiService.getVerificationSummary({ fromDate, toDate })
+      if (res.success) setSummary(res.summary)
+      else toast.error('Failed to load dashboard summary')
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load dashboard summary')
     } finally {
@@ -42,16 +39,12 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate])
 
-  // Stat cards data derived from calculation result (using verified data calculations)
+  // Stat cards derived from verification summary
   const stats = useMemo(() => {
-    const attendanceTotal = calcResult?.counts?.attendanceTotal ?? 0 // Verified attendance only
-    const attendanceRaw = calcResult?.counts?.attendanceTotalRaw ?? 0 // Raw attendance count
-    const totalRevenue = calcResult?.revenue?.totalPayments ?? 0 // Verified revenue (excludes fees)
-    const bgmPayment = (calcResult?.splits?.group?.bgm ?? 0) + (calcResult?.splits?.private?.landlord ?? 0)
-    const managementPayment = (calcResult?.splits?.group?.management ?? 0) + (calcResult?.splits?.private?.management ?? 0)
-    const coachesCount = calcResult?.coachBreakdown?.length ?? 0
+    const attendanceTotal = summary?.verifiedRecords ?? summary?.verifiedAttendanceRecords ?? 0
+    const attendanceRaw = summary?.totalRecords ?? summary?.totalAttendanceRecords ?? 0
     const verificationRate = attendanceRaw > 0 ? ((attendanceTotal / attendanceRaw) * 100).toFixed(1) : '0'
-    const totalCoachPayments = calcResult?.coachBreakdown?.reduce((sum: number, coach: any) => sum + (coach.totalPayment || 0), 0) ?? 0
+    const totalVerifiedAmount = summary?.totalVerifiedAmount ?? 0
     
     return [
       {
@@ -65,8 +58,8 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'Verified Revenue',
-        value: euro(totalRevenue),
-        subtitle: 'Excludes fees & full discounts',
+        value: euro(totalVerifiedAmount),
+        subtitle: 'Verified payments total',
         color: 'text-blue-500',
         border: 'border-blue-400',
         icon: DollarSign,
@@ -74,8 +67,8 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'Total Coach Payments',
-        value: euro(totalCoachPayments),
-        subtitle: `${coachesCount} active coaches`,
+        value: euro(summary?.totalFuturePaymentsMFC ?? 0),
+        subtitle: 'Future MFC (unverified)',
         color: 'text-sky-500',
         border: 'border-sky-400',
         icon: UserCheck,
@@ -83,8 +76,8 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'Private Sessions',
-        value: String(calcResult?.counts?.privateSessions ?? 0),
-        subtitle: 'Verified private sessions',
+        value: String(attendanceTotal - (summary?.categoryBreakdown?.verified ?? attendanceTotal)),
+        subtitle: 'Pending verifications',
         color: 'text-orange-500',
         border: 'border-orange-400',
         icon: Users,
@@ -92,8 +85,8 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'BGM Payment',
-        value: euro(bgmPayment),
-        subtitle: 'Landlord share (30% + 15%)',
+        value: euro(summary?.totalTaxAmount ?? 0),
+        subtitle: 'Tax total',
         color: 'text-purple-500',
         border: 'border-purple-400',
         icon: CreditCard,
@@ -101,15 +94,15 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'Management Pay',
-        value: euro(managementPayment),
-        subtitle: 'Management share (8.5%)',
+        value: euro(summary?.totalDiscountedAmount ?? 0),
+        subtitle: 'Discounted total',
         color: 'text-teal-500',
         border: 'border-teal-400',
         icon: Briefcase,
         labelClass: 'text-4xl',
       },
     ]
-  }, [calcResult])
+  }, [summary])
 
   return (
     <div className="space-y-4">
