@@ -28,6 +28,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const [testMemo, setTestMemo] = useState('');
   const [testResult, setTestResult] = useState<any>(null);
   const [testing, setTesting] = useState(false);
+  const [hasTested, setHasTested] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -216,6 +217,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       setTesting(true);
+      setHasTested(false);
       const response = await fetch(`${API_URL}/discounts/classify`, {
         method: 'POST',
         headers: {
@@ -227,12 +229,15 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       const data = await response.json();
       
       if (data.success) {
-        setTestResult(data.data);
+        // data.data can be null when no match – keep it as null so UI can show the no‑match message
+        setTestResult(data.data ?? null);
       } else {
-        setTestResult({ error: data.message });
+        setTestResult({ error: data.message || 'Unexpected error' });
       }
+      setHasTested(true);
     } catch (error) {
       setTestResult({ error: 'Error testing match' });
+      setHasTested(true);
     } finally {
       setTesting(false);
     }
@@ -340,9 +345,9 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
           </button>
         </div>
         
-        {testResult && (
+        {hasTested && (
           <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
-            {testResult.error ? (
+            {testResult && (testResult as any).error ? (
               <div className="text-red-600 dark:text-red-400">Error: {testResult.error}</div>
             ) : testResult ? (
               <div className="space-y-2">
