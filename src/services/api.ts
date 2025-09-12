@@ -3,17 +3,15 @@ import { API_URL } from '../config/env';
 
 const API_BASE_URL = API_URL;
 
-// Normalize provided base URL and ensure it contains the required "/api" prefix
+// Normalize provided base URL to avoid double prefixes or trailing segments
 // - trims whitespace
 // - removes trailing slashes
-// - appends "/api" if it's not already present (case-insensitive)
+// - strips a trailing "/api" if present (case-insensitive)
 const normalizeBaseURL = (url: string): string => {
   if (!url) return '';
   let out = String(url).trim();
   out = out.replace(/\/+$/, '');
-  if (!/\/api$/i.test(out)) {
-    out = `${out}/api`;
-  }
+  out = out.replace(/\/api$/i, '');
   return out;
 };
 
