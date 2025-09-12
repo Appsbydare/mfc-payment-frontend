@@ -49,20 +49,71 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       setLoading(true);
       const response = await fetch(`${API_URL}/api/discounts`);
       const data = await response.json();
-      
-      if (data.success) {
+
+      const tryFetchFromSheets = async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/data/sheets?sheet=discounts`);
+          const js = await res.json();
+          if (js?.success && Array.isArray(js.data)) {
+            const mapped = js.data.map((row: any, index: number) => ({
+              id: parseInt(row.id || `${index + 1}`) || (index + 1),
+              discount_code: row.discount_code || row['discount_code'] || '',
+              name: row.name || row['name'] || '',
+              applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
+              coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
+              match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
+              active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
+              notes: row.notes || row['notes'] || '',
+              created_at: row.created_at || row['created_at'] || new Date().toISOString(),
+              updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
+            })).filter((d: any) => d.discount_code && d.name);
+            if (mapped.length) {
+              setDiscounts(mapped);
+              return true;
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching discounts from sheets fallback:', err);
+        }
+        return false;
+      };
+
+      if (data?.success && Array.isArray(data.data) && data.data.length > 0) {
         setDiscounts(data.data);
       } else {
-        console.error('Failed to fetch discounts:', data.message);
-        // If no discounts found, try to initialize
-        if (data.data && data.data.length === 0) {
+        console.error('Failed to fetch discounts or empty list from API. Trying sheets fallback.', data?.message);
+        const ok = await tryFetchFromSheets();
+        if (!ok) {
+          // If no discounts found, try to initialize
           await initializeDiscounts();
         }
       }
     } catch (error) {
       console.error('Error fetching discounts:', error);
-      // Try to initialize discounts if fetch fails
-      await initializeDiscounts();
+      // Fallback to direct sheets read; if that fails, try initializing
+      try {
+        const res = await fetch(`${API_URL}/api/data/sheets?sheet=discounts`);
+        const js = await res.json();
+        if (js?.success && Array.isArray(js.data)) {
+          const mapped = js.data.map((row: any, index: number) => ({
+            id: parseInt(row.id || `${index + 1}`) || (index + 1),
+            discount_code: row.discount_code || row['discount_code'] || '',
+            name: row.name || row['name'] || '',
+            applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
+            coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
+            match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
+            active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
+            notes: row.notes || row['notes'] || '',
+            created_at: row.created_at || row['created_at'] || new Date().toISOString(),
+            updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
+          })).filter((d: any) => d.discount_code && d.name);
+          setDiscounts(mapped);
+        } else {
+          await initializeDiscounts();
+        }
+      } catch (err) {
+        await initializeDiscounts();
+      }
     } finally {
       setLoading(false);
     }
@@ -372,7 +423,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Coach Payment Type *
+                    Discount Type*
                   </label>
                   <select
                     required

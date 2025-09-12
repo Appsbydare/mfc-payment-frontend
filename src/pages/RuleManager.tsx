@@ -101,6 +101,13 @@ const RuleManager: React.FC = () => {
   }
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
+    // Keep category and privateSession in sync so saves persist the intended type
+    if (name === 'category') {
+      const newCategory = String(value)
+      const isPrivate = /^private/i.test(newCategory)
+      setRule(r => ({ ...r, category: newCategory, privateSession: isPrivate }))
+      return
+    }
     if (type === 'checkbox') {
       setRule(r => ({ ...r, [name]: (e.target as HTMLInputElement).checked }))
     } else {
@@ -115,11 +122,15 @@ const RuleManager: React.FC = () => {
   const handleSave = async () => {
     try {
       setLoading(true)
+      const sessionType = (() => {
+        if (rule.category) return /^private/i.test(rule.category) ? 'private' : 'group'
+        return rule.privateSession ? 'private' : 'group'
+      })()
       const payload = {
         id: (rule as any).id || '',
         rule_name: rule.name,
         package_name: rule.name,
-        session_type: rule.privateSession ? 'private' : 'group',
+        session_type: sessionType,
         price: rule.price,
         sessions: rule.sessions,
         sessions_per_pack: rule.sessions,
