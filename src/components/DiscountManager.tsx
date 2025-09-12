@@ -47,12 +47,12 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/discounts`);
+      const response = await fetch(`${API_URL}/discounts`);
       const data = await response.json();
 
       const tryFetchFromSheets = async () => {
         try {
-          const res = await fetch(`${API_URL}/api/data/sheets?sheet=discounts`);
+          const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
           const js = await res.json();
           if (js?.success && Array.isArray(js.data)) {
             const mapped = js.data.map((row: any, index: number) => ({
@@ -92,7 +92,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       console.error('Error fetching discounts:', error);
       // Fallback to direct sheets read; if that fails, try initializing
       try {
-        const res = await fetch(`${API_URL}/api/data/sheets?sheet=discounts`);
+        const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
         const js = await res.json();
         if (js?.success && Array.isArray(js.data)) {
           const mapped = js.data.map((row: any, index: number) => ({
