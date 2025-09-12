@@ -41,16 +41,17 @@ const Dashboard: React.FC = () => {
 
   // Stat cards derived from verification summary
   const stats = useMemo(() => {
-    const attendanceTotal = summary?.verifiedRecords ?? summary?.verifiedAttendanceRecords ?? 0
-    const attendanceRaw = summary?.totalRecords ?? summary?.totalAttendanceRecords ?? 0
-    const verificationRate = attendanceRaw > 0 ? ((attendanceTotal / attendanceRaw) * 100).toFixed(1) : '0'
+    const attendanceVerified = summary?.verifiedAttendanceRecords ?? summary?.verifiedRecords ?? 0
+    const attendanceTotal = summary?.totalAttendanceRecords ?? summary?.totalRecords ?? 0
+    const pendingVerifications = Math.max(0, attendanceTotal - attendanceVerified)
+    const verificationRate = attendanceTotal > 0 ? ((attendanceVerified / attendanceTotal) * 100).toFixed(1) : '0'
     const totalVerifiedAmount = summary?.totalVerifiedAmount ?? 0
     
     return [
       {
         name: 'Verified Attendances',
-        value: String(attendanceTotal),
-        subtitle: `${verificationRate}% of ${attendanceRaw} total`,
+        value: String(attendanceVerified),
+        subtitle: `${verificationRate}% of ${attendanceTotal} total`,
         color: 'text-green-500',
         border: 'border-green-400',
         icon: Users,
@@ -76,7 +77,7 @@ const Dashboard: React.FC = () => {
       },
       {
         name: 'Private Sessions',
-        value: String(attendanceTotal - (summary?.categoryBreakdown?.verified ?? attendanceTotal)),
+        value: String(pendingVerifications),
         subtitle: 'Pending verifications',
         color: 'text-orange-500',
         border: 'border-orange-400',
