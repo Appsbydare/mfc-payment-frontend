@@ -121,7 +121,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
 
   const initializeDiscounts = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/discounts/initialize`, {
+      const response = await fetch(`${API_URL}/discounts/initialize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,8 +143,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       const url = editingDiscount 
-        ? `${API_URL}/api/discounts/${editingDiscount.id}`
-        : `${API_URL}/api/discounts`;
+        ? `${API_URL}/discounts/${editingDiscount.id}`
+        : `${API_URL}/discounts`;
       
       const method = editingDiscount ? 'PUT' : 'POST';
       
@@ -192,7 +192,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/discounts/${id}`, {
+      const response = await fetch(`${API_URL}/discounts/${id}`, {
         method: 'DELETE',
       });
       
@@ -216,7 +216,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       setTesting(true);
-      const response = await fetch(`${API_URL}/api/discounts/classify`, {
+      const response = await fetch(`${API_URL}/discounts/classify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
