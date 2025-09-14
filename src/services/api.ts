@@ -124,6 +124,17 @@ class ApiService {
     return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=attendance_verification`);
   }
 
+  // Master verification (payment_calc_detail)
+  async getMasterVerification() {
+    return this.request<{ success: boolean; data: any[]; count: number }>(`/verification/master`);
+  }
+
+  async syncMasterVerification() {
+    return this.request<{ success: boolean; appended: number; message: string }>(`/verification/master-sync`, {
+      method: 'POST',
+    });
+  }
+
   // Read settings to detect unverified state
   async getSettingsSheet() {
     return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=settings`);
