@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   Upload, 
   Settings, 
-  Calculator, 
   FileText, 
   Cog,
   Percent
@@ -18,7 +17,6 @@ const navigation = [
   { name: 'Data Import', href: '/data-import', icon: Upload },
   { name: 'Rule Manager', href: '/rule-manager', icon: Settings },
   { name: 'Discount Manager', href: '/discount-manager', icon: Percent },
-  { name: 'Payment Calculator', href: '/payment-calculator', icon: Calculator },
   { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Cog },
 ]

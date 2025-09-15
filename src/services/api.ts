@@ -72,14 +72,7 @@ class ApiService {
     }>('/data/attendance');
   }
 
-  // Payment rules
-  async getPaymentRules() {
-    return this.request<{
-      success: boolean;
-      data: any[];
-      message: string;
-    }>('/payments/rules');
-  }
+  // Payment rules - removed with Payment Calculator
 
   // Rule Manager (Sheets-based)
   async listRules() {
@@ -118,63 +111,17 @@ class ApiService {
   // Attendance verification - REMOVED
   // All attendance verification methods have been removed as requested
 
-  async getGlobalRules() {
-    return this.request<{
-      success: boolean;
-      data: any[];
-      message: string;
-    }>('/payments/rules/global');
-  }
+  // Global rules via /rules endpoints remain available
 
-  async createRule(ruleData: any) {
-    return this.request<{
-      success: boolean;
-      data: any;
-      message: string;
-    }>('/payments/rules', {
-      method: 'POST',
-      body: JSON.stringify(ruleData),
-    });
-  }
+  // Removed create/update/delete under /payments/rules
 
-  async updateRule(id: number, ruleData: any) {
-    return this.request<{
-      success: boolean;
-      data: any;
-      message: string;
-    }>(`/payments/rules/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(ruleData),
-    });
-  }
+  
 
-  async deleteRule(id: number) {
-    return this.request<{
-      success: boolean;
-      message: string;
-    }>(`/payments/rules/${id}`, {
-      method: 'DELETE',
-    });
-  }
+  
 
-  // Global settings
-  async getGlobalSettings() {
-    return this.request<{
-      success: boolean;
-      data: any[];
-      message: string;
-    }>('/payments/settings');
-  }
+  // Global settings moved to /rules endpoints
 
-  async updateGlobalSettings(settings: any[]) {
-    return this.request<{
-      success: boolean;
-      message: string;
-    }>('/payments/settings', {
-      method: 'PUT',
-      body: JSON.stringify(settings),
-    });
-  }
+  
 
   // Data import
   async importData(formData: FormData) {
@@ -247,26 +194,7 @@ class ApiService {
     });
   }
 
-  // Payments calculation
-  async calculatePayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
-    return this.request<{
-      success: boolean;
-      filters: { month: number | null; year: number | null; fromDate: string | null; toDate: string | null };
-      counts: {
-        attendanceTotal: number;
-        groupSessions: number;
-        privateSessions: number;
-        paymentsCount: number;
-        discountPayments: number;
-      };
-      revenue: { totalPayments: number };
-      splits: any;
-      notes?: string;
-    }>('/payments/calculate', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  }
+  // Payments calculation removed
 
   // New Attendance Verification System
   async getAttendanceVerificationMaster() {
