@@ -254,7 +254,7 @@ class ApiService {
     }>('/attendance-verification/master');
   }
 
-  async verifyAttendanceData() {
+  async verifyAttendanceData(forceReverify: boolean = true) {
     return this.request<{
       success: boolean;
       message: string;
@@ -268,7 +268,7 @@ class ApiService {
       };
     }>('/attendance-verification/verify', {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: JSON.stringify({ forceReverify }),
     });
   }
 
@@ -347,6 +347,17 @@ class ApiService {
       console.error('Export failed:', error);
       throw error;
     }
+  }
+
+  async rewriteAttendanceVerification(params: { fromDate?: string; toDate?: string } = {}) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      summary: any;
+    }>(`/attendance-verification/rewrite`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
   }
 }
 

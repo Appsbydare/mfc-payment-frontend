@@ -57,7 +57,7 @@ const VerificationManager: React.FC = () => {
   const handleVerify = async () => {
     try {
       setLoading(true)
-      const res = await apiService.verifyAttendanceData()
+      const res = await apiService.verifyAttendanceData(true)
       if ((res as any).success) {
         if ((res as any).message?.includes('already verified')) {
           toast.success('Uploaded Data already verified!')
@@ -69,6 +69,21 @@ const VerificationManager: React.FC = () => {
       }
     } catch (e: any) {
       toast.error(e?.message || 'Verification failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRewrite = async () => {
+    try {
+      setLoading(true)
+      const res = await apiService.rewriteAttendanceVerification({})
+      if ((res as any).success) {
+        toast.success('Master sheet rewritten')
+        await loadMaster()
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Rewrite failed')
     } finally {
       setLoading(false)
     }
@@ -112,6 +127,7 @@ const VerificationManager: React.FC = () => {
             <div className="flex gap-2">
               <button onClick={loadMaster} disabled={loading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">Refresh</button>
               <button onClick={handleVerify} disabled={loading} className="px-3 py-2 rounded bg-primary-600 text-white disabled:opacity-50">Verify Payments</button>
+              <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
             </div>
           </div>
 
