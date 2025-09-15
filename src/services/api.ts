@@ -196,6 +196,49 @@ class ApiService {
 
   // Payments calculation removed
 
+  // Discounts API
+  async listDiscounts() {
+    return this.request<{ success: boolean; data: any[] }>(`/discounts`);
+  }
+
+  async initializeDiscounts() {
+    return this.request<{ success: boolean; data: any[]; message: string }>(`/discounts/initialize`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  async createDiscount(payload: any) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/discounts`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateDiscount(id: number | string, payload: any) {
+    return this.request<{ success: boolean; data: any; message: string }>(`/discounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteDiscount(id: number | string) {
+    return this.request<{ success: boolean; message: string }>(`/discounts/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async classifyDiscount(memo: string) {
+    return this.request<{ success: boolean; data: any }>(`/discounts/classify`, {
+      method: 'POST',
+      body: JSON.stringify({ memo }),
+    });
+  }
+
+  async debugDiscounts() {
+    return this.request<{ success: boolean; debug?: any; error?: string }>(`/discounts/debug`);
+  }
+
   // New Attendance Verification System
   async getAttendanceVerificationMaster() {
     return this.request<{

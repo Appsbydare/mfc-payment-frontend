@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, TestTube, Check, X, RefreshCw } from 'lucide-react';
-import { API_URL } from '../config/env';
+import apiService from '../services/api';
 
 interface Discount {
   id: number;
@@ -48,13 +48,11 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/discounts`);
-      const data = await response.json();
+      const data = await apiService.listDiscounts();
 
       const tryFetchFromSheets = async () => {
         try {
-          const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
-          const js = await res.json();
+          const js = await apiService.getSheetData('payments'); // sheets endpoint only supports attendance|payments
           if (js?.success && Array.isArray(js.data)) {
             const mapped = js.data.map((row: any, index: number) => ({
               id: parseInt(row.id || `${index + 1}`) || (index + 1),
@@ -79,8 +77,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
         return false;
       };
 
-      if (data?.success && Array.isArray(data.data) && data.data.length > 0) {
-        setDiscounts(data.data);
+      if ((data as any)?.success && Array.isArray((data as any).data) && (data as any).data.length > 0) {
+        setDiscounts((data as any).data);
       } else {
         console.error('Failed to fetch discounts or empty list from API. Trying sheets fallback.', data?.message);
         const ok = await tryFetchFromSheets();
@@ -93,8 +91,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       console.error('Error fetching discounts:', error);
       // Fallback to direct sheets read; if that fails, try initializing
       try {
-        const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
-        const js = await res.json();
+        const js = await apiService.getSheetData('payments');
         if (js?.success && Array.isArray(js.data)) {
           const mapped = js.data.map((row: any, index: number) => ({
             id: parseInt(row.id || `${index + 1}`) || (index + 1),
@@ -122,16 +119,10 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
 
   const initializeDiscounts = async () => {
     try {
-      const response = await fetch(`${API_URL}/discounts/initialize`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
+      const data = await apiService.initializeDiscounts();
       
-      if (data.success) {
-        setDiscounts(data.data);
+      if ((data as any).success) {
+        setDiscounts((data as any).data);
         console.log('Discounts initialized successfully');
       }
     } catch (error) {
@@ -143,29 +134,18 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     e.preventDefault();
     
     try {
-      const url = editingDiscount 
-        ? `${API_URL}/discounts/${editingDiscount.id}`
-        : `${API_URL}/discounts`;
+      const data = editingDiscount
+        ? await apiService.updateDiscount(editingDiscount.id, formData)
+        : await apiService.createDiscount(formData);
       
-      const method = editingDiscount ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
+      if ((data as any).success) {
         await fetchDiscounts();
         resetForm();
         onDiscountChange?.();
       } else {
-        console.error('Failed to save discount:', data.message);
-        alert('Failed to save discount: ' + data.message);
+        const msg = (data as any).message || 'Failed to save discount';
+        console.error('Failed to save discount:', msg);
+        alert('Failed to save discount: ' + msg);
       }
     } catch (error) {
       console.error('Error saving discount:', error);
@@ -193,18 +173,15 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     }
     
     try {
-      const response = await fetch(`${API_URL}/discounts/${id}`, {
-        method: 'DELETE',
-      });
+      const data = await apiService.deleteDiscount(id);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if ((data as any).success) {
         await fetchDiscounts();
         onDiscountChange?.();
       } else {
-        console.error('Failed to delete discount:', data.message);
-        alert('Failed to delete discount: ' + data.message);
+        const msg = (data as any).message || 'Failed to delete discount';
+        console.error('Failed to delete discount:', msg);
+        alert('Failed to delete discount: ' + msg);
       }
     } catch (error) {
       console.error('Error deleting discount:', error);
@@ -218,21 +195,13 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     try {
       setTesting(true);
       setHasTested(false);
-      const response = await fetch(`${API_URL}/discounts/classify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ memo: testMemo }),
-      });
+      const data = await apiService.classifyDiscount(testMemo);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if ((data as any).success) {
         // data.data can be null when no match – keep it as null so UI can show the no‑match message
-        setTestResult(data.data ?? null);
+        setTestResult((data as any).data ?? null);
       } else {
-        setTestResult({ error: data.message || 'Unexpected error' });
+        setTestResult({ error: (data as any).message || 'Unexpected error' });
       }
       setHasTested(true);
     } catch (error) {
