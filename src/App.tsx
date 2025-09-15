@@ -43,7 +43,7 @@ function App() {
           <Route path="/discount-manager" element={<DiscountManager />} />
           <Route
             path="/payment-calculator"
-            element={<PaymentCalculator fromDate={fromDate} toDate={toDate} />}
+            element={<PaymentCalculator />}
           />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
