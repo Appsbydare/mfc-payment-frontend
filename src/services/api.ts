@@ -268,8 +268,119 @@ class ApiService {
     });
   }
 
-  // Verification system - REMOVED
-  // All verification-related methods have been removed as requested
+  // New Attendance Verification System
+  async getAttendanceVerificationMaster(params: { fromDate?: string; toDate?: string } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    if (params.toDate) queryParams.append('toDate', params.toDate);
+    
+    return this.request<{
+      success: boolean;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        verificationRate: number;
+        newRecordsAdded: number;
+      };
+    }>(`/attendance-verification/master?${queryParams.toString()}`);
+  }
+
+  async verifyAttendanceData(payload: { fromDate?: string; toDate?: string; forceReverify?: boolean }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        verificationRate: number;
+        newRecordsAdded: number;
+      };
+    }>('/attendance-verification/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getAttendanceVerificationSummary(params: { fromDate?: string; toDate?: string } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    if (params.toDate) queryParams.append('toDate', params.toDate);
+    
+    return this.request<{
+      success: boolean;
+      data: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        verificationRate: number;
+        totalAmount: number;
+        totalSessionPrice: number;
+        totalCoachAmount: number;
+        totalBgmAmount: number;
+        totalManagementAmount: number;
+        totalMfcAmount: number;
+      };
+    }>(`/attendance-verification/summary?${queryParams.toString()}`);
+  }
+
+  async getUnverifiedRecords(params: { fromDate?: string; toDate?: string } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    if (params.toDate) queryParams.append('toDate', params.toDate);
+    
+    return this.request<{
+      success: boolean;
+      data: any[];
+      count: number;
+    }>(`/attendance-verification/unverified?${queryParams.toString()}`);
+  }
+
+  async manualVerifyRecord(payload: { uniqueKey: string; invoiceNumber: string; customerName?: string }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>('/attendance-verification/manual-verify', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async exportAttendanceVerification(params: { fromDate?: string; toDate?: string; format?: 'csv' | 'json' } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
+    if (params.toDate) queryParams.append('toDate', params.toDate);
+    if (params.format) queryParams.append('format', params.format);
+    
+    const url = `${this.baseURL}/attendance-verification/export?${queryParams.toString()}`;
+    
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      if (params.format === 'csv') {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `attendance_verification_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        return { success: true, message: 'File downloaded successfully' };
+      } else {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

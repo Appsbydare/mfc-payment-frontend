@@ -80,53 +80,64 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
   }, [])
 
-  // Verification state removed - functionality disabled
+  // Legacy verification state - kept for compatibility
   const verifyResult = { rows: [], summary: {} }
   const masterRows: any[] = []
-  const verificationSummary = {
-    totalAttendanceRecords: 0,
-    totalRecords: 0,
-    verifiedAttendanceRecords: 0,
-    verifiedRecords: 0,
-    unverifiedAttendanceRecords: 0,
-    unverifiedRecords: 0,
-    attendanceVerificationRate: 0,
-    verificationCompletionRate: 0,
-    totalPaymentRecords: 0,
-    verifiedPaymentRecords: 0,
-    unverifiedPaymentRecords: 0,
-    paymentVerificationRate: 0,
-    paymentCategoryBreakdown: {
-      payment: 0,
-      fullDiscount: 0,
-      tax: 0,
-      discount: 0,
-      refund: 0
-    },
-    totalVerifiedAmount: 0,
-    totalTaxAmount: 0,
-    totalDiscountedAmount: 0,
-    mfcRetentionRate: 0
-  }
   const [sortKey, setSortKey] = useState<string>('Date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [filter, setFilter] = useState<string>('')
-  const [editingRow, setEditingRow] = useState<number | null>(null)
-  const [unverifiedInvoices, setUnverifiedInvoices] = useState<any[]>([])
-  const [selectedInvoice, setSelectedInvoice] = useState<string>('')
   const [showPaymentCategorization, setShowPaymentCategorization] = useState(false)
   const [paymentData, setPaymentData] = useState<any[]>([])
+  const [masterData, setMasterData] = useState<any[]>([])
+  const [verificationSummary, setVerificationSummary] = useState<any>(null)
 
-
-  const handleVerify = async () => {
-    // Verification functionality has been removed
-    toast.error('Verification functionality has been removed');
+  const handleLoadMasterData = async () => {
+    try {
+      const result = await apiService.getAttendanceVerificationMaster({
+        fromDate: localFromDate,
+        toDate: localToDate
+      });
+      
+      if (result.success) {
+        setMasterData(result.data);
+        setVerificationSummary(result.summary);
+      }
+    } catch (error: any) {
+      console.error('Error loading master data:', error);
+      toast.error('Failed to load verification data');
+    }
   }
 
-  // Load Master on mount - REMOVED
+  const handleVerify = async () => {
+    try {
+      toast.loading('Verifying payments...', { id: 'verify' });
+      
+      const result = await apiService.verifyAttendanceData({
+        fromDate: localFromDate,
+        toDate: localToDate
+      });
+      
+      if (result.success) {
+        if (result.message === 'Uploaded Data already verified!') {
+          toast.success(result.message, { id: 'verify' });
+        } else {
+          toast.success(result.message, { id: 'verify' });
+        }
+        
+        // Reload the master data
+        await handleLoadMasterData();
+      } else {
+        toast.error('Verification failed', { id: 'verify' });
+      }
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      toast.error(error?.message || 'Verification failed', { id: 'verify' });
+    }
+  }
+
+  // Load Master data on mount
   useEffect(() => {
-    // Master verification functionality has been removed
-    console.log('Master verification functionality has been removed')
+    handleLoadMasterData();
   }, [])
 
   // Re-run verification when date range changes (silent)
@@ -147,8 +158,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             console.log('Silent calculation failed:', calcError)
           }
           
-          // Payment verification functionality has been removed
-          console.log('Payment verification functionality has been removed')
+          // Reload master data when dates change
+          await handleLoadMasterData()
         } catch (e) {
           console.log('Silent verification failed')
         }
@@ -160,22 +171,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const handleLoadVerificationSummary = async () => {
     // Verification summary functionality has been removed
     toast.error('Verification summary functionality has been removed');
-  }
-
-  const handleStartManualVerification = async (_row: any, _rowIndex: number) => {
-    // Manual verification functionality has been removed
-    toast.error('Manual verification functionality has been removed');
-  }
-
-  const handleConfirmManualVerification = async (_row: any) => {
-    // Manual verification functionality has been removed
-    toast.error('Manual verification functionality has been removed');
-  }
-
-  const handleCancelManualVerification = () => {
-    setEditingRow(null)
-    setSelectedInvoice('')
-    setUnverifiedInvoices([])
   }
 
   const handleLoadPaymentData = async () => {
@@ -203,6 +198,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     handleLoadVerificationSummary()
   }
 
+  // Legacy sorted filtered rows - kept for compatibility
   const sortedFilteredRows = useMemo(() => {
     return (verifyResult?.rows || [])
       .filter((r: any) => !filter || JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()))
@@ -439,177 +435,154 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
         {activeTab === 0 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Verification Master Table</h2>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="btn-primary"
+                  onClick={handleVerify}
+                >
+                  Verify Payments
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => apiService.exportAttendanceVerification({ fromDate: localFromDate, toDate: localToDate, format: 'csv' })}
+                >
+                  Export CSV
+                </button>
+              </div>
             </div>
             
-      <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-sm text-gray-700 dark:text-gray-300">Verification {masterRows ? `(rows: ${masterRows.length})` : ''}</div>
-          <div className="flex items-center gap-2">
-            <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-          <div className="overflow-x-auto">
-            <div className="max-h-[560px] overflow-y-auto">
-                    <table className="min-w-[1840px] w-full table-fixed text-sm text-left">
-                <colgroup>
-                  <col className="w-28" />
-                  <col className="w-48" />
-                  <col className="w-[360px]" />
-                  <col className="w-[240px]" />
-                  <col className="w-44" />
-                  <col className="w-24" />
-                  <col className="w-32" />
-                  <col className="w-40" />
-                  <col className="w-28" />
-                  <col className="w-32" />
-                  <col className="w-28" />
-                  <col className="w-28" />
-                  <col className="w-32" />
-                  <col className="w-28" />
-                  <col className="w-36" />
-                  <col className="w-32" />
-                  <col className="w-48" />
-                  <col className="w-28" />
-                </colgroup>
-                <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
-                  <tr>
-                    {[ 
-                      { key: 'Date', label: 'Date' },
-                      { key: 'Customer', label: 'Customer' },
-                      { key: 'Membership', label: 'Membership' },
-                      { key: 'ClassType', label: 'ClassType' },
-                      { key: 'Instructors', label: 'Instructors' },
-                      { key: 'Verified', label: 'Verified' },
-                      { key: 'Category', label: 'Category' },
-                      { key: 'Actions', label: 'Actions' },
-                      { key: 'Invoice', label: 'Invoice' },
-                      { key: 'PaymentDate', label: 'Payment Date' },
-                      { key: 'UnitPrice', label: 'Unit Price' },
-                      { key: 'EffectiveAmount', label: 'Effective Amount' },
-                      { key: 'CoachAmount', label: 'Coach Amount' },
-                      { key: 'BgmAmount', label: 'BGM Amount' },
-                      { key: 'ManagementAmount', label: 'Management Amount' },
-                      { key: 'MfcAmount', label: 'MFC Amount' },
-                      { key: 'DiscountName', label: 'Discount Name' },
-                      { key: 'ApplicablePercentage', label: 'Discount %' },
-                    ].map(col => (
-                      <th
-                        key={col.key}
-                        onClick={() => { setSortKey(col.key); setSortDir(d => d==='asc'?'desc':'asc') }}
-                        className="cursor-pointer select-none px-3 py-2 font-semibold border-b border-primary-200 dark:border-primary-700"
-                      >
-                        {col.label}{sortKey===col.key? (sortDir==='asc'?' ▲':' ▼'):''}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(sortedFilteredRows.length ? sortedFilteredRows : (masterRows || [])).map((r: any, idx: number) => (
-                    <tr
-                      key={idx}
-                      className={`${r.Verified ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
-                    >
-                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.Date}</td>
-                      <td className="px-3 py-2 border-b truncate" title={r.Customer}>{r.Customer}</td>
-                      <td className="px-3 py-2 border-b truncate" title={r.Membership}>{r.Membership}</td>
-                      <td className="px-3 py-2 border-b truncate" title={r.ClassType}>{r.ClassType}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.Instructors}>{r.Instructors}</td>
+            {/* Verification Summary */}
+            {verificationSummary && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <div className="text-sm text-blue-600 dark:text-blue-400">Total Records</div>
+                  <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{verificationSummary.totalRecords}</div>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <div className="text-sm text-green-600 dark:text-green-400">Verified</div>
+                  <div className="text-2xl font-bold text-green-900 dark:text-green-100">{verificationSummary.verifiedRecords}</div>
+                </div>
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                  <div className="text-sm text-red-600 dark:text-red-400">Unverified</div>
+                  <div className="text-2xl font-bold text-red-900 dark:text-red-100">{verificationSummary.unverifiedRecords}</div>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                  <div className="text-sm text-purple-600 dark:text-purple-400">Verification Rate</div>
+                  <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">{(verificationSummary.verificationRate || 0).toFixed(1)}%</div>
+                </div>
+              </div>
+            )}
+            
+            <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm text-gray-700 dark:text-gray-300">Master Table {masterData ? `(${masterData.length} records)` : ''}</div>
+                <div className="flex items-center gap-2">
+                  <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+                <div className="overflow-x-auto">
+                  <div className="max-h-[560px] overflow-y-auto">
+                    <table className="min-w-[2000px] w-full table-fixed text-sm text-left">
+                      <colgroup>
+                        <col className="w-32" />
+                        <col className="w-48" />
+                        <col className="w-48" />
+                        <col className="w-44" />
+                        <col className="w-24" />
+                        <col className="w-32" />
+                        <col className="w-24" />
+                        <col className="w-24" />
+                        <col className="w-28" />
+                        <col className="w-32" />
+                        <col className="w-32" />
+                        <col className="w-28" />
+                        <col className="w-28" />
+                        <col className="w-28" />
+                        <col className="w-32" />
+                        <col className="w-28" />
+                      </colgroup>
+                      <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
+                        <tr>
+                          {[ 
+                            { key: 'customerName', label: 'Customer Name' },
+                            { key: 'eventStartsAt', label: 'Event Starts At' },
+                            { key: 'membershipName', label: 'Membership Name' },
+                            { key: 'instructors', label: 'Instructors' },
+                            { key: 'status', label: 'Status' },
+                            { key: 'discount', label: 'Discount' },
+                            { key: 'discountPercentage', label: 'Discount %' },
+                            { key: 'verificationStatus', label: 'Verification Status' },
+                            { key: 'invoiceNumber', label: 'Invoice #' },
+                            { key: 'amount', label: 'Amount' },
+                            { key: 'paymentDate', label: 'Payment Date' },
+                            { key: 'sessionPrice', label: 'Session Price' },
+                            { key: 'coachAmount', label: 'Coach Amount' },
+                            { key: 'bgmAmount', label: 'BGM Amount' },
+                            { key: 'managementAmount', label: 'Management Amount' },
+                            { key: 'mfcAmount', label: 'MFC Amount' },
+                          ].map(col => (
+                            <th
+                              key={col.key}
+                              onClick={() => { setSortKey(col.key); setSortDir(d => d==='asc'?'desc':'asc') }}
+                              className="cursor-pointer select-none px-3 py-2 font-semibold border-b border-primary-200 dark:border-primary-700"
+                            >
+                              {col.label}{sortKey===col.key? (sortDir==='asc'?' ▲':' ▼'):''}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {masterData
+                          .filter((r: any) => !filter || JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()))
+                          .sort((a: any, b: any) => {
+                            const av = a[sortKey] ?? '';
+                            const bv = b[sortKey] ?? '';
+                            if (av < bv) return sortDir === 'asc' ? -1 : 1;
+                            if (av > bv) return sortDir === 'asc' ? 1 : -1;
+                            return 0;
+                          })
+                          .map((r: any, idx: number) => (
+                          <tr
+                            key={idx}
+                            className={`${r.verificationStatus === 'Verified' ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
+                          >
+                            <td className="px-3 py-2 border-b truncate" title={r.customerName}>{r.customerName}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.eventStartsAt}</td>
+                            <td className="px-3 py-2 border-b truncate" title={r.membershipName}>{r.membershipName}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap truncate" title={r.instructors}>{r.instructors}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.status}</td>
+                            <td className="px-3 py-2 border-b truncate" title={r.discount}>{r.discount}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-center">
+                              {r.discountPercentage ? `${r.discountPercentage.toFixed(1)}%` : ''}
+                            </td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                r.Verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                r.verificationStatus === 'Verified' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                               }`}>
-                                {r.Verified ? 'Yes' : 'No'}
+                                {r.verificationStatus}
                               </span>
                             </td>
-                            <td className="px-3 py-2 border-b truncate" title={r.Category}>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                r.Category === 'Verified' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                r.Category === 'Manually Verified' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                                r.Category === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                              }`}>
-                                {r.Category === 'info_mismatch' ? 'No payment record' : (r.Category || 'Pending')}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap">
-                              {!r.Verified && r.Category !== 'Manually Verified' && (
-                                <button
-                                  onClick={() => handleStartManualVerification(r, idx)}
-                                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                                >
-                                  Verify
-                                </button>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap">
-                              {editingRow === idx ? (
-                                <div className="flex flex-col gap-1">
-                                  <select
-                                    value={selectedInvoice}
-                                    onChange={(e) => setSelectedInvoice(e.target.value)}
-                                    className="text-xs border rounded px-1 py-0.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500"
-                                  >
-                                    <option value="">Select Invoice</option>
-                                    {unverifiedInvoices.map((inv: any) => (
-                                      <option key={inv.invoice} value={inv.invoice}>
-                                        {inv.invoice} (€{inv.totalAmount.toFixed(2)})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="flex gap-1">
-                                    <button
-                                      onClick={() => handleConfirmManualVerification(r)}
-                                      className="text-xs bg-green-600 text-white px-2 py-0.5 rounded hover:bg-green-700"
-                                    >
-                                      ✓
-                                    </button>
-                                    <button
-                                      onClick={handleCancelManualVerification}
-                                      className="text-xs bg-red-600 text-white px-2 py-0.5 rounded hover:bg-red-700"
-                                    >
-                                      ✗
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-sm">{r.Invoice || ''}</span>
-                              )}
-                            </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">{r.PaymentDate || ''}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.UnitPrice || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.EffectiveAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.CoachAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.BgmAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.ManagementAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.MfcAmount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 border-b truncate" title={r.DiscountName || ''}>
-                        {r.DiscountName ? (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            r.CoachPaymentType === 'full' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                            r.CoachPaymentType === 'partial' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                            r.CoachPaymentType === 'free' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                          }`}>
-                            {r.DiscountName}
-                          </span>
-                        ) : ''}
-                      </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        {r.ApplicablePercentage ? `${Number(r.ApplicablePercentage).toFixed(1)}%` : ''}
-                      </td>
-                    </tr>
-                  ))}
-                  {!masterRows && (
-                          <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>Click Verify Payments to load rows.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.invoiceNumber}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.amount || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap">{r.paymentDate}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.sessionPrice || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.coachAmount || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.bgmAmount || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.managementAmount || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.mfcAmount || 0).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        {masterData.length === 0 && (
+                          <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>No verification data available. Click "Verify Payments" to process data.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
           </div>
         )}
         
