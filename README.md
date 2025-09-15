@@ -82,3 +82,5 @@ The frontend communicates with the backend API. Make sure to:
 1. Set the correct `VITE_API_BASE_URL` environment variable
 2. Ensure CORS is properly configured on the backend
 3. Handle authentication tokens appropriately 
+
+# I need to push this somehow :)
