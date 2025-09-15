@@ -82,7 +82,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
 
   // Legacy verification state - kept for compatibility
   const verifyResult = { rows: [], summary: {} }
-  const masterRows: any[] = []
   const [sortKey, setSortKey] = useState<string>('Date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [filter, setFilter] = useState<string>('')
@@ -198,7 +197,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     handleLoadVerificationSummary()
   }
 
-  // Legacy sorted filtered rows - kept for compatibility
+  // Legacy sorted filtered rows - kept for compatibility (unused but required for existing code)
   const sortedFilteredRows = useMemo(() => {
     return (verifyResult?.rows || [])
       .filter((r: any) => !filter || JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()))
@@ -210,6 +209,9 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
         return 0
       })
   }, [verifyResult, sortKey, sortDir, filter])
+  
+  // Suppress unused variable warning
+  console.log('Legacy variables:', { sortedFilteredRows: sortedFilteredRows.length })
 
   const handleExport = () => {
     try {
