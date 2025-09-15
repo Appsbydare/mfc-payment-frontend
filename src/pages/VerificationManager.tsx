@@ -117,7 +117,7 @@ const VerificationManager: React.FC = () => {
   }, [])
 
   return (
-    <div className="p-6 overflow-y-auto max-h-[calc(100vh-100px)]">
+    <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Verification Manager</h1>
 
       <div className="mb-4">
@@ -163,8 +163,8 @@ const VerificationManager: React.FC = () => {
             </div>
           )}
 
-          <div className="overflow-auto border border-gray-200 dark:border-gray-700 rounded">
-            <table className="min-w-full text-sm">
+          <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
+            <table className="min-w-[1400px] text-sm">
               <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 z-10">
                 <tr>
                   {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','sessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount'].map((key, idx) => (
