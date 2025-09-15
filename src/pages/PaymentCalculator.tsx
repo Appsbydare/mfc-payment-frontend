@@ -81,9 +81,33 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   }, [])
 
   // Verification state removed - functionality disabled
-  const verifyResult = null
-  const masterRows = null
-  const verificationSummary = null
+  const verifyResult = { rows: [], summary: {} }
+  const masterRows: any[] = []
+  const verificationSummary = {
+    totalAttendanceRecords: 0,
+    totalRecords: 0,
+    verifiedAttendanceRecords: 0,
+    verifiedRecords: 0,
+    unverifiedAttendanceRecords: 0,
+    unverifiedRecords: 0,
+    attendanceVerificationRate: 0,
+    verificationCompletionRate: 0,
+    totalPaymentRecords: 0,
+    verifiedPaymentRecords: 0,
+    unverifiedPaymentRecords: 0,
+    paymentVerificationRate: 0,
+    paymentCategoryBreakdown: {
+      payment: 0,
+      fullDiscount: 0,
+      tax: 0,
+      discount: 0,
+      refund: 0
+    },
+    totalVerifiedAmount: 0,
+    totalTaxAmount: 0,
+    totalDiscountedAmount: 0,
+    mfcRetentionRate: 0
+  }
   const [sortKey, setSortKey] = useState<string>('Date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [filter, setFilter] = useState<string>('')

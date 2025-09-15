@@ -10,7 +10,7 @@ interface PaymentCategorizationProps {
 const PaymentCategorization: React.FC<PaymentCategorizationProps> = ({ 
   onClose, 
   paymentData, 
-  onUpdate 
+  onUpdate: _onUpdate 
 }) => {
   const [payments, setPayments] = useState<any[]>([]);
   const [editingPayment, setEditingPayment] = useState<string | null>(null);
