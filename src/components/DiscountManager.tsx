@@ -45,73 +45,43 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     fetchDiscounts();
   }, []);
 
+  const normalizeCoachPaymentType = (v: any): 'full' | 'partial' | 'free' => {
+    const s = String(v || 'partial').toLowerCase();
+    return (s === 'full' || s === 'partial' || s === 'free') ? s : 'partial';
+  };
+
+  const normalizeMatchType = (v: any): 'exact' | 'contains' | 'regex' => {
+    const s = String(v || 'exact').toLowerCase();
+    return (s === 'exact' || s === 'contains' || s === 'regex') ? s : 'exact';
+  };
+
+  const normalizeDiscount = (row: any, fallbackId?: number): Discount => ({
+    id: Number(row.id ?? fallbackId ?? Date.now()),
+    discount_code: String(row.discount_code ?? row['discount_code'] ?? ''),
+    name: String(row.name ?? row['name'] ?? ''),
+    applicable_percentage: Number(row.applicable_percentage ?? row['applicable_percentage'] ?? 0) || 0,
+    coach_payment_type: normalizeCoachPaymentType(row.coach_payment_type ?? row['coach_payment_type']),
+    match_type: normalizeMatchType(row.match_type ?? row['match_type']),
+    active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
+    notes: row.notes ?? row['notes'] ?? '',
+    created_at: row.created_at ?? row['created_at'] ?? new Date().toISOString(),
+    updated_at: row.updated_at ?? row['updated_at'] ?? new Date().toISOString(),
+  });
+
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
       const data = await apiService.listDiscounts();
-
-      const tryFetchFromSheets = async () => {
-        try {
-          const js = await apiService.getSheetData('payments'); // sheets endpoint only supports attendance|payments
-          if (js?.success && Array.isArray(js.data)) {
-            const mapped = js.data.map((row: any, index: number) => ({
-              id: parseInt(row.id || `${index + 1}`) || (index + 1),
-              discount_code: row.discount_code || row['discount_code'] || '',
-              name: row.name || row['name'] || '',
-              applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
-              coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
-              match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
-              active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
-              notes: row.notes || row['notes'] || '',
-              created_at: row.created_at || row['created_at'] || new Date().toISOString(),
-              updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
-            })).filter((d: any) => d.discount_code && d.name);
-            if (mapped.length) {
-              setDiscounts(mapped);
-              return true;
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching discounts from sheets fallback:', err);
-        }
-        return false;
-      };
-
       if ((data as any)?.success && Array.isArray((data as any).data) && (data as any).data.length > 0) {
-        setDiscounts((data as any).data);
+        const normalized = (data as any).data.map((r: any, i: number) => normalizeDiscount(r, i + 1));
+        setDiscounts(normalized);
       } else {
-        console.error('Failed to fetch discounts or empty list from API. Trying sheets fallback.', data?.message);
-        const ok = await tryFetchFromSheets();
-        if (!ok) {
-          // If no discounts found, try to initialize
-          await initializeDiscounts();
-        }
+        console.error('Failed to fetch discounts or empty list from API.');
+        await initializeDiscounts();
       }
     } catch (error) {
       console.error('Error fetching discounts:', error);
-      // Fallback to direct sheets read; if that fails, try initializing
-      try {
-        const js = await apiService.getSheetData('payments');
-        if (js?.success && Array.isArray(js.data)) {
-          const mapped = js.data.map((row: any, index: number) => ({
-            id: parseInt(row.id || `${index + 1}`) || (index + 1),
-            discount_code: row.discount_code || row['discount_code'] || '',
-            name: row.name || row['name'] || '',
-            applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
-            coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
-            match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
-            active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
-            notes: row.notes || row['notes'] || '',
-            created_at: row.created_at || row['created_at'] || new Date().toISOString(),
-            updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
-          })).filter((d: any) => d.discount_code && d.name);
-          setDiscounts(mapped);
-        } else {
-          await initializeDiscounts();
-        }
-      } catch (err) {
-        await initializeDiscounts();
-      }
+      await initializeDiscounts();
     } finally {
       setLoading(false);
     }
@@ -122,7 +92,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       const data = await apiService.initializeDiscounts();
       
       if ((data as any).success) {
-        setDiscounts((data as any).data);
+        const normalized = ((data as any).data || []).map((r: any, i: number) => normalizeDiscount(r, i + 1));
+        setDiscounts(normalized);
         console.log('Discounts initialized successfully');
       }
     } catch (error) {
