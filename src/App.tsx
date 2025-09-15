@@ -31,14 +31,7 @@ function App() {
           <Route path="/data-import" element={<DataImport />} />
           <Route path="/rule-manager" element={<RuleManager />} />
           <Route path="/discount-manager" element={<DiscountManager />} />
-<<<<<<< HEAD
-          <Route
-            path="/payment-calculator"
-            element={<PaymentCalculator />}
-          />
-=======
           <Route path="/payment-calculator" element={<Navigate to="/dashboard" replace />} />
->>>>>>> 91ee123 (Remove Payment Calculator UI: route+redirect, sidebar, page, wrapper; prune payments API calls)
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
