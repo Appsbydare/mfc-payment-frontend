@@ -14,7 +14,7 @@ const getApiUrl = (): string => {
   // Default fallback - in production, use the deployed backend
   const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
   return isProduction 
-    ? 'https://mfc-payment-backend-bvz3kl21y-darshanas-projects-d30d0377.vercel.app'
+    ? 'https://mfc-payment-backend.vercel.app'
     : 'http://localhost:5000';
 };
 
