@@ -7,7 +7,8 @@ import {
   Settings, 
   FileText, 
   Cog,
-  Percent
+  Percent,
+  ShieldCheck
 } from 'lucide-react'
 import { RootState } from '@store/index'
 import { setSidebarOpen } from '@store/uiSlice'
@@ -17,6 +18,7 @@ const navigation = [
   { name: 'Data Import', href: '/data-import', icon: Upload },
   { name: 'Rule Manager', href: '/rule-manager', icon: Settings },
   { name: 'Discount Manager', href: '/discount-manager', icon: Percent },
+  { name: 'Verification Manager', href: '/verification-manager', icon: ShieldCheck },
   { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Cog },
 ]

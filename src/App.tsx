@@ -8,6 +8,7 @@ import RuleManager from '@pages/RuleManager'
 import DiscountManager from '@pages/DiscountManager'
 import Reports from '@pages/Reports'
 import Settings from '@pages/Settings'
+import VerificationManager from '@pages/VerificationManager'
 import { RootState } from '@store/index'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="/data-import" element={<DataImport />} />
           <Route path="/rule-manager" element={<RuleManager />} />
           <Route path="/discount-manager" element={<DiscountManager />} />
+          <Route path="/verification-manager" element={<VerificationManager />} />
           <Route path="/payment-calculator" element={<Navigate to="/dashboard" replace />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
