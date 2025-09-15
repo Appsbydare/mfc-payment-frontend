@@ -111,31 +111,11 @@ class ApiService {
     });
   }
 
-  // Payments verification
-  async verifyPayments(payload: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
-    return this.request<{ success: boolean; rows: any[]; summary: any }>(`/payments/verify`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  }
+  // Payments verification - REMOVED
+  // Payment verification methods have been removed as requested
 
-  // Read persisted attendance verification results
-  async getAttendanceVerification() {
-    return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=attendance_verification`);
-  }
-
-  // Read settings to detect unverified state
-  async getSettingsSheet() {
-    return this.request<{ success: boolean; data: any[]; count: number }>(`/data/sheets?sheet=settings`);
-  }
-
-  // Update payment verification status
-  async updatePaymentVerification(payments: any[]) {
-    return this.request<{ success: boolean; message: string }>(`/verification/update-payments`, {
-      method: 'POST',
-      body: JSON.stringify({ payments }),
-    });
-  }
+  // Attendance verification - REMOVED
+  // All attendance verification methods have been removed as requested
 
   async getGlobalRules() {
     return this.request<{
@@ -287,98 +267,8 @@ class ApiService {
     });
   }
 
-  // Verification system
-  async getVerificationSummary(params: { month?: number; year?: number; fromDate?: string; toDate?: string }) {
-    const queryParams = new URLSearchParams();
-    if (params.month) queryParams.append('month', params.month.toString());
-    if (params.year) queryParams.append('year', params.year.toString());
-    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
-    if (params.toDate) queryParams.append('toDate', params.toDate);
-    
-    return this.request<{
-      success: boolean;
-      summary: {
-        totalRecords: number;
-        verifiedRecords: number;
-        unverifiedRecords: number;
-        manuallyVerifiedRecords: number;
-        totalDiscountedAmount: number;
-        totalTaxAmount: number;
-        totalFuturePaymentsMFC: number;
-        totalVerifiedAmount: number;
-        totalUnverifiedAmount: number;
-        verificationCompletionRate: number;
-        mfcRetentionRate: number;
-        categoryBreakdown: {
-          verified: number;
-          pending: number;
-          manuallyVerified: number;
-        };
-      };
-      message: string;
-    }>(`/verification/summary?${queryParams.toString()}`);
-  }
-
-  async getUnverifiedInvoices(customer: string) {
-    return this.request<{
-      success: boolean;
-      customer: string;
-      invoiceOptions: Array<{
-        invoice: string;
-        totalAmount: number;
-        paymentCount: number;
-        payments: Array<{
-          id: string;
-          amount: number;
-          date: string;
-          memo: string;
-          category: string;
-        }>;
-      }>;
-      message: string;
-    }>(`/verification/unverified-invoices/${encodeURIComponent(customer)}`);
-  }
-
-  async manuallyVerifyAttendance(data: { attendanceId: string; invoiceNumber: string; customer: string }) {
-    return this.request<{
-      success: boolean;
-      message: string;
-    }>('/verification/manual-verify-attendance', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updatePaymentCategory(data: { paymentId: string; category: string; customer?: string; invoice?: string }) {
-    return this.request<{
-      success: boolean;
-      message: string;
-    }>('/verification/update-payment-category', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getInvoiceStatus(invoice: string) {
-    return this.request<{
-      success: boolean;
-      invoice: string;
-      status: 'not_found' | 'fully_verified' | 'unverified' | 'partially_verified';
-      totalAmount: number;
-      verifiedAmount: number;
-      unverifiedAmount: number;
-      paymentCount: number;
-      payments: Array<{
-        id: string;
-        amount: number;
-        date: string;
-        customer: string;
-        memo: string;
-        category: string;
-        isVerified: boolean;
-      }>;
-    }>(`/verification/invoice-status/${encodeURIComponent(invoice)}`);
-  }
+  // Verification system - REMOVED
+  // All verification-related methods have been removed as requested
 }
 
 export const apiService = new ApiService();

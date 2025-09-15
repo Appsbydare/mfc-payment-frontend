@@ -1,125 +1,74 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { Users, DollarSign, UserCheck, CreditCard, Briefcase } from 'lucide-react'
-import { apiService } from '../services/api'
-import toast from 'react-hot-toast'
-import DateSelector from '../components/DateSelector'
 
 const Dashboard: React.FC = () => {
-  // Date range (defaults: From = 12 months ago, To = today)
-  const [fromDate, setFromDate] = useState<string>(() => {
-    const now = new Date()
-    const twelveMonthsAgo = new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()))
-    return twelveMonthsAgo.toISOString().slice(0, 10)
-  })
-  const [toDate, setToDate] = useState<string>(() => {
-    const now = new Date()
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().slice(0, 10)
-  })
-  const [summary, setSummary] = useState<any | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-
   const euro = (n: number) => `€${Number(n || 0).toFixed(2)}`
 
-  // Fetch verification summary for the selected range
-  const fetchSummary = async () => {
-    try {
-      setIsLoading(true)
-      const res = await apiService.getVerificationSummary({ fromDate, toDate })
-      if (res.success) setSummary(res.summary)
-      else toast.error('Failed to load dashboard summary')
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load dashboard summary')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchSummary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromDate, toDate])
-
-  // Stat cards derived from verification summary
-  const stats = useMemo(() => {
-    const attendanceVerified = summary?.verifiedAttendanceRecords ?? summary?.verifiedRecords ?? 0
-    const attendanceTotal = summary?.totalAttendanceRecords ?? summary?.totalRecords ?? 0
-    const pendingVerifications = Math.max(0, attendanceTotal - attendanceVerified)
-    const verificationRate = attendanceTotal > 0 ? ((attendanceVerified / attendanceTotal) * 100).toFixed(1) : '0'
-    const totalVerifiedAmount = summary?.totalVerifiedAmount ?? 0
-    
-    return [
-      {
-        name: 'Verified Attendances',
-        value: String(attendanceVerified),
-        subtitle: `${verificationRate}% of ${attendanceTotal} total`,
-        color: 'text-green-500',
-        border: 'border-green-400',
-        icon: Users,
-        labelClass: 'text-4xl',
-      },
-      {
-        name: 'Verified Revenue',
-        value: euro(totalVerifiedAmount),
-        subtitle: 'Verified payments total',
-        color: 'text-blue-500',
-        border: 'border-blue-400',
-        icon: DollarSign,
-        labelClass: 'text-4xl',
-      },
-      {
-        name: 'Total Coach Payments',
-        value: euro(summary?.totalFuturePaymentsMFC ?? 0),
-        subtitle: 'Future MFC (unverified)',
-        color: 'text-sky-500',
-        border: 'border-sky-400',
-        icon: UserCheck,
-        labelClass: 'text-4xl',
-      },
-      {
-        name: 'Private Sessions',
-        value: String(pendingVerifications),
-        subtitle: 'Pending verifications',
-        color: 'text-orange-500',
-        border: 'border-orange-400',
-        icon: Users,
-        labelClass: 'text-4xl',
-      },
-      {
-        name: 'BGM Payment',
-        value: euro(summary?.totalTaxAmount ?? 0),
-        subtitle: 'Tax total',
-        color: 'text-purple-500',
-        border: 'border-purple-400',
-        icon: CreditCard,
-        labelClass: 'text-4xl',
-      },
-      {
-        name: 'Management Pay',
-        value: euro(summary?.totalDiscountedAmount ?? 0),
-        subtitle: 'Discounted total',
-        color: 'text-teal-500',
-        border: 'border-teal-400',
-        icon: Briefcase,
-        labelClass: 'text-4xl',
-      },
-    ]
-  }, [summary])
+  // Static stat cards - no dynamic data fetching
+  const stats = [
+    {
+      name: 'Verified Attendances',
+      value: '0',
+      subtitle: '0% of 0 total',
+      color: 'text-green-500',
+      border: 'border-green-400',
+      icon: Users,
+      labelClass: 'text-4xl',
+    },
+    {
+      name: 'Verified Revenue',
+      value: euro(0),
+      subtitle: 'Verified payments total',
+      color: 'text-blue-500',
+      border: 'border-blue-400',
+      icon: DollarSign,
+      labelClass: 'text-4xl',
+    },
+    {
+      name: 'Total Coach Payments',
+      value: euro(0),
+      subtitle: 'Future MFC (unverified)',
+      color: 'text-sky-500',
+      border: 'border-sky-400',
+      icon: UserCheck,
+      labelClass: 'text-4xl',
+    },
+    {
+      name: 'Private Sessions',
+      value: '0',
+      subtitle: 'Pending verifications',
+      color: 'text-orange-500',
+      border: 'border-orange-400',
+      icon: Users,
+      labelClass: 'text-4xl',
+    },
+    {
+      name: 'BGM Payment',
+      value: euro(0),
+      subtitle: 'Tax total',
+      color: 'text-purple-500',
+      border: 'border-purple-400',
+      icon: CreditCard,
+      labelClass: 'text-4xl',
+    },
+    {
+      name: 'Management Pay',
+      value: euro(0),
+      subtitle: 'Discounted total',
+      color: 'text-teal-500',
+      border: 'border-teal-400',
+      icon: Briefcase,
+      labelClass: 'text-4xl',
+    },
+  ]
 
   return (
     <div className="space-y-4">
-      {/* Page title + date controls */}
+      {/* Page title */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <DateSelector
-            fromDate={fromDate}
-            toDate={toDate}
-            onFromDateChange={setFromDate}
-            onToDateChange={setToDate}
-          />
-          <button className="btn-secondary" onClick={fetchSummary} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Refresh'}
-          </button>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Dashboard updating mechanism removed - awaiting new implementation
         </div>
       </div>
 
