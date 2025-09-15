@@ -13,8 +13,6 @@ import { RootState } from '@store/index'
 
 function App() {
   const isDarkMode = useSelector((state: RootState) => state.ui.isDarkMode)
-  const [fromDate, setFromDate] = React.useState<string>('')
-  const [toDate, setToDate] = React.useState<string>('')
 
   React.useEffect(() => {
     if (isDarkMode) {
@@ -24,13 +22,6 @@ function App() {
     }
   }, [isDarkMode])
 
-  // Initialize default dates once on app start
-  React.useEffect(() => {
-    const today = new Date()
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    setFromDate(firstDayOfMonth.toISOString().split('T')[0])
-    setToDate(today.toISOString().split('T')[0])
-  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
