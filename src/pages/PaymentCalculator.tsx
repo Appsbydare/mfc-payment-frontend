@@ -145,40 +145,6 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   const handleConfirmManualVerification = async (row: any) => {
     // Manual verification functionality has been removed
     toast.error('Manual verification functionality has been removed');
-    return;
-      
-      if (res.success) {
-        toast.success('Attendance manually verified')
-        
-        // Update the local state immediately
-        if (verifyResult && verifyResult.rows) {
-          const updatedRows = verifyResult.rows.map((item: any) => {
-            if (item.Date === row.Date && item.Customer === row.Customer && item.ClassType === row.ClassType) {
-              return {
-                ...item,
-                Verified: true,
-                Category: 'Manually Verified',
-                Invoice: selectedInvoice
-              }
-            }
-            return item
-          })
-          
-          setVerifyResult({
-            ...verifyResult,
-            rows: updatedRows
-          })
-        }
-        
-        setEditingRow(null)
-        setSelectedInvoice('')
-        setUnverifiedInvoices([])
-      } else {
-        toast.error('Failed to verify attendance')
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to verify attendance')
-    }
   }
 
   const handleCancelManualVerification = () => {
