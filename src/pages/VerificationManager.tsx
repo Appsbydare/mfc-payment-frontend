@@ -27,6 +27,8 @@ const VerificationManager: React.FC = () => {
   const [masterData, setMasterData] = useState<MasterRow[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [filter, setFilter] = useState('')
+  const [sortKey, setSortKey] = useState<string>('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
@@ -38,6 +40,27 @@ const VerificationManager: React.FC = () => {
       (r.invoiceNumber || '').toLowerCase().includes(q)
     )
   }, [filter, masterData])
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered
+    const out = [...filtered]
+    out.sort((a: any, b: any) => {
+      const av = a[sortKey]
+      const bv = b[sortKey]
+      const an = typeof av === 'number' ? av : parseFloat(av || 'NaN')
+      const bn = typeof bv === 'number' ? bv : parseFloat(bv || 'NaN')
+      if (!isNaN(an) && !isNaN(bn)) return sortDir === 'asc' ? an - bn : bn - an
+      const as = String(av ?? '')
+      const bs = String(bv ?? '')
+      return sortDir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as)
+    })
+    return out
+  }, [filtered, sortKey, sortDir])
+
+  const handleSort = (key: keyof MasterRow) => {
+    if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    else { setSortKey(key as string); setSortDir('asc') }
+  }
 
   const loadMaster = async () => {
     try {
@@ -142,15 +165,18 @@ const VerificationManager: React.FC = () => {
 
           <div className="overflow-auto border border-gray-200 dark:border-gray-700 rounded">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 z-10">
                 <tr>
-                  {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount'].map(h => (
-                    <th key={h} className="px-3 py-2 text-left font-semibold whitespace-nowrap">{h}</th>
+                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','sessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount'].map((key, idx) => (
+                    <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none">
+                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount'][idx]}
+                      {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r, idx) => (
+                {sorted.map((r, idx) => (
                   <tr key={idx} className="border-t border-gray-100 dark:border-gray-700">
                     <td className="px-3 py-2 whitespace-nowrap">{r.customerName}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.eventStartsAt}</td>
@@ -158,22 +184,22 @@ const VerificationManager: React.FC = () => {
                     <td className="px-3 py-2 whitespace-nowrap">{r.instructors}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.discount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.discountPercentage}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.discountPercentage || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.verificationStatus}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.invoiceNumber}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.amount}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.amount || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.paymentDate}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.sessionPrice}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.coachAmount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.bgmAmount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.managementAmount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.mfcAmount}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.sessionPrice || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.coachAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.bgmAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.managementAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.mfcAmount || 0).toFixed(2)}</td>
                   </tr>
                 ))}
                 {loading && (
                   <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>Loading...</td></tr>
                 )}
-                {!loading && filtered.length === 0 && (
+                {!loading && sorted.length === 0 && (
                   <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>No data</td></tr>
                 )}
               </tbody>
