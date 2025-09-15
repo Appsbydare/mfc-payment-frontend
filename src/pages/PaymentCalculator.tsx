@@ -81,6 +81,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   }, [])
 
   const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
+  const [masterRows, setMasterRows] = useState<any[] | null>(null)
   const [verificationSummary, setVerificationSummary] = useState<any | null>(null)
   const [sortKey, setSortKey] = useState<string>('Date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -94,82 +95,37 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
 
   const handleVerify = async () => {
     try {
-      const payload: any = {}
-      if (localFromDate || localToDate) {
-        payload.fromDate = localFromDate || undefined
-        payload.toDate = localToDate || undefined
-      } else {
-        const now = new Date()
-        payload.month = now.getUTCMonth() + 1
-        payload.year = now.getUTCFullYear()
+      // Sync new rows into Master; if none, show info
+      const syncRes = await apiService.syncMasterVerification()
+      if (syncRes.success) {
+        if (syncRes.appended === 0) {
+          toast.success('Uploaded Data already verified!')
+        } else {
+          toast.success(`Verification complete: ${syncRes.appended} new rows`)
+        }
       }
-      
-      // First perform calculation
-      const calcRes = await apiService.calculatePayments(payload)
-      if (calcRes.success) {
-        setCalcResult(calcRes)
-        toast.success('Calculation complete')
-      } else {
-        toast.error('Calculation failed')
-        return
-      }
-      
-      // Then perform verification
-      const verifyRes = await apiService.verifyPayments(payload)
-      if (verifyRes.success) {
-        setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
-        toast.success('Verification complete')
-      } else {
-        toast.error('Verification failed')
-      }
+      // Load master rows after sync
+      try {
+        const master = await apiService.getMasterVerification()
+        if (master.success) setMasterRows(master.data)
+      } catch {}
     } catch (e: any) {
       toast.error(e?.message || 'Verification failed')
     }
   }
 
-  // Auto-verify on component mount with current date range (silent)
+  // Load Master on mount
   useEffect(() => {
-    // Auto-run verification when component mounts to show data by default
-    const autoVerify = async () => {
+    const loadMaster = async () => {
       try {
-        const payload: any = {}
-        if (localFromDate || localToDate) {
-          payload.fromDate = localFromDate || undefined
-          payload.toDate = localToDate || undefined
-        } else {
-          const now = new Date()
-          payload.month = now.getUTCMonth() + 1
-          payload.year = now.getUTCFullYear()
-        }
-        
-        // Silent verification - no toast messages
-        try {
-          const calcRes = await apiService.calculatePayments(payload)
-          if (calcRes.success) {
-            setCalcResult(calcRes)
-          }
-        } catch (calcError) {
-          console.log('Auto-calculation failed:', calcError)
-        }
-        
-        try {
-          const verifyRes = await apiService.verifyPayments(payload)
-          if (verifyRes.success) {
-            setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
-          }
-        } catch (verifyError) {
-          console.log('Auto-verification failed:', verifyError)
-        }
-      } catch (e) {
-        // Silent fail - user can manually verify if needed
-        console.log('Auto-verification failed, user can manually verify')
+        const res = await apiService.getMasterVerification()
+        if (res.success) setMasterRows(res.data)
+      } catch (err) {
+        console.log('Failed to load master verification:', err)
       }
     }
-    
-    // Run auto-verification after a short delay to let component settle
-    const timer = setTimeout(autoVerify, 1000)
-    return () => clearTimeout(timer)
-  }, []) // Only run on mount
+    loadMaster()
+  }, [])
 
   // Re-run verification when date range changes (silent)
   useEffect(() => {
@@ -613,7 +569,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             
       <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm text-gray-700 dark:text-gray-300">Verification {verifyResult ? `(rows: ${verifyResult.rows.length})` : ''}</div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">Verification {masterRows ? `(rows: ${masterRows.length})` : ''}</div>
           <div className="flex items-center gap-2">
             <input className="input-field" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} />
           </div>
@@ -644,7 +600,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
                   <tr>
-                    {[
+                    {[ 
                       { key: 'Date', label: 'Date' },
                       { key: 'Customer', label: 'Customer' },
                       { key: 'Membership', label: 'Membership' },
@@ -675,7 +631,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedFilteredRows.map((r: any, idx: number) => (
+                  {(sortedFilteredRows.length ? sortedFilteredRows : (masterRows || [])).map((r: any, idx: number) => (
                     <tr
                       key={idx}
                       className={`${r.Verified ? 'bg-primary-50/60 dark:bg-primary-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/60`}
@@ -770,7 +726,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
                       </td>
                     </tr>
                   ))}
-                  {!verifyResult && (
+                  {!masterRows && (
                           <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>Click Verify Payments to load rows.</td></tr>
                   )}
                 </tbody>

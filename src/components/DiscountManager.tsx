@@ -28,6 +28,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const [testMemo, setTestMemo] = useState('');
   const [testResult, setTestResult] = useState<any>(null);
   const [testing, setTesting] = useState(false);
+  const [hasTested, setHasTested] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -47,22 +48,73 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const fetchDiscounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/discounts`);
+      const response = await fetch(`${API_URL}/discounts`);
       const data = await response.json();
-      
-      if (data.success) {
+
+      const tryFetchFromSheets = async () => {
+        try {
+          const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
+          const js = await res.json();
+          if (js?.success && Array.isArray(js.data)) {
+            const mapped = js.data.map((row: any, index: number) => ({
+              id: parseInt(row.id || `${index + 1}`) || (index + 1),
+              discount_code: row.discount_code || row['discount_code'] || '',
+              name: row.name || row['name'] || '',
+              applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
+              coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
+              match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
+              active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
+              notes: row.notes || row['notes'] || '',
+              created_at: row.created_at || row['created_at'] || new Date().toISOString(),
+              updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
+            })).filter((d: any) => d.discount_code && d.name);
+            if (mapped.length) {
+              setDiscounts(mapped);
+              return true;
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching discounts from sheets fallback:', err);
+        }
+        return false;
+      };
+
+      if (data?.success && Array.isArray(data.data) && data.data.length > 0) {
         setDiscounts(data.data);
       } else {
-        console.error('Failed to fetch discounts:', data.message);
-        // If no discounts found, try to initialize
-        if (data.data && data.data.length === 0) {
+        console.error('Failed to fetch discounts or empty list from API. Trying sheets fallback.', data?.message);
+        const ok = await tryFetchFromSheets();
+        if (!ok) {
+          // If no discounts found, try to initialize
           await initializeDiscounts();
         }
       }
     } catch (error) {
       console.error('Error fetching discounts:', error);
-      // Try to initialize discounts if fetch fails
-      await initializeDiscounts();
+      // Fallback to direct sheets read; if that fails, try initializing
+      try {
+        const res = await fetch(`${API_URL}/data/sheets?sheet=discounts`);
+        const js = await res.json();
+        if (js?.success && Array.isArray(js.data)) {
+          const mapped = js.data.map((row: any, index: number) => ({
+            id: parseInt(row.id || `${index + 1}`) || (index + 1),
+            discount_code: row.discount_code || row['discount_code'] || '',
+            name: row.name || row['name'] || '',
+            applicable_percentage: parseFloat(row.applicable_percentage || row['applicable_percentage'] || '0') || 0,
+            coach_payment_type: String(row.coach_payment_type || row['coach_payment_type'] || 'partial').toLowerCase(),
+            match_type: String(row.match_type || row['match_type'] || 'exact').toLowerCase(),
+            active: row.active === true || String(row.active).toUpperCase() === 'TRUE' || row.active === '1' || row.active === 1,
+            notes: row.notes || row['notes'] || '',
+            created_at: row.created_at || row['created_at'] || new Date().toISOString(),
+            updated_at: row.updated_at || row['updated_at'] || new Date().toISOString(),
+          })).filter((d: any) => d.discount_code && d.name);
+          setDiscounts(mapped);
+        } else {
+          await initializeDiscounts();
+        }
+      } catch (err) {
+        await initializeDiscounts();
+      }
     } finally {
       setLoading(false);
     }
@@ -70,7 +122,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
 
   const initializeDiscounts = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/discounts/initialize`, {
+      const response = await fetch(`${API_URL}/discounts/initialize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,8 +144,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       const url = editingDiscount 
-        ? `${API_URL}/api/discounts/${editingDiscount.id}`
-        : `${API_URL}/api/discounts`;
+        ? `${API_URL}/discounts/${editingDiscount.id}`
+        : `${API_URL}/discounts`;
       
       const method = editingDiscount ? 'PUT' : 'POST';
       
@@ -141,7 +193,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/discounts/${id}`, {
+      const response = await fetch(`${API_URL}/discounts/${id}`, {
         method: 'DELETE',
       });
       
@@ -165,7 +217,8 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     
     try {
       setTesting(true);
-      const response = await fetch(`${API_URL}/api/discounts/classify`, {
+      setHasTested(false);
+      const response = await fetch(`${API_URL}/discounts/classify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,12 +229,15 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       const data = await response.json();
       
       if (data.success) {
-        setTestResult(data.data);
+        // data.data can be null when no match – keep it as null so UI can show the no‑match message
+        setTestResult(data.data ?? null);
       } else {
-        setTestResult({ error: data.message });
+        setTestResult({ error: data.message || 'Unexpected error' });
       }
+      setHasTested(true);
     } catch (error) {
       setTestResult({ error: 'Error testing match' });
+      setHasTested(true);
     } finally {
       setTesting(false);
     }
@@ -289,9 +345,9 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
           </button>
         </div>
         
-        {testResult && (
+        {hasTested && (
           <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
-            {testResult.error ? (
+            {testResult && (testResult as any).error ? (
               <div className="text-red-600 dark:text-red-400">Error: {testResult.error}</div>
             ) : testResult ? (
               <div className="space-y-2">
@@ -319,15 +375,15 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
               {editingDiscount ? 'Edit Discount' : 'Add New Discount'}
             </h3>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Discount Code *
                   </label>
                   <input
@@ -335,13 +391,13 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                     required
                     value={formData.discount_code}
                     onChange={(e) => setFormData({ ...formData, discount_code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="e.g., LOYALTY: 1 TO 1 - SINGLE CLASS DISCOUNT"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Name *
                   </label>
                   <input
@@ -349,13 +405,13 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="e.g., Loyalty 1-to-1 Single Class Discount"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Applicable Percentage
                   </label>
                   <input
@@ -365,20 +421,20 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                     step="0.1"
                     value={formData.applicable_percentage}
                     onChange={(e) => setFormData({ ...formData, applicable_percentage: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="12.5"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Coach Payment Type *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Discount Type*
                   </label>
                   <select
                     required
                     value={formData.coach_payment_type}
                     onChange={(e) => setFormData({ ...formData, coach_payment_type: e.target.value as 'full' | 'partial' | 'free' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="full">Full Payment (treat as regular)</option>
                     <option value="partial">Partial Payment (apply discount)</option>
@@ -387,14 +443,14 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Match Type *
                   </label>
                   <select
                     required
                     value={formData.match_type}
                     onChange={(e) => setFormData({ ...formData, match_type: e.target.value as 'exact' | 'contains' | 'regex' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="exact">Exact Match</option>
                     <option value="contains">Contains</option>
@@ -408,23 +464,23 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                     id="active"
                     checked={formData.active}
                     onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
                   />
-                  <label htmlFor="active" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="active" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
                     Active
                   </label>
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Notes
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Additional notes about this discount..."
                 />
               </div>
@@ -433,7 +489,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
