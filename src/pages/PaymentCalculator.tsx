@@ -80,9 +80,10 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     }
   }, [])
 
-  const [verifyResult, setVerifyResult] = useState<{ rows: any[]; summary: any } | null>(null)
-  const [masterRows, setMasterRows] = useState<any[] | null>(null)
-  const [verificationSummary, setVerificationSummary] = useState<any | null>(null)
+  // Verification state removed - functionality disabled
+  const verifyResult = null
+  const masterRows = null
+  const verificationSummary = null
   const [sortKey, setSortKey] = useState<string>('Date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [filter, setFilter] = useState<string>('')
@@ -137,12 +138,12 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
     toast.error('Verification summary functionality has been removed');
   }
 
-  const handleStartManualVerification = async (row: any, rowIndex: number) => {
+  const handleStartManualVerification = async (_row: any, _rowIndex: number) => {
     // Manual verification functionality has been removed
     toast.error('Manual verification functionality has been removed');
   }
 
-  const handleConfirmManualVerification = async (row: any) => {
+  const handleConfirmManualVerification = async (_row: any) => {
     // Manual verification functionality has been removed
     toast.error('Manual verification functionality has been removed');
   }

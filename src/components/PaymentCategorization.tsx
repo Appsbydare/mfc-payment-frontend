@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
 interface PaymentCategorizationProps {
@@ -35,23 +34,9 @@ const PaymentCategorization: React.FC<PaymentCategorizationProps> = ({
     setSelectedCategory(payment.Category || 'Payment');
   };
 
-  const handleSaveCategory = async (payment: any) => {
-    try {
-      // Payment category update functionality has been removed
-      toast.error('Payment category update functionality has been removed');
-      return;
-
-      if (res.success) {
-        toast.success('Payment category updated');
-        setEditingPayment(null);
-        setSelectedCategory('');
-        onUpdate();
-      } else {
-        toast.error('Failed to update payment category');
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to update payment category');
-    }
+  const handleSaveCategory = async (_payment: any) => {
+    // Payment category update functionality has been removed
+    toast.error('Payment category update functionality has been removed');
   };
 
   const handleCancelEdit = () => {
