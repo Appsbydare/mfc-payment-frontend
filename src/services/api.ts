@@ -269,11 +269,7 @@ class ApiService {
   }
 
   // New Attendance Verification System
-  async getAttendanceVerificationMaster(params: { fromDate?: string; toDate?: string } = {}) {
-    const queryParams = new URLSearchParams();
-    if (params.fromDate) queryParams.append('fromDate', params.fromDate);
-    if (params.toDate) queryParams.append('toDate', params.toDate);
-    
+  async getAttendanceVerificationMaster() {
     return this.request<{
       success: boolean;
       data: any[];
@@ -284,10 +280,10 @@ class ApiService {
         verificationRate: number;
         newRecordsAdded: number;
       };
-    }>(`/attendance-verification/master?${queryParams.toString()}`);
+    }>('/attendance-verification/master');
   }
 
-  async verifyAttendanceData(payload: { fromDate?: string; toDate?: string; forceReverify?: boolean }) {
+  async verifyAttendanceData() {
     return this.request<{
       success: boolean;
       message: string;
@@ -301,7 +297,7 @@ class ApiService {
       };
     }>('/attendance-verification/verify', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({}),
     });
   }
 
