@@ -37,12 +37,9 @@ const PaymentCategorization: React.FC<PaymentCategorizationProps> = ({
 
   const handleSaveCategory = async (payment: any) => {
     try {
-      const res = await apiService.updatePaymentCategory({
-        paymentId: payment.id || `${payment.Date}_${payment.Customer}_${payment.Amount}`,
-        category: selectedCategory,
-        customer: payment.Customer,
-        invoice: payment.Invoice
-      });
+      // Payment category update functionality has been removed
+      toast.error('Payment category update functionality has been removed');
+      return;
 
       if (res.success) {
         toast.success('Payment category updated');

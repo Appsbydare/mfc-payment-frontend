@@ -94,37 +94,14 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
 
 
   const handleVerify = async () => {
-    try {
-      // Sync new rows into Master; if none, show info
-      const syncRes = await apiService.syncMasterVerification()
-      if (syncRes.success) {
-        if (syncRes.appended === 0) {
-          toast.success('Uploaded Data already verified!')
-        } else {
-          toast.success(`Verification complete: ${syncRes.appended} new rows`)
-        }
-      }
-      // Load master rows after sync
-      try {
-        const master = await apiService.getMasterVerification()
-        if (master.success) setMasterRows(master.data)
-      } catch {}
-    } catch (e: any) {
-      toast.error(e?.message || 'Verification failed')
-    }
+    // Verification functionality has been removed
+    toast.error('Verification functionality has been removed');
   }
 
-  // Load Master on mount
+  // Load Master on mount - REMOVED
   useEffect(() => {
-    const loadMaster = async () => {
-      try {
-        const res = await apiService.getMasterVerification()
-        if (res.success) setMasterRows(res.data)
-      } catch (err) {
-        console.log('Failed to load master verification:', err)
-      }
-    }
-    loadMaster()
+    // Master verification functionality has been removed
+    console.log('Master verification functionality has been removed')
   }, [])
 
   // Re-run verification when date range changes (silent)
@@ -145,14 +122,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
             console.log('Silent calculation failed:', calcError)
           }
           
-          try {
-            const verifyRes = await apiService.verifyPayments(payload)
-            if (verifyRes.success) {
-              setVerifyResult({ rows: verifyRes.rows || [], summary: verifyRes.summary || {} })
-            }
-          } catch (verifyError) {
-            console.log('Silent verification failed:', verifyError)
-          }
+          // Payment verification functionality has been removed
+          console.log('Payment verification functionality has been removed')
         } catch (e) {
           console.log('Silent verification failed')
         }
@@ -162,55 +133,19 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   }, [localFromDate, localToDate])
 
   const handleLoadVerificationSummary = async () => {
-    try {
-      const payload: any = {}
-      if (fromDate || toDate) {
-        payload.fromDate = fromDate || undefined
-        payload.toDate = toDate || undefined
-      } else {
-        const now = new Date()
-        payload.month = now.getUTCMonth() + 1
-        payload.year = now.getUTCFullYear()
-      }
-      const res = await apiService.getVerificationSummary(payload)
-      if (res.success) {
-        setVerificationSummary(res.summary)
-        toast.success('Verification summary loaded')
-      } else {
-        toast.error('Failed to load verification summary')
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load verification summary')
-    }
+    // Verification summary functionality has been removed
+    toast.error('Verification summary functionality has been removed');
   }
 
   const handleStartManualVerification = async (row: any, rowIndex: number) => {
-    try {
-      const res = await apiService.getUnverifiedInvoices(row.Customer)
-      if (res.success) {
-        setUnverifiedInvoices(res.invoiceOptions)
-        setEditingRow(rowIndex)
-        setSelectedInvoice('')
-      } else {
-        toast.error('Failed to load unverified invoices')
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load unverified invoices')
-    }
+    // Manual verification functionality has been removed
+    toast.error('Manual verification functionality has been removed');
   }
 
   const handleConfirmManualVerification = async (row: any) => {
-    if (!selectedInvoice) {
-      toast.error('Please select an invoice number')
-      return
-    }
-
-    try {
-      const res = await apiService.manuallyVerifyAttendance({
-        attendanceId: `${row.Date}_${row.Customer}_${row.ClassType}`,
-        invoiceNumber: selectedInvoice,
-        customer: row.Customer
-      })
+    // Manual verification functionality has been removed
+    toast.error('Manual verification functionality has been removed');
+    return;
       
       if (res.success) {
         toast.success('Attendance manually verified')
@@ -267,59 +202,8 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({ fromDate, toDate 
   }
 
   const handleVerifyPaymentData = async () => {
-    try {
-      // Apply verification logic to payment data
-      const verifiedPayments = paymentData.map(payment => {
-        let category = payment.Category || 'Payment'
-        let isVerified = payment.IsVerified === 'true' || payment.IsVerified === true
-
-        // Rule 1: If Memo contains "Fee", categorize as "Tax"
-        if (payment.Memo && payment.Memo.toLowerCase().includes('fee')) {
-          category = 'Tax'
-          isVerified = true
-        }
-
-        // Rule 2: Check for 100% Discount (same day, same customer, same amount with opposite signs)
-        const sameRecords = paymentData.filter(p => 
-          p.Date === payment.Date && 
-          p.Customer === payment.Customer && 
-          Math.abs(parseFloat(p.Amount || '0')) === Math.abs(parseFloat(payment.Amount || '0'))
-        )
-
-        if (sameRecords.length >= 2) {
-          // Check if we have positive and negative amounts (indicating discount)
-          const amounts = sameRecords.map(p => parseFloat(p.Amount || '0'))
-          const hasPositive = amounts.some(a => a > 0)
-          const hasNegative = amounts.some(a => a < 0)
-          
-          if (hasPositive && hasNegative) {
-            category = '100% Discount'
-            isVerified = true
-          }
-        }
-
-        return {
-          ...payment,
-          Category: category,
-          IsVerified: isVerified
-        }
-      })
-
-      // Update the local state
-      setPaymentData(verifiedPayments)
-
-      // Send updates to backend
-      try {
-        await apiService.updatePaymentVerification(verifiedPayments)
-        toast.success('Payment verification completed')
-      } catch (updateError) {
-        console.log('Failed to update backend:', updateError)
-        toast.success('Payment verification completed (local only)')
-      }
-
-    } catch (e: any) {
-      toast.error(e?.message || 'Payment verification failed')
-    }
+    // Payment verification functionality has been removed
+    toast.error('Payment verification functionality has been removed');
   }
 
   const handlePaymentCategorizationUpdate = () => {
