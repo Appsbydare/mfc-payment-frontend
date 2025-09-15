@@ -79,19 +79,19 @@ const VerificationManager: React.FC = () => {
   }, [])
 
   return (
-    <div className="p-6">
+    <div className="p-6 overflow-y-auto max-h-[calc(100vh-100px)]">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Verification Manager</h1>
 
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
-        <nav className="-mb-px flex gap-6" aria-label="Tabs">
+      <div className="mb-4">
+        <nav className="flex gap-2" aria-label="Tabs">
           {['Master Verification', 'Payment Verification', 'Verification Summary', 'Coaches Summary'].map((label, idx) => (
             <button
               key={label}
               onClick={() => setActiveTab(idx)}
-              className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${
+              className={`whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                 activeTab === idx
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {label}
