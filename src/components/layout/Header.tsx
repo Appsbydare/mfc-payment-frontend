@@ -29,7 +29,7 @@ const Header: React.FC = () => {
           className="text-gray-900 dark:text-white"
           style={{ fontFamily: 'Impact, sans-serif', fontSize: 42, fontWeight: 400 }}
         >
-          Malta Fight Co. - Payment Automation System
+          Malta Fight Co. - Payment System
         </span>
         
         {/* Right: Buttons */}
