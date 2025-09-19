@@ -118,7 +118,7 @@ const VerificationManager: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Verification Manager</h1>
+      <h1 className="text-2xl font-bold text-white mb-4">Verification Manager</h1>
 
       <div className="mb-4">
         <nav className="flex gap-2" aria-label="Tabs">
@@ -129,7 +129,7 @@ const VerificationManager: React.FC = () => {
               className={`whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                 activeTab === idx
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
               }`}
             >
               {label}
@@ -155,7 +155,7 @@ const VerificationManager: React.FC = () => {
           </div>
 
           {summary && (
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+            <div className="text-sm text-white">
               <span className="mr-4">Total: {summary.totalRecords}</span>
               <span className="mr-4">Verified: {summary.verifiedRecords}</span>
               <span className="mr-4">Unverified: {summary.unverifiedRecords}</span>
@@ -165,10 +165,10 @@ const VerificationManager: React.FC = () => {
 
           <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
             <table className="min-w-[1400px] text-sm">
-              <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 z-10">
+              <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
                   {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','sessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount'].map((key, idx) => (
-                    <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none">
+                    <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
                       {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
@@ -178,22 +178,22 @@ const VerificationManager: React.FC = () => {
               <tbody>
                 {sorted.map((r, idx) => (
                   <tr key={idx} className="border-t border-gray-100 dark:border-gray-700">
-                    <td className="px-3 py-2 whitespace-nowrap">{r.customerName}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.eventStartsAt}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.membershipName}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.instructors}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.status}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.discount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.discountPercentage || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.verificationStatus}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.invoiceNumber}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.amount || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.paymentDate}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.sessionPrice || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.coachAmount || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.bgmAmount || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.managementAmount || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{Number(r.mfcAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.customerName}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.eventStartsAt}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.membershipName}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.instructors}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.status}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.discount}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.discountPercentage || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.verificationStatus}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.invoiceNumber}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.amount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.paymentDate}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.sessionPrice || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.coachAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.bgmAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.managementAmount || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.mfcAmount || 0).toFixed(2)}</td>
                   </tr>
                 ))}
                 {loading && (
