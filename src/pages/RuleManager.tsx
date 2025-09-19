@@ -26,7 +26,9 @@ const defaultRule = {
   privateSession: false,
   allowDiscounts: false,
   taxExempt: false,
-  notes: ''
+  notes: '',
+  attendanceAlias: '',
+  paymentMemoAlias: ''
 }
 
 const RuleManager: React.FC = () => {
@@ -83,6 +85,8 @@ const RuleManager: React.FC = () => {
       allowDiscounts: String(r.allow_discounts || '').toLowerCase() === 'true',
       taxExempt: false,
       notes: r.notes || '',
+      attendanceAlias: r.attendance_alias || '',
+      paymentMemoAlias: r.payment_memo_alias || '',
     }
     setRule(form as any)
   }
@@ -144,6 +148,8 @@ const RuleManager: React.FC = () => {
         fixed_rate: '',
         allow_discounts: rule.allowDiscounts,
         notes: rule.notes,
+        attendance_alias: rule.attendanceAlias,
+        payment_memo_alias: rule.paymentMemoAlias,
       }
       await apiService.saveRule(payload)
       await refreshRules()
@@ -267,6 +273,44 @@ const RuleManager: React.FC = () => {
             </div>
           </div>
 
+          {/* Alias Fields for Exact Matching */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <h3 className="text-lg font-semibold mb-3 text-blue-800 dark:text-blue-200">Exact Matching Aliases</h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+              These fields help the verification system match this rule exactly with attendance and payment data.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
+                  Attendance Report Name
+                  <span className="text-xs text-gray-500 ml-1">(How it appears in attendance data)</span>
+                </label>
+                <input 
+                  name="attendanceAlias" 
+                  value={rule.attendanceAlias} 
+                  onChange={handleInput} 
+                  className="input-field" 
+                  placeholder="e.g., 'Yoga Class', 'Personal Training'"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to use the membership name above</p>
+              </div>
+              <div>
+                <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">
+                  Payment Report Name
+                  <span className="text-xs text-gray-500 ml-1">(How it appears in payment memos)</span>
+                </label>
+                <input 
+                  name="paymentMemoAlias" 
+                  value={rule.paymentMemoAlias} 
+                  onChange={handleInput} 
+                  className="input-field" 
+                  placeholder="e.g., 'Yoga', 'PT Session'"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to use the membership name above</p>
+              </div>
+            </div>
+          </div>
+
           {/* Payment Split Percentages */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -327,6 +371,8 @@ const RuleManager: React.FC = () => {
                   <th className="px-2 py-1 text-left">Price</th>
                   <th className="px-2 py-1 text-left">Sessions</th>
                   <th className="px-2 py-1 text-left">Coach %</th>
+                  <th className="px-2 py-1 text-left">Attendance Alias</th>
+                  <th className="px-2 py-1 text-left">Payment Alias</th>
                 </tr>
               </thead>
               <tbody>
@@ -338,6 +384,8 @@ const RuleManager: React.FC = () => {
                     <td className="px-2 py-1">{r.price}</td>
                     <td className="px-2 py-1">{r.sessions}</td>
                     <td className="px-2 py-1">{r.coach_percentage}</td>
+                    <td className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400">{r.attendance_alias || '-'}</td>
+                    <td className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400">{r.payment_memo_alias || '-'}</td>
                   </tr>
                 ))}
               </tbody>
