@@ -14,6 +14,7 @@ type MasterRow = {
   invoiceNumber: string
   amount: number
   paymentDate: string
+  packagePrice: number
   sessionPrice: number
   coachAmount: number
   bgmAmount: number
@@ -167,9 +168,9 @@ const VerificationManager: React.FC = () => {
             <table className="min-w-[1400px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','sessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Package Price','Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -189,6 +190,7 @@ const VerificationManager: React.FC = () => {
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.invoiceNumber}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.amount || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.paymentDate}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.packagePrice || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.sessionPrice || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.coachAmount || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.bgmAmount || 0).toFixed(2)}</td>
@@ -197,10 +199,10 @@ const VerificationManager: React.FC = () => {
                   </tr>
                 ))}
                 {loading && (
-                  <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>Loading...</td></tr>
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={17}>Loading...</td></tr>
                 )}
                 {!loading && sorted.length === 0 && (
-                  <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>No data</td></tr>
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={17}>No data</td></tr>
                 )}
               </tbody>
             </table>
