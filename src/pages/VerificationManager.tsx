@@ -108,13 +108,18 @@ const VerificationManager: React.FC = () => {
   const handleAddDiscounts = async () => {
     try {
       setLoading(true)
+      console.log('🔍 Calling addDiscounts API...')
       const res = await apiService.addDiscounts()
+      console.log('📊 Add Discounts Response:', res)
       if ((res as any).success) {
         toast.success(`Discounts added to ${(res as any).summary?.discountAppliedCount || 0} records`)
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
+      } else {
+        toast.error((res as any).message || 'Add discounts failed')
       }
     } catch (e: any) {
+      console.error('❌ Add Discounts Error:', e)
       toast.error(e?.message || 'Add discounts failed')
     } finally {
       setLoading(false)
@@ -124,13 +129,18 @@ const VerificationManager: React.FC = () => {
   const handleRecalculateDiscounts = async () => {
     try {
       setLoading(true)
+      console.log('🔍 Calling recalculateDiscounts API...')
       const res = await apiService.recalculateDiscounts()
+      console.log('📊 Recalculate Discounts Response:', res)
       if ((res as any).success) {
         toast.success(`Amounts recalculated for ${(res as any).summary?.recalculatedCount || 0} discounted records`)
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
+      } else {
+        toast.error((res as any).message || 'Recalculate discounts failed')
       }
     } catch (e: any) {
+      console.error('❌ Recalculate Discounts Error:', e)
       toast.error(e?.message || 'Recalculate discounts failed')
     } finally {
       setLoading(false)
