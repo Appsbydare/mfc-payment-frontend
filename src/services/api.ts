@@ -272,6 +272,34 @@ class ApiService {
     });
   }
 
+  async addDiscounts() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        discountAppliedCount: number;
+      };
+    }>('/attendance-verification/add-discounts', {
+      method: 'POST',
+    });
+  }
+
+  async recalculateDiscounts() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        recalculatedCount: number;
+      };
+    }>('/attendance-verification/recalculate-discounts', {
+      method: 'POST',
+    });
+  }
+
   async getAttendanceVerificationSummary(params: { fromDate?: string; toDate?: string } = {}) {
     const queryParams = new URLSearchParams();
     if (params.fromDate) queryParams.append('fromDate', params.fromDate);

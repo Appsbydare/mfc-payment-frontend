@@ -105,6 +105,38 @@ const VerificationManager: React.FC = () => {
     }
   }
 
+  const handleAddDiscounts = async () => {
+    try {
+      setLoading(true)
+      const res = await apiService.addDiscounts()
+      if ((res as any).success) {
+        toast.success(`Discounts added to ${(res as any).summary?.discountAppliedCount || 0} records`)
+        setMasterData((res as any).data || [])
+        setSummary((res as any).summary || null)
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Add discounts failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRecalculateDiscounts = async () => {
+    try {
+      setLoading(true)
+      const res = await apiService.recalculateDiscounts()
+      if ((res as any).success) {
+        toast.success(`Amounts recalculated for ${(res as any).summary?.recalculatedCount || 0} discounted records`)
+        setMasterData((res as any).data || [])
+        setSummary((res as any).summary || null)
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Recalculate discounts failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleRewrite = async () => {
     try {
       setLoading(true)
@@ -223,6 +255,8 @@ const VerificationManager: React.FC = () => {
             <div className="flex gap-2">
               <button onClick={loadMaster} disabled={loading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">Refresh</button>
               <button onClick={handleVerify} disabled={loading} className="px-3 py-2 rounded bg-primary-600 text-white disabled:opacity-50">Verify Payments</button>
+              <button onClick={handleAddDiscounts} disabled={loading} className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50">Add Discounts</button>
+              <button onClick={handleRecalculateDiscounts} disabled={loading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">Recalculate Discounts</button>
               <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
               <button onClick={handleTesting} disabled={loading} className="px-3 py-2 rounded bg-orange-600 text-white disabled:opacity-50">Testing</button>
             </div>
