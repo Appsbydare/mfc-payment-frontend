@@ -386,6 +386,21 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async testInvoiceVerification() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: {
+        existingRecords: number;
+        initializedRecords: number;
+        sampleData: any[];
+      };
+    }>('/attendance-verification/test', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
 }
 
 export const apiService = new ApiService();

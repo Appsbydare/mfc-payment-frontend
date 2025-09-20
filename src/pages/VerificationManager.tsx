@@ -120,6 +120,50 @@ const VerificationManager: React.FC = () => {
     }
   }
 
+  const handleTesting = async () => {
+    try {
+      setLoading(true)
+      console.log('🧪 Starting testing process...')
+      
+      // Run comprehensive test
+      const testRes = await apiService.testInvoiceVerification()
+      if (testRes.success) {
+        console.log('✅ All tests passed!')
+        console.log('📊 Test results:', testRes.data)
+        toast.success(`Testing successful! ${testRes.data.initializedRecords} invoice records processed.`)
+        
+        // Show sample data in console
+        if (testRes.data.sampleData && testRes.data.sampleData.length > 0) {
+          console.log('📋 Sample invoice data:', testRes.data.sampleData)
+        }
+      }
+      
+    } catch (e: any) {
+      console.error('❌ Testing failed:', e)
+      toast.error(`Testing failed: ${e?.message || 'Unknown error'}`)
+      
+      // Log detailed error information
+      console.error('Full error object:', e)
+      if (e.response) {
+        console.error('Response status:', e.response.status)
+        console.error('Response data:', e.response.data)
+      }
+      if (e.request) {
+        console.error('Request details:', e.request)
+      }
+      
+      // Show specific error details
+      if (e.message) {
+        console.error('Error message:', e.message)
+      }
+      if (e.stack) {
+        console.error('Error stack:', e.stack)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Start with empty data - user must click Refresh to load
   useEffect(() => {
     // No auto-loading - start with empty table
@@ -160,6 +204,7 @@ const VerificationManager: React.FC = () => {
               <button onClick={loadMaster} disabled={loading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">Refresh</button>
               <button onClick={handleVerify} disabled={loading} className="px-3 py-2 rounded bg-primary-600 text-white disabled:opacity-50">Verify Payments</button>
               <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
+              <button onClick={handleTesting} disabled={loading} className="px-3 py-2 rounded bg-orange-600 text-white disabled:opacity-50">Testing</button>
             </div>
           </div>
 
