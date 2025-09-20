@@ -124,41 +124,61 @@ const VerificationManager: React.FC = () => {
     try {
       setLoading(true)
       console.log('🧪 Starting testing process...')
+      console.log('🌐 Testing endpoint: /api/attendance-verification/test')
       
       // Run comprehensive test
       const testRes = await apiService.testInvoiceVerification()
       if (testRes.success) {
         console.log('✅ All tests passed!')
         console.log('📊 Test results:', testRes.data)
-        toast.success(`Testing successful! ${testRes.data.initializedRecords} invoice records processed.`)
         
-        // Show sample data in console
-        if (testRes.data.sampleData && testRes.data.sampleData.length > 0) {
-          console.log('📋 Sample invoice data:', testRes.data.sampleData)
+        // Show service availability
+        if (testRes.data.services) {
+          console.log('🔧 Service availability:', testRes.data.services)
         }
+        
+        toast.success(`Testing successful! Backend is working correctly.`)
       }
       
     } catch (e: any) {
       console.error('❌ Testing failed:', e)
-      toast.error(`Testing failed: ${e?.message || 'Unknown error'}`)
       
-      // Log detailed error information
-      console.error('Full error object:', e)
-      if (e.response) {
-        console.error('Response status:', e.response.status)
-        console.error('Response data:', e.response.data)
-      }
-      if (e.request) {
-        console.error('Request details:', e.request)
+      // Enhanced error logging
+      console.error('=== DETAILED ERROR INFORMATION ===')
+      console.error('Error type:', typeof e)
+      console.error('Error message:', e?.message)
+      console.error('Error name:', e?.name)
+      console.error('Error code:', e?.code)
+      
+      // Check if it's a network error
+      if (e.message?.includes('fetch')) {
+        console.error('🌐 Network error detected - possible CORS or connectivity issue')
       }
       
-      // Show specific error details
-      if (e.message) {
-        console.error('Error message:', e.message)
+      // Check if it's a 500 error
+      if (e.message?.includes('500')) {
+        console.error('🔥 Server error (500) - backend is crashing')
       }
-      if (e.stack) {
-        console.error('Error stack:', e.stack)
+      
+      // Check if it's a 404 error
+      if (e.message?.includes('404')) {
+        console.error('🔍 Not found (404) - endpoint might not exist')
       }
+      
+      // Show user-friendly error message
+      let userMessage = 'Testing failed: '
+      if (e.message?.includes('500')) {
+        userMessage += 'Server error - backend is having issues'
+      } else if (e.message?.includes('404')) {
+        userMessage += 'Endpoint not found - deployment issue'
+      } else if (e.message?.includes('fetch')) {
+        userMessage += 'Network error - check connectivity'
+      } else {
+        userMessage += e?.message || 'Unknown error'
+      }
+      
+      toast.error(userMessage)
+      
     } finally {
       setLoading(false)
     }
