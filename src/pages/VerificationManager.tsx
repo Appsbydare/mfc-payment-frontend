@@ -133,7 +133,7 @@ const VerificationManager: React.FC = () => {
         console.log('📊 Test results:', testRes.data)
         
         // Show service availability
-        if (testRes.data.services) {
+        if (testRes.data && testRes.data.services) {
           console.log('🔧 Service availability:', testRes.data.services)
         }
         

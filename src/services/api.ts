@@ -392,9 +392,15 @@ class ApiService {
       success: boolean;
       message: string;
       data: {
-        existingRecords: number;
-        initializedRecords: number;
-        sampleData: any[];
+        services?: {
+          attendanceVerificationService: boolean;
+          invoiceVerificationService: boolean;
+        };
+        timestamp?: string;
+        environment?: string;
+        existingRecords?: number;
+        initializedRecords?: number;
+        sampleData?: any[];
       };
     }>('/attendance-verification/test', {
       method: 'POST',
