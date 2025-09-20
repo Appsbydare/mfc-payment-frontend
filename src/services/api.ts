@@ -358,6 +358,34 @@ class ApiService {
       body: JSON.stringify({}),
     });
   }
+
+  // Invoice Verification API methods
+  async getInvoiceVerificationData() {
+    return this.request<{
+      success: boolean;
+      data: any[];
+    }>('/attendance-verification/invoices');
+  }
+
+  async initializeInvoiceVerification() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+    }>('/attendance-verification/invoices/initialize', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  async clearInvoiceVerificationData() {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>('/attendance-verification/invoices', {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();
