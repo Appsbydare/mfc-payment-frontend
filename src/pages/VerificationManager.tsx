@@ -10,7 +10,7 @@ type MasterRow = {
   status: string
   discount: string
   discountPercentage: number
-  verificationStatus: 'Verified' | 'Not Verified'
+  verificationStatus: 'Verified' | 'Not Verified' | 'Package Cannot be found'
   invoiceNumber: string
   amount: number
   paymentDate: string
@@ -64,6 +64,15 @@ const VerificationManager: React.FC = () => {
     else { setSortKey(key as string); setSortDir('asc') }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Verified': return 'bg-green-100 text-green-800'
+      case 'Not Verified': return 'bg-red-100 text-red-800'
+      case 'Package Cannot be found': return 'bg-orange-100 text-orange-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   const loadMaster = async () => {
     try {
       setLoading(true)
@@ -71,6 +80,7 @@ const VerificationManager: React.FC = () => {
       if ((res as any).success) {
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
+        toast.success('Data loaded from Google Sheets')
       }
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load verification data')
@@ -84,11 +94,7 @@ const VerificationManager: React.FC = () => {
       setLoading(true)
       const res = await apiService.verifyAttendanceData(true)
       if ((res as any).success) {
-        if ((res as any).message?.includes('already verified')) {
-          toast.success('Uploaded Data already verified!')
-        } else {
-          toast.success((res as any).message || 'Verification complete')
-        }
+        toast.success('Verification process completed')
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
       }
@@ -102,9 +108,9 @@ const VerificationManager: React.FC = () => {
   const handleRewrite = async () => {
     try {
       setLoading(true)
-      const res = await apiService.rewriteAttendanceVerification({})
+      const res = await apiService.rewriteMasterSheet()
       if ((res as any).success) {
-        toast.success('Master sheet rewritten')
+        toast.success('Master sheet rewritten with verified data')
         await loadMaster()
       }
     } catch (e: any) {
@@ -114,8 +120,9 @@ const VerificationManager: React.FC = () => {
     }
   }
 
+  // Start with empty data - user must click Refresh to load
   useEffect(() => {
-    loadMaster()
+    // No auto-loading - start with empty table
   }, [])
 
   return (
@@ -187,7 +194,11 @@ const VerificationManager: React.FC = () => {
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.status}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.discount}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.discountPercentage || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{r.verificationStatus}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(r.verificationStatus)}`}>
+                        {r.verificationStatus}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.invoiceNumber}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(r.amount || 0).toFixed(2)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-white">{r.paymentDate}</td>

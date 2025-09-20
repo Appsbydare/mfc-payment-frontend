@@ -349,14 +349,13 @@ class ApiService {
     }
   }
 
-  async rewriteAttendanceVerification(params: { fromDate?: string; toDate?: string } = {}) {
+  async rewriteMasterSheet() {
     return this.request<{
       success: boolean;
       message: string;
-      summary: any;
-    }>(`/attendance-verification/rewrite`, {
+    }>('/attendance-verification/rewrite-master', {
       method: 'POST',
-      body: JSON.stringify(params),
+      body: JSON.stringify({}),
     });
   }
 }
