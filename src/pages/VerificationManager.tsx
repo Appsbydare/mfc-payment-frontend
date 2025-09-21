@@ -127,8 +127,17 @@ const VerificationManager: React.FC = () => {
       toast.success(`Amounts recalculated for ${(recalcRes as any).summary?.recalculatedCount || 0} discounted records`, { id: 'recalculate-discounts' })
       
       // Update UI with final data
-      setMasterData((recalcRes as any).data || [])
-      setSummary((recalcRes as any).summary || null)
+      const finalData = (recalcRes as any).data || []
+      setMasterData(finalData)
+      
+      // Calculate summary from the actual data
+      const calculatedSummary = {
+        totalRecords: finalData.length,
+        verifiedRecords: finalData.filter((r: any) => r.verificationStatus === 'Verified').length,
+        unverifiedRecords: finalData.filter((r: any) => r.verificationStatus !== 'Verified').length,
+        verificationRate: finalData.length > 0 ? (finalData.filter((r: any) => r.verificationStatus === 'Verified').length / finalData.length) * 100 : 0
+      }
+      setSummary(calculatedSummary)
       
       // Final success message
       toast.success('Complete verification process finished successfully!', { duration: 4000 })
@@ -152,6 +161,25 @@ const VerificationManager: React.FC = () => {
       }
     } catch (e: any) {
       toast.error(e?.message || 'Rewrite failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportReport = async () => {
+    try {
+      setLoading(true)
+      toast.loading('Generating Excel report...', { id: 'export-report' })
+      
+      const res = await apiService.exportAttendanceVerification({ format: 'csv' })
+      if ((res as any).success) {
+        toast.success('Excel report downloaded successfully!', { id: 'export-report' })
+      } else {
+        toast.error((res as any).message || 'Export failed', { id: 'export-report' })
+      }
+    } catch (e: any) {
+      console.error('❌ Export Error:', e)
+      toast.error(e?.message || 'Export failed', { id: 'export-report' })
     } finally {
       setLoading(false)
     }
@@ -198,18 +226,17 @@ const VerificationManager: React.FC = () => {
               <button onClick={handleVerify} disabled={loading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
                 {loading ? 'Processing...' : 'Verify Payments'}
               </button>
+              <button onClick={handleExportReport} disabled={loading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">Export Report</button>
               <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
             </div>
           </div>
 
-          {summary && (
-            <div className="text-sm text-white">
-              <span className="mr-4">Total: {summary.totalRecords}</span>
-              <span className="mr-4">Verified: {summary.verifiedRecords}</span>
-              <span className="mr-4">Unverified: {summary.unverifiedRecords}</span>
-              <span>Rate: {summary.verificationRate?.toFixed?.(1)}%</span>
-            </div>
-          )}
+          <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
+            <span className="mr-4 font-medium">Total: {summary?.totalRecords || 0}</span>
+            <span className="mr-4 text-green-400">Verified: {summary?.verifiedRecords || 0}</span>
+            <span className="mr-4 text-red-400">Unverified: {summary?.unverifiedRecords || 0}</span>
+            <span className="text-blue-400">Rate: {summary?.verificationRate?.toFixed?.(1) || '0.0'}%</span>
+          </div>
 
           <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
             <table className="min-w-[1400px] text-sm">
