@@ -81,7 +81,7 @@ const VerificationManager: React.FC = () => {
       if ((res as any).success) {
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
-        toast.success('Data loaded from Google Sheets (read-only)')
+        toast.success('Data loaded from database (read-only)')
       }
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load verification data')
@@ -132,10 +132,9 @@ const VerificationManager: React.FC = () => {
       setLoading(true)
       const res = await apiService.rewriteMasterSheet()
       if ((res as any).success) {
-        toast.success('Master sheet rewritten with verified data')
-        // Don't call loadMaster() to avoid overwriting discount data
-        // The data is already in the UI from the previous verification
-        console.log('✅ Rewrite completed - UI data preserved')
+        toast.success('Master data rewritten to database successfully')
+        // No need to reload data - we already have it in memory from previous verification
+        console.log('✅ Rewrite completed - data already in memory, no reload needed')
       }
     } catch (e: any) {
       toast.error(e?.message || 'Rewrite failed')
