@@ -378,13 +378,28 @@ class ApiService {
   }
 
   async rewriteMasterSheet() {
-    return this.request<{
-      success: boolean;
-      message: string;
-    }>('/attendance-verification/rewrite-master', {
-      method: 'POST',
-      body: JSON.stringify({}),
-    });
+    try {
+      // Try the main endpoint first
+      return await this.request<{
+        success: boolean;
+        message: string;
+        recordCount?: number;
+      }>('/attendance-verification/rewrite-master', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+    } catch (error: any) {
+      // If main endpoint fails, try the alternative endpoint
+      console.log('Main endpoint failed, trying alternative endpoint...');
+      return await this.request<{
+        success: boolean;
+        message: string;
+        recordCount?: number;
+      }>('/attendance-verification/refresh-data', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+    }
   }
 
   // Invoice Verification API methods
