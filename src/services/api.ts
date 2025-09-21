@@ -273,8 +273,7 @@ class ApiService {
   }
 
   async addDiscounts() {
-    console.log('🔍 API: Calling addDiscounts endpoint...')
-    const result = await this.request<{
+    return this.request<{
       success: boolean;
       message: string;
       data: any[];
@@ -285,13 +284,10 @@ class ApiService {
     }>('/attendance-verification/add-discounts', {
       method: 'POST',
     });
-    console.log('📊 API: Add Discounts result:', result)
-    return result;
   }
 
   async recalculateDiscounts() {
-    console.log('🔍 API: Calling recalculateDiscounts endpoint...')
-    const result = await this.request<{
+    return this.request<{
       success: boolean;
       message: string;
       data: any[];
@@ -302,8 +298,6 @@ class ApiService {
     }>('/attendance-verification/recalculate-discounts', {
       method: 'POST',
     });
-    console.log('📊 API: Recalculate Discounts result:', result)
-    return result;
   }
 
   async getAttendanceVerificationSummary(params: { fromDate?: string; toDate?: string } = {}) {

@@ -92,60 +92,55 @@ const VerificationManager: React.FC = () => {
   const handleVerify = async () => {
     try {
       setLoading(true)
-      const res = await apiService.verifyAttendanceData(true)
-      if ((res as any).success) {
-        toast.success('Verification process completed')
-        setMasterData((res as any).data || [])
-        setSummary((res as any).summary || null)
+      
+      // Step 1: Verify Payments
+      toast.loading('Verifying payments...', { id: 'verify-payments' })
+      console.log('🔍 Step 1: Starting payment verification...')
+      const verifyRes = await apiService.verifyAttendanceData(true)
+      if (!(verifyRes as any).success) {
+        toast.error((verifyRes as any).message || 'Payment verification failed', { id: 'verify-payments' })
+        return
       }
+      console.log('✅ Step 1: Payment verification completed')
+      toast.success('Payments verified successfully', { id: 'verify-payments' })
+      
+      // Step 2: Add Discounts
+      toast.loading('Applying discounts...', { id: 'add-discounts' })
+      console.log('🔍 Step 2: Starting discount application...')
+      const discountRes = await apiService.addDiscounts()
+      if (!(discountRes as any).success) {
+        toast.error((discountRes as any).message || 'Discount application failed', { id: 'add-discounts' })
+        return
+      }
+      console.log('✅ Step 2: Discount application completed')
+      toast.success(`Discounts applied to ${(discountRes as any).summary?.discountAppliedCount || 0} records`, { id: 'add-discounts' })
+      
+      // Step 3: Recalculate Discounts
+      toast.loading('Recalculating amounts...', { id: 'recalculate-discounts' })
+      console.log('🔍 Step 3: Starting amount recalculation...')
+      const recalcRes = await apiService.recalculateDiscounts()
+      if (!(recalcRes as any).success) {
+        toast.error((recalcRes as any).message || 'Amount recalculation failed', { id: 'recalculate-discounts' })
+        return
+      }
+      console.log('✅ Step 3: Amount recalculation completed')
+      toast.success(`Amounts recalculated for ${(recalcRes as any).summary?.recalculatedCount || 0} discounted records`, { id: 'recalculate-discounts' })
+      
+      // Update UI with final data
+      setMasterData((recalcRes as any).data || [])
+      setSummary((recalcRes as any).summary || null)
+      
+      // Final success message
+      toast.success('Complete verification process finished successfully!', { duration: 4000 })
+      
     } catch (e: any) {
-      toast.error(e?.message || 'Verification failed')
+      console.error('❌ Verification process error:', e)
+      toast.error(e?.message || 'Verification process failed')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAddDiscounts = async () => {
-    try {
-      setLoading(true)
-      console.log('🔍 Calling addDiscounts API...')
-      const res = await apiService.addDiscounts()
-      console.log('📊 Add Discounts Response:', res)
-      if ((res as any).success) {
-        toast.success(`Discounts added to ${(res as any).summary?.discountAppliedCount || 0} records`)
-        setMasterData((res as any).data || [])
-        setSummary((res as any).summary || null)
-      } else {
-        toast.error((res as any).message || 'Add discounts failed')
-      }
-    } catch (e: any) {
-      console.error('❌ Add Discounts Error:', e)
-      toast.error(e?.message || 'Add discounts failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRecalculateDiscounts = async () => {
-    try {
-      setLoading(true)
-      console.log('🔍 Calling recalculateDiscounts API...')
-      const res = await apiService.recalculateDiscounts()
-      console.log('📊 Recalculate Discounts Response:', res)
-      if ((res as any).success) {
-        toast.success(`Amounts recalculated for ${(res as any).summary?.recalculatedCount || 0} discounted records`)
-        setMasterData((res as any).data || [])
-        setSummary((res as any).summary || null)
-      } else {
-        toast.error((res as any).message || 'Recalculate discounts failed')
-      }
-    } catch (e: any) {
-      console.error('❌ Recalculate Discounts Error:', e)
-      toast.error(e?.message || 'Recalculate discounts failed')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleRewrite = async () => {
     try {
@@ -162,69 +157,6 @@ const VerificationManager: React.FC = () => {
     }
   }
 
-  const handleTesting = async () => {
-    try {
-      setLoading(true)
-      console.log('🧪 Starting testing process...')
-      console.log('🌐 Testing endpoint: /api/attendance-verification/test')
-      
-      // Run comprehensive test
-      const testRes = await apiService.testInvoiceVerification()
-      if (testRes.success) {
-        console.log('✅ All tests passed!')
-        console.log('📊 Test results:', testRes.data)
-        
-        // Show service availability
-        if (testRes.data && testRes.data.services) {
-          console.log('🔧 Service availability:', testRes.data.services)
-        }
-        
-        toast.success(`Testing successful! Backend is working correctly.`)
-      }
-      
-    } catch (e: any) {
-      console.error('❌ Testing failed:', e)
-      
-      // Enhanced error logging
-      console.error('=== DETAILED ERROR INFORMATION ===')
-      console.error('Error type:', typeof e)
-      console.error('Error message:', e?.message)
-      console.error('Error name:', e?.name)
-      console.error('Error code:', e?.code)
-      
-      // Check if it's a network error
-      if (e.message?.includes('fetch')) {
-        console.error('🌐 Network error detected - possible CORS or connectivity issue')
-      }
-      
-      // Check if it's a 500 error
-      if (e.message?.includes('500')) {
-        console.error('🔥 Server error (500) - backend is crashing')
-      }
-      
-      // Check if it's a 404 error
-      if (e.message?.includes('404')) {
-        console.error('🔍 Not found (404) - endpoint might not exist')
-      }
-      
-      // Show user-friendly error message
-      let userMessage = 'Testing failed: '
-      if (e.message?.includes('500')) {
-        userMessage += 'Server error - backend is having issues'
-      } else if (e.message?.includes('404')) {
-        userMessage += 'Endpoint not found - deployment issue'
-      } else if (e.message?.includes('fetch')) {
-        userMessage += 'Network error - check connectivity'
-      } else {
-        userMessage += e?.message || 'Unknown error'
-      }
-      
-      toast.error(userMessage)
-      
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Start with empty data - user must click Refresh to load
   useEffect(() => {
@@ -263,12 +195,10 @@ const VerificationManager: React.FC = () => {
               placeholder="Search by customer, membership, status, invoice..."
             />
             <div className="flex gap-2">
-              <button onClick={loadMaster} disabled={loading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">Refresh</button>
-              <button onClick={handleVerify} disabled={loading} className="px-3 py-2 rounded bg-primary-600 text-white disabled:opacity-50">Verify Payments</button>
-              <button onClick={handleAddDiscounts} disabled={loading} className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50">Add Discounts</button>
-              <button onClick={handleRecalculateDiscounts} disabled={loading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">Recalculate Discounts</button>
+              <button onClick={handleVerify} disabled={loading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
+                {loading ? 'Processing...' : 'Verify Payments'}
+              </button>
               <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
-              <button onClick={handleTesting} disabled={loading} className="px-3 py-2 rounded bg-orange-600 text-white disabled:opacity-50">Testing</button>
             </div>
           </div>
 
