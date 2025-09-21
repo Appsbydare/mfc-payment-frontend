@@ -435,6 +435,47 @@ class ApiService {
       body: JSON.stringify({}),
     });
   }
+
+  // Coaches API methods
+  async getCoaches() {
+    return this.request<{
+      success: boolean;
+      data: any[];
+      count: number;
+    }>('/coaches');
+  }
+
+  async createCoach(coachData: { name: string; email: string; rate: number; active?: boolean }) {
+    return this.request<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>('/coaches', {
+      method: 'POST',
+      body: JSON.stringify(coachData),
+    });
+  }
+
+  async updateCoach(id: string | number, coachData: { name: string; email: string; rate: number; active?: boolean }) {
+    return this.request<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>(`/coaches/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(coachData),
+    });
+  }
+
+  async deleteCoach(id: string | number) {
+    return this.request<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>(`/coaches/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();

@@ -1,19 +1,22 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import apiService from '../services/api'
+import toast from 'react-hot-toast'
 
-const initialCoaches = [
-  { name: 'Alice Smith', email: 'alice@mfc.com', rate: 45, active: true },
-  { name: 'Bob Johnson', email: 'bob@mfc.com', rate: 40, active: true },
-  { name: 'Charlie Wilson', email: 'charlie@mfc.com', rate: 42, active: true },
-  { name: 'Diana Garcia', email: 'diana@mfc.com', rate: 38, active: true },
-  { name: 'Eva Martinez', email: 'eva@mfc.com', rate: 41, active: true },
-]
+type Coach = {
+  id?: number
+  name: string
+  email: string
+  rate: number
+  active: boolean
+}
 
 const Settings: React.FC = () => {
   const [tab, setTab] = useState(0)
   // Coaches state
-  const [coaches, setCoaches] = useState(initialCoaches)
+  const [coaches, setCoaches] = useState<Coach[]>([])
   const [coachForm, setCoachForm] = useState({ name: '', email: '', rate: '', active: true })
   const [editIndex, setEditIndex] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
   // General settings state
   const [splits, setSplits] = useState({ coach: 43.5, bgm: 30, mgmt: 8.5, mfc: 18 })
   const [fixedRate, setFixedRate] = useState(false)
@@ -22,32 +25,121 @@ const Settings: React.FC = () => {
   const [dbStatus] = useState('OK (mock)')
   const [backupStatus, setBackupStatus] = useState('No recent backup')
 
+  // Load coaches from API
+  const loadCoaches = async () => {
+    try {
+      setLoading(true)
+      const response = await apiService.getCoaches()
+      if (response.success) {
+        // Transform the data to match our frontend format
+        const transformedCoaches = response.data.map((coach: any, index: number) => ({
+          id: index + 1,
+          name: coach.Instructors || coach.name || '',
+          email: coach.Email || coach.email || '',
+          rate: parseFloat(coach['Hourly Rate'] || coach.rate || '0'),
+          active: (coach.Status || coach.active || 'Active') === 'Active'
+        }))
+        setCoaches(transformedCoaches)
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to load coaches')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Handlers for coaches
   const handleCoachInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
     setCoachForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }))
   }
-  const handleAddCoach = () => {
-    if (!coachForm.name || !coachForm.email || !coachForm.rate) return
-    setCoaches([...coaches, { ...coachForm, rate: parseFloat(coachForm.rate) }])
-    setCoachForm({ name: '', email: '', rate: '', active: true })
+
+  const handleAddCoach = async () => {
+    if (!coachForm.name || !coachForm.email || !coachForm.rate) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await apiService.createCoach({
+        name: coachForm.name,
+        email: coachForm.email,
+        rate: parseFloat(coachForm.rate),
+        active: coachForm.active
+      })
+
+      if (response.success) {
+        toast.success('Coach added successfully')
+        setCoachForm({ name: '', email: '', rate: '', active: true })
+        await loadCoaches() // Reload coaches from API
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to add coach')
+    } finally {
+      setLoading(false)
+    }
   }
+
   const handleEditCoach = (i: number) => {
     setEditIndex(i)
     setCoachForm({ ...coaches[i], rate: coaches[i].rate.toString() })
   }
-  const handleSaveCoach = () => {
+
+  const handleSaveCoach = async () => {
     if (editIndex === null) return
-    const updated = [...coaches]
-    updated[editIndex] = { ...coachForm, rate: parseFloat(coachForm.rate) }
-    setCoaches(updated)
-    setEditIndex(null)
-    setCoachForm({ name: '', email: '', rate: '', active: true })
+
+    try {
+      setLoading(true)
+      const coachToUpdate = coaches[editIndex]
+      const response = await apiService.updateCoach(coachToUpdate.id!, {
+        name: coachForm.name,
+        email: coachForm.email,
+        rate: parseFloat(coachForm.rate),
+        active: coachForm.active
+      })
+
+      if (response.success) {
+        toast.success('Coach updated successfully')
+        setEditIndex(null)
+        setCoachForm({ name: '', email: '', rate: '', active: true })
+        await loadCoaches() // Reload coaches from API
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update coach')
+    } finally {
+      setLoading(false)
+    }
   }
+
   const handleCancelEdit = () => {
     setEditIndex(null)
     setCoachForm({ name: '', email: '', rate: '', active: true })
   }
+
+  const handleDeleteCoach = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this coach?')) return
+
+    try {
+      setLoading(true)
+      const response = await apiService.deleteCoach(id)
+      if (response.success) {
+        toast.success('Coach deleted successfully')
+        await loadCoaches() // Reload coaches from API
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to delete coach')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load coaches on component mount
+  useEffect(() => {
+    if (tab === 0) {
+      loadCoaches()
+    }
+  }, [tab])
 
   // Handlers for general settings
   const handleSplits = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,73 +156,149 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Settings</h1>
-      </div>
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
-        {['Coaches', 'General', 'Database'].map((label, i) => (
-          <button
-            key={label}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${tab === i ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-primary-600'}`}
-            onClick={() => setTab(i)}
-          >
-            {label}
-          </button>
-        ))}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-white mb-4">System Settings</h1>
+
+      <div className="mb-4">
+        <nav className="flex gap-2" aria-label="Tabs">
+          {['Coaches', 'General', 'Database'].map((label, i) => (
+            <button
+              key={label}
+              onClick={() => setTab(i)}
+              className={`whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                tab === i
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
       {/* Tab Content */}
       {tab === 0 && (
-        <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-md">
-          <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Coach Management</h2>
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">Full Name</label>
-              <input name="name" value={coachForm.name} onChange={handleCoachInput} className="input-field" />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">Email</label>
-              <input name="email" value={coachForm.email} onChange={handleCoachInput} className="input-field" type="email" />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-medium mb-1">Hourly Rate</label>
-              <input name="rate" value={coachForm.rate} onChange={handleCoachInput} className="input-field" type="number" min="0" step="0.01" />
-            </div>
-            <div className="flex items-center gap-2 mt-6">
-              <label className="text-gray-700 dark:text-gray-200">Active</label>
-              <input name="active" type="checkbox" checked={coachForm.active} onChange={handleCoachInput} />
-            </div>
-            {editIndex === null ? (
-              <button className="btn-primary h-10" onClick={handleAddCoach}>Add Coach</button>
-            ) : (
-              <div className="flex gap-2">
-                <button className="btn-primary h-10" onClick={handleSaveCoach}>Save</button>
-                <button className="btn-secondary h-10" onClick={handleCancelEdit}>Cancel</button>
+        <div className="space-y-4">
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <h2 className="text-lg font-bold mb-4 text-white">Coach Management</h2>
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div>
+                <label className="block text-white font-medium mb-1">Full Name</label>
+                <input 
+                  name="name" 
+                  value={coachForm.name} 
+                  onChange={handleCoachInput} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded" 
+                  placeholder="Enter coach name"
+                />
               </div>
-            )}
+              <div>
+                <label className="block text-white font-medium mb-1">Email</label>
+                <input 
+                  name="email" 
+                  value={coachForm.email} 
+                  onChange={handleCoachInput} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded" 
+                  type="email" 
+                  placeholder="Enter email address"
+                />
+              </div>
+              <div>
+                <label className="block text-white font-medium mb-1">Hourly Rate</label>
+                <input 
+                  name="rate" 
+                  value={coachForm.rate} 
+                  onChange={handleCoachInput} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded" 
+                  type="number" 
+                  min="0" 
+                  step="0.01" 
+                  placeholder="Enter hourly rate"
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-6">
+                <label className="text-white">Active</label>
+                <input name="active" type="checkbox" checked={coachForm.active} onChange={handleCoachInput} />
+              </div>
+              {editIndex === null ? (
+                <button 
+                  className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium" 
+                  onClick={handleAddCoach}
+                  disabled={loading}
+                >
+                  {loading ? 'Adding...' : 'Add Coach'}
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button 
+                    className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium" 
+                    onClick={handleSaveCoach}
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                  <button 
+                    className="px-4 py-2 rounded bg-gray-600 text-white disabled:opacity-50" 
+                    onClick={handleCancelEdit}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
-            <table className="min-w-full text-sm text-left">
-              <thead>
+
+          <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Coach Name</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Email</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Hourly Rate</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Status</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Coach Name</th>
+                  <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Email</th>
+                  <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Hourly Rate</th>
+                  <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Status</th>
+                  <th className="px-3 py-2 text-left font-semibold whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {coaches.map((c, i) => (
-                  <tr key={i}>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{c.name}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{c.email}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">€{c.rate.toFixed(2)}</td>
-                    <td className="px-3 py-2 border-b text-gray-900 dark:text-gray-100">{c.active ? 'Active' : 'Inactive'}</td>
-                    <td className="px-3 py-2 border-b"><button className="btn-secondary" onClick={() => handleEditCoach(i)}>Edit</button></td>
+                  <tr key={i} className="border-t border-gray-100 dark:border-gray-700">
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{c.name}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{c.email}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">€{c.rate.toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        c.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {c.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <button 
+                          className="px-3 py-1 rounded bg-blue-600 text-white text-xs disabled:opacity-50" 
+                          onClick={() => handleEditCoach(i)}
+                          disabled={loading}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="px-3 py-1 rounded bg-red-600 text-white text-xs disabled:opacity-50" 
+                          onClick={() => handleDeleteCoach(c.id!)}
+                          disabled={loading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
+                {loading && (
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={5}>Loading...</td></tr>
+                )}
+                {!loading && coaches.length === 0 && (
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={5}>No coaches found</td></tr>
+                )}
               </tbody>
             </table>
           </div>
