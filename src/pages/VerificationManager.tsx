@@ -76,11 +76,12 @@ const VerificationManager: React.FC = () => {
   const loadMaster = async () => {
     try {
       setLoading(true)
+      // Use the read-only endpoint that doesn't reprocess data
       const res = await apiService.getAttendanceVerificationMaster()
       if ((res as any).success) {
         setMasterData((res as any).data || [])
         setSummary((res as any).summary || null)
-        toast.success('Data loaded from Google Sheets')
+        toast.success('Data loaded from Google Sheets (read-only)')
       }
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load verification data')
@@ -93,58 +94,33 @@ const VerificationManager: React.FC = () => {
     try {
       setLoading(true)
       
-      // Step 1: Verify Payments
-      toast.loading('Verifying payments...', { id: 'verify-payments' })
-      console.log('🔍 Step 1: Starting payment verification...')
-      const verifyRes = await apiService.verifyAttendanceData(true)
-      if (!(verifyRes as any).success) {
-        toast.error((verifyRes as any).message || 'Payment verification failed', { id: 'verify-payments' })
-        return
-      }
-      console.log('✅ Step 1: Payment verification completed')
-      toast.success('Payments verified successfully', { id: 'verify-payments' })
+      // Use the new batch verification process (all steps in memory, single write at end)
+      toast.loading('Starting batch verification process...', { id: 'batch-verify' })
+      console.log('🔄 Starting batch verification process...')
       
-      // Step 2: Add Discounts
-      toast.loading('Applying discounts...', { id: 'add-discounts' })
-      console.log('🔍 Step 2: Starting discount application...')
-      const discountRes = await apiService.addDiscounts()
-      if (!(discountRes as any).success) {
-        toast.error((discountRes as any).message || 'Discount application failed', { id: 'add-discounts' })
+      const batchRes = await apiService.batchVerificationProcess(true)
+      if (!(batchRes as any).success) {
+        toast.error((batchRes as any).message || 'Batch verification failed', { id: 'batch-verify' })
         return
       }
-      console.log('✅ Step 2: Discount application completed')
-      toast.success(`Discounts applied to ${(discountRes as any).summary?.discountAppliedCount || 0} records`, { id: 'add-discounts' })
       
-      // Step 3: Recalculate Discounts
-      toast.loading('Recalculating amounts...', { id: 'recalculate-discounts' })
-      console.log('🔍 Step 3: Starting amount recalculation...')
-      const recalcRes = await apiService.recalculateDiscounts()
-      if (!(recalcRes as any).success) {
-        toast.error((recalcRes as any).message || 'Amount recalculation failed', { id: 'recalculate-discounts' })
-        return
-      }
-      console.log('✅ Step 3: Amount recalculation completed')
-      toast.success(`Amounts recalculated for ${(recalcRes as any).summary?.recalculatedCount || 0} discounted records`, { id: 'recalculate-discounts' })
+      console.log('✅ Batch verification completed')
+      toast.success('Batch verification completed successfully!', { id: 'batch-verify' })
       
       // Update UI with final data
-      const finalData = (recalcRes as any).data || []
+      const finalData = (batchRes as any).data || []
       setMasterData(finalData)
       
-      // Calculate summary from the actual data
-      const calculatedSummary = {
-        totalRecords: finalData.length,
-        verifiedRecords: finalData.filter((r: any) => r.verificationStatus === 'Verified').length,
-        unverifiedRecords: finalData.filter((r: any) => r.verificationStatus !== 'Verified').length,
-        verificationRate: finalData.length > 0 ? (finalData.filter((r: any) => r.verificationStatus === 'Verified').length / finalData.length) * 100 : 0
-      }
-      setSummary(calculatedSummary)
+      // Use the summary from the response
+      const responseSummary = (batchRes as any).summary || {}
+      setSummary(responseSummary)
       
       // Final success message
-      toast.success('Complete verification process finished successfully!', { duration: 4000 })
+      toast.success(`Verification complete: ${responseSummary.verifiedRecords || 0}/${responseSummary.totalRecords || 0} verified`, { duration: 4000 })
       
     } catch (e: any) {
-      console.error('❌ Verification process error:', e)
-      toast.error(e?.message || 'Verification process failed')
+      console.error('❌ Batch verification process error:', e)
+      toast.error(e?.message || 'Batch verification process failed')
     } finally {
       setLoading(false)
     }
@@ -157,7 +133,9 @@ const VerificationManager: React.FC = () => {
       const res = await apiService.rewriteMasterSheet()
       if ((res as any).success) {
         toast.success('Master sheet rewritten with verified data')
-        await loadMaster()
+        // Don't call loadMaster() to avoid overwriting discount data
+        // The data is already in the UI from the previous verification
+        console.log('✅ Rewrite completed - UI data preserved')
       }
     } catch (e: any) {
       toast.error(e?.message || 'Rewrite failed')

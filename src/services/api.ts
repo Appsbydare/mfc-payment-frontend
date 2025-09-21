@@ -272,6 +272,24 @@ class ApiService {
     });
   }
 
+  async batchVerificationProcess(forceReverify: boolean = true) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        verificationRate: number;
+        newRecordsAdded: number;
+      };
+    }>('/attendance-verification/batch-verify', {
+      method: 'POST',
+      body: JSON.stringify({ forceReverify }),
+    });
+  }
+
   async addDiscounts() {
     return this.request<{
       success: boolean;
