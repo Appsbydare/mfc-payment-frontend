@@ -406,6 +406,17 @@ class ApiService {
     });
   }
 
+  async upsertMasterRows(rows: any[]) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      recordCount?: number;
+    }>('/attendance-verification/upsert-master', {
+      method: 'POST',
+      body: JSON.stringify({ rows }),
+    });
+  }
+
   // Invoice Verification API methods
   async getInvoiceVerificationData() {
     return this.request<{
