@@ -27,7 +27,13 @@ type MasterRow = {
 
 const VerificationManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loadingStates, setLoadingStates] = useState({
+    loadVerified: false,
+    verify: false,
+    export: false,
+    rewrite: false,
+    saveEdit: false
+  })
   const [masterData, setMasterData] = useState<MasterRow[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [filter, setFilter] = useState('')
@@ -37,6 +43,14 @@ const VerificationManager: React.FC = () => {
   const [pendingEdits, setPendingEdits] = useState<Record<string, MasterRow>>({})
   const [editingKey, setEditingKey] = useState<string>('')
   const [editDraft, setEditDraft] = useState<Partial<MasterRow>>({})
+
+  // Helper function to update loading states
+  const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
+    setLoadingStates(prev => ({ ...prev, [key]: value }))
+  }
+
+  // Check if any operation is loading
+  const isAnyLoading = Object.values(loadingStates).some(Boolean)
 
   // Utility function to generate uniqueKey if missing
   const generateUniqueKey = (row: MasterRow): string => {
@@ -125,7 +139,7 @@ const VerificationManager: React.FC = () => {
 
   const handleLoadVerified = async () => {
     try {
-      setLoading(true)
+      setLoading('loadVerified', true)
       toast.loading('Loading verified data...', { id: 'load-verified' })
       
       
@@ -145,13 +159,13 @@ const VerificationManager: React.FC = () => {
       console.error('❌ Load verified error:', e)
       toast.error(e?.message || 'Failed to load verified data', { id: 'load-verified' })
     } finally {
-      setLoading(false)
+      setLoading('loadVerified', false)
     }
   }
 
   const handleVerify = async () => {
     try {
-      setLoading(true)
+      setLoading('verify', true)
       
       // Use the new batch verification process (all steps in memory, single write at end)
       toast.loading('Starting batch verification process...', { id: 'batch-verify' })
@@ -191,14 +205,14 @@ const VerificationManager: React.FC = () => {
       console.error('❌ Batch verification process error:', e)
       toast.error(e?.message || 'Batch verification process failed')
     } finally {
-      setLoading(false)
+      setLoading('verify', false)
     }
   }
 
 
   const handleRewrite = async () => {
     try {
-      setLoading(true)
+      setLoading('rewrite', true)
       // Determine rows to upsert: pending manual edits + newly verified rows not yet in sheet
       const edits = Object.values(pendingEdits)
       const newRows = masterData.filter(r => (r.uniqueKey ? !existingKeys.has(r.uniqueKey) : false))
@@ -206,7 +220,7 @@ const VerificationManager: React.FC = () => {
 
       if (rowsToUpsert.length === 0) {
         toast.success('Nothing to rewrite. No new or edited rows.')
-        setLoading(false)
+        setLoading('rewrite', false)
         return
       }
 
@@ -227,13 +241,13 @@ const VerificationManager: React.FC = () => {
     } catch (e: any) {
       toast.error(e?.message || 'Rewrite failed')
     } finally {
-      setLoading(false)
+      setLoading('rewrite', false)
     }
   }
 
   const handleExportReport = async () => {
     try {
-      setLoading(true)
+      setLoading('export', true)
       toast.loading('Generating Excel report...', { id: 'export-report' })
       
       const res = await apiService.exportAttendanceVerification({ format: 'csv' })
@@ -246,14 +260,14 @@ const VerificationManager: React.FC = () => {
       console.error('❌ Export Error:', e)
       toast.error(e?.message || 'Export failed', { id: 'export-report' })
     } finally {
-      setLoading(false)
+      setLoading('export', false)
     }
   }
 
   const handleSaveEdit = async (row: MasterRow) => {
     if (!row.uniqueKey) { toast.error('Missing UniqueKey for this row'); return }
     try {
-      setLoading(true)
+      setLoading('saveEdit', true)
       const original = masterData.find(r => r.uniqueKey === row.uniqueKey) as MasterRow
       const merged: MasterRow = {
         ...original,
@@ -299,7 +313,7 @@ const VerificationManager: React.FC = () => {
       console.error('❌ Save edit failed:', e)
       toast.error(e?.message || 'Failed to save changes')
     } finally {
-      setLoading(false)
+      setLoading('saveEdit', false)
     }
   }
 
@@ -347,12 +361,18 @@ const VerificationManager: React.FC = () => {
               placeholder="Search by customer, membership, status, invoice..."
             />
             <div className="flex gap-2">
-              <button onClick={handleLoadVerified} disabled={loading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">Load Verified Data</button>
-              <button onClick={handleVerify} disabled={loading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
-                {loading ? 'Processing...' : 'Verify Payments'}
+              <button onClick={handleLoadVerified} disabled={loadingStates.loadVerified || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
+                {loadingStates.loadVerified ? 'Loading...' : 'Load Verified Data'}
               </button>
-              <button onClick={handleExportReport} disabled={loading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">Export Report</button>
-              <button onClick={handleRewrite} disabled={loading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">Rewrite Master</button>
+              <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
+                {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
+              </button>
+              <button onClick={handleExportReport} disabled={loadingStates.export || isAnyLoading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
+                {loadingStates.export ? 'Exporting...' : 'Export Report'}
+              </button>
+              <button onClick={handleRewrite} disabled={loadingStates.rewrite || isAnyLoading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">
+                {loadingStates.rewrite ? 'Rewriting...' : 'Rewrite Master'}
+              </button>
             </div>
           </div>
 
@@ -494,7 +514,13 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap">
                         {isEditing ? (
                           <div className="flex gap-2">
-                            <button className="px-3 py-1 rounded bg-emerald-600 text-white" onClick={() => handleSaveEdit(r)}>Save Changes</button>
+                            <button 
+                              className="px-3 py-1 rounded bg-emerald-600 text-white disabled:opacity-50" 
+                              onClick={() => handleSaveEdit(r)}
+                              disabled={loadingStates.saveEdit}
+                            >
+                              {loadingStates.saveEdit ? 'Saving...' : 'Save Changes'}
+                            </button>
                             <button className="px-3 py-1 rounded bg-gray-600 text-white" onClick={handleCancelEdit}>Cancel</button>
                           </div>
                         ) : null}
@@ -502,10 +528,10 @@ const VerificationManager: React.FC = () => {
                     </tr>
                   )
                 })}
-                {loading && (
+                {isAnyLoading && (
                   <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>Loading...</td></tr>
                 )}
-                {!loading && sorted.length === 0 && (
+                {!isAnyLoading && sorted.length === 0 && (
                   <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>No data</td></tr>
                 )}
               </tbody>
