@@ -73,22 +73,7 @@ const VerificationManager: React.FC = () => {
     }
   }
 
-  const loadMaster = async () => {
-    try {
-      setLoading(true)
-      // Use the read-only endpoint that doesn't reprocess data
-      const res = await apiService.getAttendanceVerificationMaster()
-      if ((res as any).success) {
-        setMasterData((res as any).data || [])
-        setSummary((res as any).summary || null)
-        toast.success('Data loaded from database (read-only)')
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load verification data')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Removed loadMaster to avoid accidental reprocessing and to fix unused variable warning
 
   const handleVerify = async () => {
     try {
