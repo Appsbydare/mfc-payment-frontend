@@ -58,8 +58,8 @@ const VerificationManager: React.FC = () => {
       const an = typeof av === 'number' ? av : parseFloat(av || 'NaN')
       const bn = typeof bv === 'number' ? bv : parseFloat(bv || 'NaN')
       if (!isNaN(an) && !isNaN(bn)) return sortDir === 'asc' ? an - bn : bn - an
-      const as = String(av ?? '')
-      const bs = String(bv ?? '')
+      const as = `${av ?? ''}`
+      const bs = `${bv ?? ''}`
       return sortDir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as)
     })
     return out
@@ -222,7 +222,7 @@ const VerificationManager: React.FC = () => {
       fieldsToTrack.forEach(k => {
         const beforeVal = (original as any)[k]
         const afterVal = (merged as any)[k]
-        if (String(beforeVal ?? '') !== String(afterVal ?? '')) changedFields.push(String(k))
+        if (`${beforeVal ?? ''}` !== `${afterVal ?? ''}`) changedFields.push(`${k}`)
       })
       const ts = new Date().toISOString()
       const note: string = `${ts}: Manual edit (${changedFields.join(', ')})`
