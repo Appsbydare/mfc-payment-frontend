@@ -38,6 +38,23 @@ const VerificationManager: React.FC = () => {
   const [editingKey, setEditingKey] = useState<string>('')
   const [editDraft, setEditDraft] = useState<Partial<MasterRow>>({})
 
+  // Utility function to generate uniqueKey if missing
+  const generateUniqueKey = (row: MasterRow): string => {
+    const date = row.eventStartsAt || '';
+    const customer = row.customerName || '';
+    const membership = row.membershipName || '';
+    const instructors = row.instructors || '';
+    return `${date}_${customer}_${membership}_${instructors}`.replace(/[^a-zA-Z0-9_]/g, '_');
+  }
+
+  // Ensure all rows have uniqueKey
+  const ensureUniqueKeys = (rows: MasterRow[]): MasterRow[] => {
+    return rows.map(row => ({
+      ...row,
+      uniqueKey: row.uniqueKey || generateUniqueKey(row)
+    }));
+  }
+
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
     if (!q) return masterData
@@ -88,7 +105,8 @@ const VerificationManager: React.FC = () => {
       toast.loading('Loading verified data...', { id: 'load-verified' })
       const res = await apiService.getAttendanceVerificationMaster()
       if ((res as any).success) {
-        const rows = (res as any).data || []
+        const rawRows = (res as any).data || []
+        const rows = ensureUniqueKeys(rawRows)
         setMasterData(rows)
         setSummary((res as any).summary || {})
         const keySet = new Set<string>(rows.map((r: any) => r.uniqueKey).filter(Boolean))
@@ -124,7 +142,8 @@ const VerificationManager: React.FC = () => {
       toast.success('Batch verification completed successfully!', { id: 'batch-verify' })
       
       // Update UI with final data
-      const finalData = (batchRes as any).data || []
+      const rawFinalData = (batchRes as any).data || []
+      const finalData = ensureUniqueKeys(rawFinalData)
       setMasterData(finalData)
       
       // Track which are newly verified compared to loaded keys
