@@ -225,9 +225,10 @@ const VerificationManager: React.FC = () => {
         if (String(beforeVal ?? '') !== String(afterVal ?? '')) changedFields.push(String(k))
       })
       const ts = new Date().toISOString()
-      const note = `${ts}: Manual edit (${changedFields.join(', ')})`
-      const changeHistory = original.changeHistory ? `${original.changeHistory} | ${note}` : note
-      (merged as any).changeHistory = changeHistory
+      const note: string = `${ts}: Manual edit (${changedFields.join(', ')})`
+      const previousHistory: string = typeof original.changeHistory === 'string' ? original.changeHistory : ''
+      const changeHistoryText: string = previousHistory ? `${previousHistory} | ${note}` : note
+      (merged as any).changeHistory = changeHistoryText
 
       await apiService.upsertMasterRows([merged as any])
 
