@@ -1,48 +1,47 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import apiService from '../services/api'
 import toast from 'react-hot-toast'
-
-type MasterRow = {
-  customerName: string
-  eventStartsAt: string
-  membershipName: string
-  instructors: string
-  status: string
-  discount: string
-  discountPercentage: number
-  verificationStatus: 'Verified' | 'Not Verified' | 'Package Cannot be found'
-  invoiceNumber: string
-  amount: number
-  paymentDate: string
-  packagePrice: number
-  sessionPrice: number
-  discountedSessionPrice: number
-  coachAmount: number
-  bgmAmount: number
-  managementAmount: number
-  mfcAmount: number
-  uniqueKey?: string
-  changeHistory?: string
-}
+import { RootState } from '../store'
+import {
+  MasterRow,
+  setActiveTab,
+  setMasterData,
+  setSummary,
+  setFilter,
+  setSorting,
+  setExistingKeys,
+  setPendingEdits,
+  updatePendingEdit,
+  setEditingKey,
+  setEditDraft,
+  updateEditDraft,
+  clearEditState,
+  updateMasterRow,
+} from '../store/verificationSlice'
 
 const VerificationManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0)
-  const [loadingStates, setLoadingStates] = useState({
+  const dispatch = useDispatch()
+  const {
+    activeTab,
+    masterData,
+    summary,
+    filter,
+    sortKey,
+    sortDir,
+    existingKeys,
+    pendingEdits,
+    editingKey,
+    editDraft,
+  } = useSelector((state: RootState) => state.verification)
+  
+  const [loadingStates, setLoadingStates] = React.useState({
     loadVerified: false,
     verify: false,
     export: false,
     rewrite: false,
     saveEdit: false
   })
-  const [masterData, setMasterData] = useState<MasterRow[]>([])
-  const [summary, setSummary] = useState<any>(null)
-  const [filter, setFilter] = useState('')
-  const [sortKey, setSortKey] = useState<string>('')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
-  const [existingKeys, setExistingKeys] = useState<Set<string>>(new Set())
-  const [pendingEdits, setPendingEdits] = useState<Record<string, MasterRow>>({})
-  const [editingKey, setEditingKey] = useState<string>('')
-  const [editDraft, setEditDraft] = useState<Partial<MasterRow>>({})
 
   // Helper function to update loading states
   const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
@@ -51,6 +50,9 @@ const VerificationManager: React.FC = () => {
 
   // Check if any operation is loading
   const isAnyLoading = Object.values(loadingStates).some(Boolean)
+
+  // Convert existingKeys array to Set for easier operations
+  const existingKeysSet = useMemo(() => new Set(existingKeys), [existingKeys])
 
   // Utility function to generate uniqueKey if missing
   const generateUniqueKey = (row: MasterRow): string => {
@@ -121,8 +123,11 @@ const VerificationManager: React.FC = () => {
   }, [filtered, sortKey, sortDir])
 
   const handleSort = (key: keyof MasterRow) => {
-    if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortKey(key as string); setSortDir('asc') }
+    if (sortKey === key) {
+      dispatch(setSorting({ key: key as string, dir: sortDir === 'asc' ? 'desc' : 'asc' }))
+    } else {
+      dispatch(setSorting({ key: key as string, dir: 'asc' }))
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -147,10 +152,10 @@ const VerificationManager: React.FC = () => {
       if ((res as any).success) {
         const rawRows = (res as any).data || []
         const rows = ensureUniqueKeys(rawRows)
-        setMasterData(rows)
-        setSummary((res as any).summary || {})
-        const keySet = new Set<string>(rows.map((r: any) => r.uniqueKey).filter(Boolean))
-        setExistingKeys(keySet)
+        dispatch(setMasterData(rows))
+        dispatch(setSummary((res as any).summary || {}))
+        const keyArray = rows.map((r: any) => r.uniqueKey).filter(Boolean)
+        dispatch(setExistingKeys(keyArray))
         toast.success('Verified data loaded', { id: 'load-verified' })
       } else {
         toast.error((res as any).message || 'Failed to load verified data', { id: 'load-verified' })
@@ -184,11 +189,11 @@ const VerificationManager: React.FC = () => {
       // Update UI with final data
       const rawFinalData = (batchRes as any).data || []
       const finalData = ensureUniqueKeys(rawFinalData)
-      setMasterData(finalData)
+      dispatch(setMasterData(finalData))
       
       // Track which are newly verified compared to loaded keys
-      if (existingKeys && existingKeys.size > 0) {
-        const newCount = finalData.filter((r: any) => r.uniqueKey && !existingKeys.has(r.uniqueKey)).length
+      if (existingKeysSet && existingKeysSet.size > 0) {
+        const newCount = finalData.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
         if (newCount > 0) {
           toast.success(`${newCount} new records found since last load`)
         }
@@ -196,7 +201,7 @@ const VerificationManager: React.FC = () => {
 
       // Use the summary from the response
       const responseSummary = (batchRes as any).summary || {}
-      setSummary(responseSummary)
+      dispatch(setSummary(responseSummary))
       
       // Final success message
       toast.success(`Verification complete: ${responseSummary.verifiedRecords || 0}/${responseSummary.totalRecords || 0} verified`, { duration: 4000 })
@@ -215,7 +220,7 @@ const VerificationManager: React.FC = () => {
       setLoading('rewrite', true)
       // Determine rows to upsert: pending manual edits + newly verified rows not yet in sheet
       const edits = Object.values(pendingEdits)
-      const newRows = masterData.filter(r => (r.uniqueKey ? !existingKeys.has(r.uniqueKey) : false))
+      const newRows = masterData.filter(r => (r.uniqueKey ? !existingKeysSet.has(r.uniqueKey) : false))
       const rowsToUpsert = [...edits, ...newRows]
 
       if (rowsToUpsert.length === 0) {
@@ -231,10 +236,11 @@ const VerificationManager: React.FC = () => {
         try {
           const reload = await apiService.getAttendanceVerificationMaster()
           if ((reload as any).success) {
-            setMasterData((reload as any).data || [])
-            setSummary((reload as any).summary || {})
-            setExistingKeys(new Set<string>(((reload as any).data || []).map((r: any) => r.uniqueKey).filter(Boolean)))
-            setPendingEdits({})
+            dispatch(setMasterData((reload as any).data || []))
+            dispatch(setSummary((reload as any).summary || {}))
+            const keyArray = ((reload as any).data || []).map((r: any) => r.uniqueKey).filter(Boolean)
+            dispatch(setExistingKeys(keyArray))
+            dispatch(setPendingEdits({}))
           }
         } catch {}
       }
@@ -303,11 +309,11 @@ const VerificationManager: React.FC = () => {
       }
 
       // Update local state and caches
-      setMasterData(prev => prev.map(r => r.uniqueKey === merged.uniqueKey ? merged : r))
-      setExistingKeys(prev => new Set<string>([...prev, merged.uniqueKey || '']))
-      setPendingEdits(prev => ({ ...prev, [merged.uniqueKey as string]: merged }))
-      setEditingKey('')
-      setEditDraft({})
+      dispatch(updateMasterRow(merged))
+      const updatedKeys = [...existingKeys, merged.uniqueKey || ''].filter(Boolean)
+      dispatch(setExistingKeys(Array.from(new Set(updatedKeys))))
+      dispatch(updatePendingEdit({ key: merged.uniqueKey as string, data: merged }))
+      dispatch(clearEditState())
       toast.success('Changes saved')
     } catch (e: any) {
       console.error('❌ Save edit failed:', e)
@@ -319,8 +325,7 @@ const VerificationManager: React.FC = () => {
 
   const handleCancelEdit = () => {
     console.log('❌ Canceling edit mode');
-    setEditingKey('')
-    setEditDraft({})
+    dispatch(clearEditState())
   }
 
 
@@ -338,7 +343,7 @@ const VerificationManager: React.FC = () => {
           {['Master Verification', 'Payment Verification', 'Verification Summary', 'Coaches Summary'].map((label, idx) => (
             <button
               key={label}
-              onClick={() => setActiveTab(idx)}
+              onClick={() => dispatch(setActiveTab(idx))}
               className={`whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                 activeTab === idx
                   ? 'bg-primary-600 text-white'
@@ -356,7 +361,7 @@ const VerificationManager: React.FC = () => {
           <div className="flex items-center justify-between gap-3">
             <input
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => dispatch(setFilter(e.target.value))}
               className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
               placeholder="Search by customer, membership, status, invoice..."
             />
@@ -387,9 +392,9 @@ const VerificationManager: React.FC = () => {
             <table className="min-w-[1750px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory','actions'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History','Actions'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -412,14 +417,20 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.status}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">
                         {isEditing ? (
-                          <input className="w-32 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.discount ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, discount:e.target.value}))} />
+                          <input className="w-32 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.discount ?? ''}`} onChange={(e)=>dispatch(updateEditDraft({discount: e.target.value}))} />
                         ) : (
                           draft.discount
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountPercentage ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, discountPercentage: Number(e.target.value || 0)}))} />
+                          <input 
+                            type="number" 
+                            step="0.01" 
+                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
+                            value={`${draft.discountPercentage ?? 0}`} 
+                            onChange={(e)=>dispatch(updateEditDraft({discountPercentage: parseFloat(e.target.value || '0')}))} 
+                          />
                         ) : (
                           Number(draft.discountPercentage || 0).toFixed(2)
                         )}
@@ -429,8 +440,8 @@ const VerificationManager: React.FC = () => {
                           console.log('🖱️ Double-clicked row with uniqueKey:', r.uniqueKey);
                           console.log('🔍 Row data:', { customer: r.customerName, date: r.eventStartsAt, membership: r.membershipName });
                           console.log('📝 Current editingKey before set:', editingKey);
-                          setEditingKey(r.uniqueKey); 
-                          setEditDraft({});
+                          dispatch(setEditingKey(r.uniqueKey)); 
+                          dispatch(setEditDraft({}));
                         } else {
                           console.warn('⚠️ Row has no uniqueKey, cannot edit');
                           toast.error('Cannot edit row: missing unique identifier');
@@ -440,77 +451,6 @@ const VerificationManager: React.FC = () => {
                           {draft.verificationStatus}
                         </span>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-white">
-                        {isEditing ? (
-                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.invoiceNumber ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, invoiceNumber:e.target.value}))} />
-                        ) : (
-                          draft.invoiceNumber
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.amount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, amount:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.amount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-white">
-                        {isEditing ? (
-                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.paymentDate ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, paymentDate:e.target.value}))} />
-                        ) : (
-                          draft.paymentDate
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.packagePrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, packagePrice:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.packagePrice || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.sessionPrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, sessionPrice:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.sessionPrice || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountedSessionPrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, discountedSessionPrice:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.discountedSessionPrice || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.coachAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, coachAmount:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.coachAmount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.bgmAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, bgmAmount:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.bgmAmount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.managementAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, managementAmount:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.managementAmount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.mfcAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, mfcAmount:Number(e.target.value || 0)}))} />
-                        ) : (
-                          Number(draft.mfcAmount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.changeHistory || ''}</td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         {isEditing ? (
                           <div className="flex gap-2">
@@ -525,6 +465,94 @@ const VerificationManager: React.FC = () => {
                           </div>
                         ) : null}
                       </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-white">
+                        {isEditing ? (
+                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.invoiceNumber ?? ''}`} onChange={(e)=>dispatch(updateEditDraft({invoiceNumber: e.target.value}))} />
+                        ) : (
+                          draft.invoiceNumber
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input 
+                            type="number" 
+                            step="0.01" 
+                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
+                            value={`${draft.amount ?? 0}`} 
+                            onChange={(e)=>dispatch(updateEditDraft({amount: parseFloat(e.target.value || '0')}))} 
+                          />
+                        ) : (
+                          Number(draft.amount || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-white">
+                        {isEditing ? (
+                          <input 
+                            type="date" 
+                            className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" 
+                            value={`${draft.paymentDate ?? ''}`} 
+                            onChange={(e)=>dispatch(updateEditDraft({paymentDate: e.target.value}))} 
+                          />
+                        ) : (
+                          draft.paymentDate
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input 
+                            type="number" 
+                            step="0.01" 
+                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
+                            value={`${draft.packagePrice ?? 0}`} 
+                            onChange={(e)=>dispatch(updateEditDraft({packagePrice: parseFloat(e.target.value || '0')}))} 
+                          />
+                        ) : (
+                          Number(draft.packagePrice || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.sessionPrice ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({sessionPrice: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.sessionPrice || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountedSessionPrice ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({discountedSessionPrice: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.discountedSessionPrice || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.coachAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({coachAmount: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.coachAmount || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.bgmAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({bgmAmount: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.bgmAmount || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.managementAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({managementAmount: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.managementAmount || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {isEditing ? (
+                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.mfcAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({mfcAmount: parseFloat(e.target.value || '0')}))} />
+                        ) : (
+                          Number(draft.mfcAmount || 0).toFixed(2)
+                        )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.changeHistory || ''}</td>
                     </tr>
                   )
                 })}
