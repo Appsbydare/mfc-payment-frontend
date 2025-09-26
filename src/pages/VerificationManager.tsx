@@ -222,12 +222,19 @@ const VerificationManager: React.FC = () => {
       fieldsToTrack.forEach(k => {
         const beforeVal = (original as any)[k]
         const afterVal = (merged as any)[k]
-        if (`${beforeVal ?? ''}` !== `${afterVal ?? ''}`) changedFields.push(`${k}`)
+        if (String(beforeVal ?? '') !== String(afterVal ?? '')) {
+          changedFields.push(String(k))
+        }
       })
       const ts = new Date().toISOString()
       const note: string = `${ts}: Manual edit (${changedFields.join(', ')})`
       const previousHistory: string = typeof original.changeHistory === 'string' ? original.changeHistory : ''
-      const changeHistoryText: string = previousHistory ? `${previousHistory} | ${note}` : note
+      let changeHistoryText: string
+      if (previousHistory) {
+        changeHistoryText = `${previousHistory} | ${note}`
+      } else {
+        changeHistoryText = note
+      }
       (merged as any).changeHistory = changeHistoryText
 
       await apiService.upsertMasterRows([merged as any])
