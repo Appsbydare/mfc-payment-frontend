@@ -127,6 +127,18 @@ const VerificationManager: React.FC = () => {
     try {
       setLoading(true)
       toast.loading('Loading verified data...', { id: 'load-verified' })
+      
+      // First test if backend is accessible
+      try {
+        console.log('🏥 Testing backend health...');
+        const healthCheck = await apiService.healthCheck();
+        console.log('✅ Backend health check passed:', healthCheck);
+      } catch (healthError) {
+        console.error('❌ Backend health check failed:', healthError);
+        toast.error('Backend server is not accessible. Please check deployment.', { id: 'load-verified' });
+        return;
+      }
+      
       const res = await apiService.getAttendanceVerificationMaster()
       if ((res as any).success) {
         const rawRows = (res as any).data || []
@@ -281,6 +293,17 @@ const VerificationManager: React.FC = () => {
       (merged as any).changeHistory = changeHistoryText
 
       console.log('💾 Saving merged row:', merged);
+      
+      // Test backend connectivity before attempting save
+      try {
+        console.log('🏥 Testing backend connectivity before save...');
+        await apiService.healthCheck();
+        console.log('✅ Backend is accessible, proceeding with save...');
+      } catch (connectivityError) {
+        console.error('❌ Backend connectivity failed:', connectivityError);
+        throw new Error('Backend server is not accessible. Please check deployment.');
+      }
+      
       const saveResult = await apiService.upsertMasterRows([merged as any])
       console.log('✅ Save result:', saveResult);
 
