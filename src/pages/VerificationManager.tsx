@@ -44,15 +44,39 @@ const VerificationManager: React.FC = () => {
     const customer = row.customerName || '';
     const membership = row.membershipName || '';
     const instructors = row.instructors || '';
-    return `${date}_${customer}_${membership}_${instructors}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    const status = row.status || '';
+    const verificationStatus = row.verificationStatus || '';
+    
+    // Include more fields to ensure uniqueness, especially for multiple sessions same day
+    const baseKey = `${date}_${customer}_${membership}_${instructors}_${status}_${verificationStatus}`;
+    return baseKey.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
   }
 
-  // Ensure all rows have uniqueKey
+  // Ensure all rows have uniqueKey and handle duplicates
   const ensureUniqueKeys = (rows: MasterRow[]): MasterRow[] => {
-    return rows.map(row => ({
-      ...row,
-      uniqueKey: row.uniqueKey || generateUniqueKey(row)
-    }));
+    const keyCount: Record<string, number> = {};
+    
+    return rows.map((row, index) => {
+      let uniqueKey = row.uniqueKey || generateUniqueKey(row);
+      
+      // Handle duplicate keys by adding sequence number
+      if (keyCount[uniqueKey]) {
+        keyCount[uniqueKey]++;
+        uniqueKey = `${uniqueKey}_${keyCount[uniqueKey]}`;
+      } else {
+        keyCount[uniqueKey] = 1;
+      }
+      
+      // If still no uniqueKey, use index as fallback
+      if (!uniqueKey || uniqueKey.trim() === '') {
+        uniqueKey = `row_${index}_${Date.now()}`;
+      }
+      
+      return {
+        ...row,
+        uniqueKey
+      };
+    });
   }
 
   const filtered = useMemo(() => {
@@ -256,7 +280,13 @@ const VerificationManager: React.FC = () => {
       }
       (merged as any).changeHistory = changeHistoryText
 
-      await apiService.upsertMasterRows([merged as any])
+      console.log('💾 Saving merged row:', merged);
+      const saveResult = await apiService.upsertMasterRows([merged as any])
+      console.log('✅ Save result:', saveResult);
+
+      if (!(saveResult as any).success) {
+        throw new Error((saveResult as any).error || (saveResult as any).message || 'Failed to save changes');
+      }
 
       // Update local state and caches
       setMasterData(prev => prev.map(r => r.uniqueKey === merged.uniqueKey ? merged : r))
@@ -377,6 +407,8 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap" onDoubleClick={() => { 
                         if (r.uniqueKey) {
                           console.log('🖱️ Double-clicked row with uniqueKey:', r.uniqueKey);
+                          console.log('🔍 Row data:', { customer: r.customerName, date: r.eventStartsAt, membership: r.membershipName });
+                          console.log('📝 Current editingKey before set:', editingKey);
                           setEditingKey(r.uniqueKey); 
                           setEditDraft({});
                         } else {
