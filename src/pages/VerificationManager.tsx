@@ -255,6 +255,7 @@ const VerificationManager: React.FC = () => {
   }
 
   const handleCancelEdit = () => {
+    console.log('❌ Canceling edit mode');
     setEditingKey('')
     setEditDraft({})
   }
@@ -327,10 +328,14 @@ const VerificationManager: React.FC = () => {
               </thead>
               <tbody>
                 {sorted.map((r, idx) => {
-                  const isEditing = editingKey && r.uniqueKey === editingKey
+                  const isEditing = editingKey && r.uniqueKey === editingKey && r.uniqueKey !== undefined && r.uniqueKey !== ''
                   const draft = isEditing ? { ...r, ...editDraft } : r
+                  // Debug logging for editing state
+                  if (isEditing) {
+                    console.log(`✏️ Row ${idx} is in editing mode. UniqueKey: ${r.uniqueKey}, EditingKey: ${editingKey}`);
+                  }
                   return (
-                    <tr key={idx} className="border-t border-gray-100 dark:border-gray-700">
+                    <tr key={r.uniqueKey || `row-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.customerName}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.eventStartsAt}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.membershipName}</td>
@@ -350,7 +355,16 @@ const VerificationManager: React.FC = () => {
                           Number(draft.discountPercentage || 0).toFixed(2)
                         )}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap" onDoubleClick={() => { setEditingKey(r.uniqueKey || ''); setEditDraft({}); }}>
+                      <td className="px-3 py-2 whitespace-nowrap" onDoubleClick={() => { 
+                        if (r.uniqueKey) {
+                          console.log('🖱️ Double-clicked row with uniqueKey:', r.uniqueKey);
+                          setEditingKey(r.uniqueKey); 
+                          setEditDraft({});
+                        } else {
+                          console.warn('⚠️ Row has no uniqueKey, cannot edit');
+                          toast.error('Cannot edit row: missing unique identifier');
+                        }
+                      }}>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(draft.verificationStatus)}`}>
                           {draft.verificationStatus}
                         </span>
