@@ -331,14 +331,14 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.status}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">
                         {isEditing ? (
-                          <input className="w-32 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={String(draft.discount || '')} onChange={(e)=>setEditDraft(d=>({...d, discount:e.target.value}))} />
+                          <input className="w-32 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.discount ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, discount:e.target.value}))} />
                         ) : (
                           draft.discount
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.discountPercentage ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, discountPercentage: Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountPercentage ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, discountPercentage: Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.discountPercentage || 0).toFixed(2)
                         )}
@@ -350,70 +350,70 @@ const VerificationManager: React.FC = () => {
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">
                         {isEditing ? (
-                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={String(draft.invoiceNumber || '')} onChange={(e)=>setEditDraft(d=>({...d, invoiceNumber:e.target.value}))} />
+                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.invoiceNumber ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, invoiceNumber:e.target.value}))} />
                         ) : (
                           draft.invoiceNumber
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.amount ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, amount:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.amount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, amount:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.amount || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">
                         {isEditing ? (
-                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={String(draft.paymentDate || '')} onChange={(e)=>setEditDraft(d=>({...d, paymentDate:e.target.value}))} />
+                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.paymentDate ?? ''}`} onChange={(e)=>setEditDraft(d=>({...d, paymentDate:e.target.value}))} />
                         ) : (
                           draft.paymentDate
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.packagePrice ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, packagePrice:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.packagePrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, packagePrice:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.packagePrice || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.sessionPrice ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, sessionPrice:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.sessionPrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, sessionPrice:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.sessionPrice || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.discountedSessionPrice ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, discountedSessionPrice:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountedSessionPrice ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, discountedSessionPrice:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.discountedSessionPrice || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.coachAmount ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, coachAmount:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.coachAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, coachAmount:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.coachAmount || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.bgmAmount ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, bgmAmount:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.bgmAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, bgmAmount:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.bgmAmount || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.managementAmount ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, managementAmount:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.managementAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, managementAmount:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.managementAmount || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
-                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={String(draft.mfcAmount ?? 0)} onChange={(e)=>setEditDraft(d=>({...d, mfcAmount:Number(e.target.value || 0)}))} />
+                          <input className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.mfcAmount ?? 0}`} onChange={(e)=>setEditDraft(d=>({...d, mfcAmount:Number(e.target.value || 0)}))} />
                         ) : (
                           Number(draft.mfcAmount || 0).toFixed(2)
                         )}
