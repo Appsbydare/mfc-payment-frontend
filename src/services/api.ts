@@ -37,24 +37,16 @@ class ApiService {
       ...options,
     };
 
-    console.log('🚀 Making API request to:', url);
-    console.log('📋 Request config:', { method: config.method || 'GET', headers: config.headers });
-
     try {
       const response = await fetch(url, config);
       
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response ok:', response.ok);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Response error text:', errorText);
+        console.error('❌ API Error:', `${response.status} - ${errorText}`);
         throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
       }
       
-      const result = await response.json();
-      console.log('✅ Response data:', result);
-      return result;
+      return await response.json();
     } catch (error) {
       console.error(`❌ API request failed for ${endpoint}:`, error);
       throw error;
@@ -417,10 +409,6 @@ class ApiService {
   }
 
   async upsertMasterRows(rows: any[]) {
-    console.log('🌐 API Base URL:', this.baseURL);
-    console.log('📡 Full URL will be:', `${this.baseURL}/attendance-verification/upsert-master`);
-    console.log('📤 Sending rows:', rows);
-    
     return this.request<{
       success: boolean;
       message: string;
