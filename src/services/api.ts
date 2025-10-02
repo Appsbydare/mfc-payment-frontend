@@ -424,7 +424,9 @@ class ApiService {
     return this.request<{
       success: boolean;
       data: any[];
-    }>('/attendance-verification/invoices');
+      count: number;
+      message: string;
+    }>('/invoice-verification');
   }
 
   async initializeInvoiceVerification() {
@@ -432,39 +434,73 @@ class ApiService {
       success: boolean;
       message: string;
       data: any[];
-    }>('/attendance-verification/invoices/initialize', {
+      count: number;
+    }>('/invoice-verification/initialize', {
       method: 'POST',
       body: JSON.stringify({}),
     });
   }
 
-  async clearInvoiceVerificationData() {
+  async verifyInvoicesWithAttendance() {
     return this.request<{
       success: boolean;
       message: string;
-    }>('/attendance-verification/invoices', {
-      method: 'DELETE',
+      data: any[];
+      verifiedRecords: number;
+      totalRecords: number;
+    }>('/invoice-verification/verify-with-attendance', {
+      method: 'POST',
+      body: JSON.stringify({}),
     });
   }
 
-  async testInvoiceVerification() {
+  async getInvoiceVerificationSummary() {
     return this.request<{
       success: boolean;
-      message: string;
       data: {
-        services?: {
-          attendanceVerificationService: boolean;
-          invoiceVerificationService: boolean;
-        };
-        timestamp?: string;
-        environment?: string;
-        existingRecords?: number;
-        initializedRecords?: number;
-        sampleData?: any[];
+        totalInvoices: number;
+        availableInvoices: number;
+        partiallyUsedInvoices: number;
+        fullyUsedInvoices: number;
+        unverifiedInvoices: number;
+        totalAmount: number;
+        usedAmount: number;
+        remainingAmount: number;
       };
-    }>('/attendance-verification/test', {
+      message: string;
+    }>('/invoice-verification/summary');
+  }
+
+  async findAvailableInvoice(customerName: string, requiredAmount: number) {
+    return this.request<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>('/invoice-verification/find-available', {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: JSON.stringify({ customerName, requiredAmount }),
+    });
+  }
+
+  async useInvoiceAmount(invoiceNumber: string, amount: number) {
+    return this.request<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>('/invoice-verification/use-amount', {
+      method: 'POST',
+      body: JSON.stringify({ invoiceNumber, amount }),
+    });
+  }
+
+  async markInvoiceUnverified(invoiceNumber: string) {
+    return this.request<{
+      success: boolean;
+      data: any[];
+      message: string;
+    }>('/invoice-verification/mark-unverified', {
+      method: 'POST',
+      body: JSON.stringify({ invoiceNumber }),
     });
   }
 

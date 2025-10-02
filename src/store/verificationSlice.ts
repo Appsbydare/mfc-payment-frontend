@@ -21,6 +21,24 @@ export interface MasterRow {
   mfcAmount: number
   uniqueKey?: string
   changeHistory?: string
+  // Invoice verification fields
+  invoiceVerificationStatus?: 'Available' | 'Partially Used' | 'Fully Used' | 'Unverified'
+  invoiceRemainingBalance?: number
+  invoiceSessionsUsed?: number
+}
+
+export interface InvoiceVerificationRecord {
+  invoiceNumber: string
+  customerName: string
+  totalAmount: number
+  usedAmount: number
+  remainingBalance: number
+  status: 'Available' | 'Partially Used' | 'Fully Used' | 'Unverified'
+  sessionsUsed: number
+  totalSessions: number
+  lastUsedDate: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface VerificationState {
@@ -34,6 +52,12 @@ interface VerificationState {
   pendingEdits: Record<string, MasterRow>
   editingKey: string
   editDraft: Partial<MasterRow>
+  // Invoice verification state
+  invoiceVerificationData: InvoiceVerificationRecord[]
+  invoiceVerificationSummary: any | null
+  invoiceFilter: string
+  invoiceSortKey: string
+  invoiceSortDir: 'asc' | 'desc'
 }
 
 const initialState: VerificationState = {
@@ -47,6 +71,12 @@ const initialState: VerificationState = {
   pendingEdits: {},
   editingKey: '',
   editDraft: {},
+  // Invoice verification state
+  invoiceVerificationData: [],
+  invoiceVerificationSummary: null,
+  invoiceFilter: '',
+  invoiceSortKey: '',
+  invoiceSortDir: 'asc',
 }
 
 const verificationSlice = createSlice({
@@ -103,6 +133,20 @@ const verificationSlice = createSlice({
     clearAllState: (state) => {
       Object.assign(state, initialState)
     },
+    // Invoice verification reducers
+    setInvoiceVerificationData: (state, action: PayloadAction<InvoiceVerificationRecord[]>) => {
+      state.invoiceVerificationData = action.payload
+    },
+    setInvoiceVerificationSummary: (state, action: PayloadAction<any>) => {
+      state.invoiceVerificationSummary = action.payload
+    },
+    setInvoiceFilter: (state, action: PayloadAction<string>) => {
+      state.invoiceFilter = action.payload
+    },
+    setInvoiceSorting: (state, action: PayloadAction<{ key: string; dir: 'asc' | 'desc' }>) => {
+      state.invoiceSortKey = action.payload.key
+      state.invoiceSortDir = action.payload.dir
+    },
   },
 })
 
@@ -122,6 +166,12 @@ export const {
   clearEditState,
   updateMasterRow,
   clearAllState,
+  // Invoice verification actions
+  setInvoiceVerificationData,
+  setInvoiceVerificationSummary,
+  setInvoiceFilter,
+  setInvoiceSorting,
 } = verificationSlice.actions
 
 export default verificationSlice.reducer
+

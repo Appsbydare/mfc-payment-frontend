@@ -18,6 +18,9 @@ import {
   updateEditDraft,
   clearEditState,
   updateMasterRow,
+  setInvoiceVerificationData,
+  setInvoiceFilter,
+  setInvoiceSorting,
 } from '../store/verificationSlice'
 
 const VerificationManager: React.FC = () => {
@@ -33,6 +36,11 @@ const VerificationManager: React.FC = () => {
     pendingEdits,
     editingKey,
     editDraft,
+    invoiceVerificationData,
+    invoiceVerificationSummary,
+    invoiceFilter,
+    invoiceSortKey,
+    invoiceSortDir,
   } = useSelector((state: RootState) => state.verification)
   
   const [loadingStates, setLoadingStates] = React.useState({
@@ -40,7 +48,11 @@ const VerificationManager: React.FC = () => {
     verify: false,
     export: false,
     rewrite: false,
-    saveEdit: false
+    saveEdit: false,
+    // Invoice verification loading states
+    loadInvoices: false,
+    initializeInvoices: false,
+    verifyInvoices: false,
   })
 
   // Helper function to update loading states
@@ -328,6 +340,68 @@ const VerificationManager: React.FC = () => {
     dispatch(clearEditState())
   }
 
+  // Invoice verification handlers
+  const handleLoadInvoices = async () => {
+    try {
+      setLoading('loadInvoices', true)
+      toast.loading('Loading invoice verification data...', { id: 'load-invoices' })
+
+      const res = await apiService.getInvoiceVerificationData()
+      if ((res as any).success) {
+        dispatch(setInvoiceVerificationData((res as any).data || []))
+        toast.success('Invoice verification data loaded', { id: 'load-invoices' })
+      } else {
+        toast.error((res as any).message || 'Failed to load invoice verification data', { id: 'load-invoices' })
+      }
+    } catch (e: any) {
+      console.error('❌ Load invoices error:', e)
+      toast.error(e?.message || 'Failed to load invoice verification data', { id: 'load-invoices' })
+    } finally {
+      setLoading('loadInvoices', false)
+    }
+  }
+
+  const handleInitializeInvoices = async () => {
+    try {
+      setLoading('initializeInvoices', true)
+      toast.loading('Initializing invoice verification data...', { id: 'init-invoices' })
+
+      const res = await apiService.initializeInvoiceVerification()
+      if ((res as any).success) {
+        dispatch(setInvoiceVerificationData((res as any).data || []))
+        toast.success('Invoice verification data initialized', { id: 'init-invoices' })
+      } else {
+        toast.error((res as any).message || 'Failed to initialize invoice verification data', { id: 'init-invoices' })
+      }
+    } catch (e: any) {
+      console.error('❌ Initialize invoices error:', e)
+      toast.error(e?.message || 'Failed to initialize invoice verification data', { id: 'init-invoices' })
+    } finally {
+      setLoading('initializeInvoices', false)
+    }
+  }
+
+  const handleVerifyInvoices = async () => {
+    try {
+      setLoading('verifyInvoices', true)
+      toast.loading('Verifying invoices with attendance data...', { id: 'verify-invoices' })
+
+      const res = await apiService.verifyInvoicesWithAttendance()
+      if ((res as any).success) {
+        toast.success(`Invoice verification completed: ${(res as any).verifiedRecords || 0}/${(res as any).totalRecords || 0} verified`, { id: 'verify-invoices' })
+        // Reload invoice data after verification
+        await handleLoadInvoices()
+      } else {
+        toast.error((res as any).message || 'Failed to verify invoices', { id: 'verify-invoices' })
+      }
+    } catch (e: any) {
+      console.error('❌ Verify invoices error:', e)
+      toast.error(e?.message || 'Failed to verify invoices', { id: 'verify-invoices' })
+    } finally {
+      setLoading('verifyInvoices', false)
+    }
+  }
+
 
   // Start with empty data - user must click Refresh to load
   useEffect(() => {
@@ -340,7 +414,7 @@ const VerificationManager: React.FC = () => {
 
       <div className="mb-4">
         <nav className="flex gap-2" aria-label="Tabs">
-          {['Master Verification', 'Payment Verification', 'Verification Summary', 'Coaches Summary'].map((label, idx) => (
+          {['Master Verification', 'Invoice Verification', 'Verification Summary', 'Coaches Summary'].map((label, idx) => (
             <button
               key={label}
               onClick={() => dispatch(setActiveTab(idx))}
@@ -568,8 +642,116 @@ const VerificationManager: React.FC = () => {
         </div>
       )}
 
-      {activeTab > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">This section will be enabled next. Master Verification is available now.</div>
+      {activeTab === 1 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <input
+              value={invoiceFilter}
+              onChange={(e) => dispatch(setInvoiceFilter(e.target.value))}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
+              placeholder="Search by customer, invoice number..."
+            />
+            <div className="flex gap-2">
+              <button onClick={handleLoadInvoices} disabled={loadingStates.loadInvoices || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
+                {loadingStates.loadInvoices ? 'Loading...' : 'Load Invoices'}
+              </button>
+              <button onClick={handleInitializeInvoices} disabled={loadingStates.initializeInvoices || isAnyLoading} className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50">
+                {loadingStates.initializeInvoices ? 'Initializing...' : 'Initialize'}
+              </button>
+              <button onClick={handleVerifyInvoices} disabled={loadingStates.verifyInvoices || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
+                {loadingStates.verifyInvoices ? 'Verifying...' : 'Verify Invoices'}
+              </button>
+            </div>
+          </div>
+
+          {invoiceVerificationSummary && (
+            <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
+              <span className="mr-4 font-medium">Total Invoices: {invoiceVerificationSummary.totalInvoices || 0}</span>
+              <span className="mr-4 text-green-400">Available: {invoiceVerificationSummary.availableInvoices || 0}</span>
+              <span className="mr-4 text-yellow-400">Partially Used: {invoiceVerificationSummary.partiallyUsedInvoices || 0}</span>
+              <span className="mr-4 text-red-400">Fully Used: {invoiceVerificationSummary.fullyUsedInvoices || 0}</span>
+              <span className="text-blue-400">Unverified: {invoiceVerificationSummary.unverifiedInvoices || 0}</span>
+            </div>
+          )}
+
+          <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
+            <table className="min-w-[1200px] text-sm">
+              <thead className="sticky top-0 bg-gray-800 text-white z-10">
+                <tr>
+                  {['invoiceNumber','customerName','totalAmount','usedAmount','remainingBalance','status','sessionsUsed','totalSessions','lastUsedDate','createdAt'].map((key, idx) => (
+                    <th key={key} onClick={() => dispatch(setInvoiceSorting({ key, dir: invoiceSortKey === key ? (invoiceSortDir === 'asc' ? 'desc' : 'asc') : 'asc' }))} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
+                      {['Invoice #','Customer Name','Total Amount','Used Amount','Remaining Balance','Status','Sessions Used','Total Sessions','Last Used','Created At'][idx]}
+                      {invoiceSortKey === key ? (invoiceSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const filtered = invoiceFilter.trim().toLowerCase()
+                    ? invoiceVerificationData.filter(r =>
+                        r.customerName.toLowerCase().includes(invoiceFilter.toLowerCase()) ||
+                        r.invoiceNumber.toLowerCase().includes(invoiceFilter.toLowerCase())
+                      )
+                    : invoiceVerificationData
+
+                  const sorted = [...filtered].sort((a: any, b: any) => {
+                    if (!invoiceSortKey) return 0
+                    const av = a[invoiceSortKey]
+                    const bv = b[invoiceSortKey]
+                    const an = typeof av === 'number' ? av : parseFloat(av || 'NaN')
+                    const bn = typeof bv === 'number' ? bv : parseFloat(bv || 'NaN')
+                    if (!isNaN(an) && !isNaN(bn)) return invoiceSortDir === 'asc' ? an - bn : bn - an
+                    const as = `${av ?? ''}`
+                    const bs = `${bv ?? ''}`
+                    return invoiceSortDir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as)
+                  })
+
+                  return sorted.map((r, idx) => {
+                    const getStatusColor = (status: string) => {
+                      switch (status) {
+                        case 'Available': return 'bg-green-100 text-green-800'
+                        case 'Partially Used': return 'bg-yellow-100 text-yellow-800'
+                        case 'Fully Used': return 'bg-red-100 text-red-800'
+                        case 'Unverified': return 'bg-orange-100 text-orange-800'
+                        default: return 'bg-gray-100 text-gray-800'
+                      }
+                    }
+
+                    return (
+                      <tr key={r.invoiceNumber || `invoice-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.invoiceNumber}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.customerName}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">${Number(r.totalAmount || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">${Number(r.usedAmount || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">${Number(r.remainingBalance || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(r.status)}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.sessionsUsed}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.totalSessions}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.lastUsedDate ? new Date(r.lastUsedDate).toLocaleDateString() : ''}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-white">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</td>
+                      </tr>
+                    )
+                  })
+                })()}
+                {isAnyLoading && (
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={10}>Loading...</td></tr>
+                )}
+                {!isAnyLoading && invoiceVerificationData.length === 0 && (
+                  <tr><td className="px-3 py-4 text-gray-500" colSpan={10}>No invoice data. Click "Initialize" to create invoice verification records from payment data.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab > 1 && (
+        <div className="text-sm text-gray-500 dark:text-gray-400">Other verification sections will be enabled next.</div>
       )}
     </div>
   )
