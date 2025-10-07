@@ -51,6 +51,9 @@ const VerificationManager: React.FC = () => {
   const [selectedCoach, setSelectedCoach] = React.useState<string | null>(null)
   const [coachSessions, setCoachSessions] = React.useState<any[]>([])
   const [coachSessionsLoading, setCoachSessionsLoading] = React.useState(false)
+  const [coachesFilterText, setCoachesFilterText] = React.useState('')
+  const [coachesSortKey, setCoachesSortKey] = React.useState<'coachName'|'totalSessions'|'totalAmount'|'totalCoachAmount'|'totalBgmAmount'|'totalManagementAmount'|'totalMfcAmount'|'averageSessionAmount'>('totalCoachAmount')
+  const [coachesSortDir, setCoachesSortDir] = React.useState<'asc'|'desc'>('desc')
 
   // Helper function to update loading states
   const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
@@ -404,6 +407,67 @@ const VerificationManager: React.FC = () => {
     setCoachSessions([]);
   };
 
+  // Coaches Summary derived views (filter + sort)
+  const filteredCoaches = useMemo(() => {
+    const q = coachesFilterText.trim().toLowerCase()
+    if (!q) return coachesSummaryData
+    return coachesSummaryData.filter(c => `${c.coachName}`.toLowerCase().includes(q))
+  }, [coachesSummaryData, coachesFilterText])
+
+  const sortedCoaches = useMemo(() => {
+    const out = [...filteredCoaches]
+    out.sort((a: any, b: any) => {
+      const av = a[coachesSortKey]
+      const bv = b[coachesSortKey]
+      const an = typeof av === 'number' ? av : parseFloat(`${av}`)
+      const bn = typeof bv === 'number' ? bv : parseFloat(`${bv}`)
+      if (!Number.isNaN(an) && !Number.isNaN(bn)) {
+        return coachesSortDir === 'asc' ? an - bn : bn - an
+      }
+      const as = `${av ?? ''}`
+      const bs = `${bv ?? ''}`
+      return coachesSortDir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as)
+    })
+    return out
+  }, [filteredCoaches, coachesSortKey, coachesSortDir])
+
+  const handleCoachesSort = (key: typeof coachesSortKey) => {
+    if (coachesSortKey === key) {
+      setCoachesSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setCoachesSortKey(key)
+      setCoachesSortDir('asc')
+    }
+  }
+
+  const exportCoachesCSV = () => {
+    const headers = ['Coach Name','Sessions','Total Amount','Coach Amount','BGM Amount','Management Amount','MFC Amount','Avg Session']
+    const rows = sortedCoaches.map(c => [
+      c.coachName,
+      c.totalSessions,
+      c.totalAmount,
+      c.totalCoachAmount,
+      c.totalBgmAmount,
+      c.totalManagementAmount,
+      c.totalMfcAmount,
+      c.averageSessionAmount
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `coaches_summary_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  // Auto-load coaches summary when tab is opened
+  useEffect(() => {
+    if (activeTab === 3 && coachesSummaryData.length === 0 && !coachesSummaryLoading) {
+      loadCoachesSummary()
+    }
+  }, [activeTab])
 
   // Start with empty data - user must click Refresh to load
   useEffect(() => {
@@ -721,6 +785,13 @@ const VerificationManager: React.FC = () => {
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
                     placeholder="To Date"
                   />
+                  <input
+                    type="text"
+                    value={coachesFilterText}
+                    onChange={(e) => setCoachesFilterText(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
+                    placeholder="Filter by coach name"
+                  />
                   <button
                     onClick={loadCoachesSummary}
                     disabled={coachesSummaryLoading}
@@ -728,32 +799,45 @@ const VerificationManager: React.FC = () => {
                   >
                     {coachesSummaryLoading ? 'Loading...' : 'Load Summary'}
                   </button>
+                  <button
+                    onClick={exportCoachesCSV}
+                    disabled={sortedCoaches.length === 0}
+                    className="px-4 py-2 rounded bg-green-600 text-white disabled:opacity-50 font-medium"
+                  >
+                    Export CSV
+                  </button>
                 </div>
               </div>
 
               <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
-                <span className="mr-4 font-medium">Total Coaches: {coachesSummaryData.length}</span>
-                <span className="mr-4">Total Sessions: {coachesSummaryData.reduce((acc, coach) => acc + coach.totalSessions, 0)}</span>
-                <span className="mr-4 text-green-400">Total Coach Amount: €{coachesSummaryData.reduce((acc, coach) => acc + coach.totalCoachAmount, 0).toFixed(2)}</span>
+                <span className="mr-4 font-medium">Total Coaches: {sortedCoaches.length}</span>
+                <span className="mr-4">Total Sessions: {sortedCoaches.reduce((acc, coach) => acc + coach.totalSessions, 0)}</span>
+                <span className="mr-4 text-green-400">Total Coach Amount: €{sortedCoaches.reduce((acc, coach) => acc + coach.totalCoachAmount, 0).toFixed(2)}</span>
               </div>
 
               <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-300px)] overflow-x-auto overflow-y-auto">
                 <table className="min-w-[1200px] text-sm">
                   <thead className="sticky top-0 bg-gray-800 text-white z-10">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold">Coach Name</th>
-                      <th className="px-3 py-2 text-right font-semibold">Sessions</th>
-                      <th className="px-3 py-2 text-right font-semibold">Total Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Coach Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">BGM Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Management Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">MFC Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Avg Session</th>
+                      {[
+                        {key:'coachName', label:'Coach Name'},
+                        {key:'totalSessions', label:'Sessions'},
+                        {key:'totalAmount', label:'Total Amount'},
+                        {key:'totalCoachAmount', label:'Coach Amount'},
+                        {key:'totalBgmAmount', label:'BGM Amount'},
+                        {key:'totalManagementAmount', label:'Management Amount'},
+                        {key:'totalMfcAmount', label:'MFC Amount'},
+                        {key:'averageSessionAmount', label:'Avg Session'}
+                      ].map(col => (
+                        <th key={col.key} onClick={() => handleCoachesSort(col.key as any)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none">
+                          {col.label}{coachesSortKey === col.key ? (coachesSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                        </th>
+                      ))}
                       <th className="px-3 py-2 text-center font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {coachesSummaryData.map((coach, idx) => (
+                    {sortedCoaches.map((coach, idx) => (
                       <tr key={coach.coachName || idx} className="border-t border-gray-100 dark:border-gray-700">
                         <td className="px-3 py-2 whitespace-nowrap text-white font-medium">{coach.coachName}</td>
                         <td className="px-3 py-2 text-right tabular-nums text-white">{coach.totalSessions}</td>
@@ -776,8 +860,8 @@ const VerificationManager: React.FC = () => {
                     {coachesSummaryLoading && (
                       <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>Loading coaches summary...</td></tr>
                     )}
-                    {!coachesSummaryLoading && coachesSummaryData.length === 0 && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>No coaches data available. Click "Load Summary" to fetch data.</td></tr>
+                    {!coachesSummaryLoading && sortedCoaches.length === 0 && (
+                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>No coaches data available.</td></tr>
                     )}
                   </tbody>
                 </table>
