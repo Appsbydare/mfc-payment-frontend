@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.15;
+  }
+  
+  body {
+    @apply bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    font-size: 15px;
+    line-height: 1.15;
+    font-weight: 400;
+  }
+  button {
+    @apply rounded-full px-2 py-1 text-xs font-medium;
+    line-height: 1.1;
+    min-height: 28px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .compact-text {
+    font-size: 13px;
+    line-height: 1.1;
+    color: #444;
+  }
+  .card {
+    @apply bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 px-4 py-6;
+  }
+  .text-shadow {
+    text-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white;
+  }
+  
+  .stat-card {
+    @apply card p-6 text-center;
+  }
+  
+  .stat-value {
+    @apply text-3xl font-bold text-primary-600 dark:text-primary-400;
+  }
+  
+  .stat-label {
+    @apply text-sm text-gray-600 dark:text-gray-400 mt-2;
+  }
+} 
