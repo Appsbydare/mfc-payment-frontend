@@ -785,6 +785,13 @@ const VerificationManager: React.FC = () => {
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
                     placeholder="To Date"
                   />
+                  <input
+                    type="text"
+                    value={coachesFilterText}
+                    onChange={(e) => setCoachesFilterText(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
+                    placeholder="Filter by coach name"
+                  />
                   <button
                     onClick={loadCoachesSummary}
                     disabled={coachesSummaryLoading}
@@ -792,32 +799,45 @@ const VerificationManager: React.FC = () => {
                   >
                     {coachesSummaryLoading ? 'Loading...' : 'Load Summary'}
                   </button>
+                  <button
+                    onClick={exportCoachesCSV}
+                    disabled={sortedCoaches.length === 0}
+                    className="px-4 py-2 rounded bg-green-600 text-white disabled:opacity-50 font-medium"
+                  >
+                    Export CSV
+                  </button>
                 </div>
               </div>
 
               <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
-                <span className="mr-4 font-medium">Total Coaches: {coachesSummaryData.length}</span>
-                <span className="mr-4">Total Sessions: {coachesSummaryData.reduce((acc, coach) => acc + coach.totalSessions, 0)}</span>
-                <span className="mr-4 text-green-400">Total Coach Amount: €{coachesSummaryData.reduce((acc, coach) => acc + coach.totalCoachAmount, 0).toFixed(2)}</span>
+                <span className="mr-4 font-medium">Total Coaches: {sortedCoaches.length}</span>
+                <span className="mr-4">Total Sessions: {sortedCoaches.reduce((acc, coach) => acc + coach.totalSessions, 0)}</span>
+                <span className="mr-4 text-green-400">Total Coach Amount: €{sortedCoaches.reduce((acc, coach) => acc + coach.totalCoachAmount, 0).toFixed(2)}</span>
               </div>
 
               <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-300px)] overflow-x-auto overflow-y-auto">
                 <table className="min-w-[1200px] text-sm">
                   <thead className="sticky top-0 bg-gray-800 text-white z-10">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold">Coach Name</th>
-                      <th className="px-3 py-2 text-right font-semibold">Sessions</th>
-                      <th className="px-3 py-2 text-right font-semibold">Total Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Coach Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">BGM Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Management Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">MFC Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Avg Session</th>
+                      {[
+                        {key:'coachName', label:'Coach Name'},
+                        {key:'totalSessions', label:'Sessions'},
+                        {key:'totalAmount', label:'Total Amount'},
+                        {key:'totalCoachAmount', label:'Coach Amount'},
+                        {key:'totalBgmAmount', label:'BGM Amount'},
+                        {key:'totalManagementAmount', label:'Management Amount'},
+                        {key:'totalMfcAmount', label:'MFC Amount'},
+                        {key:'averageSessionAmount', label:'Avg Session'}
+                      ].map(col => (
+                        <th key={col.key} onClick={() => handleCoachesSort(col.key as any)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none">
+                          {col.label}{coachesSortKey === col.key ? (coachesSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                        </th>
+                      ))}
                       <th className="px-3 py-2 text-center font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {coachesSummaryData.map((coach, idx) => (
+                    {sortedCoaches.map((coach, idx) => (
                       <tr key={coach.coachName || idx} className="border-t border-gray-100 dark:border-gray-700">
                         <td className="px-3 py-2 whitespace-nowrap text-white font-medium">{coach.coachName}</td>
                         <td className="px-3 py-2 text-right tabular-nums text-white">{coach.totalSessions}</td>
@@ -840,8 +860,8 @@ const VerificationManager: React.FC = () => {
                     {coachesSummaryLoading && (
                       <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>Loading coaches summary...</td></tr>
                     )}
-                    {!coachesSummaryLoading && coachesSummaryData.length === 0 && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>No coaches data available. Click "Load Summary" to fetch data.</td></tr>
+                    {!coachesSummaryLoading && sortedCoaches.length === 0 && (
+                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>No coaches data available.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -857,578 +877,6 @@ const VerificationManager: React.FC = () => {
     </div>
   )
 }
-
-export default VerificationManager
-
-
-
-
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-
-              placeholder="Search by customer, membership, status, invoice..."
-
-            />
-
-            <div className="flex gap-2">
-
-              <button onClick={handleLoadVerified} disabled={loadingStates.loadVerified || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
-
-                {loadingStates.loadVerified ? 'Loading...' : 'Load Verified Data'}
-
-              </button>
-
-              <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
-
-                {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
-
-              </button>
-
-              <button onClick={handleExportReport} disabled={loadingStates.export || isAnyLoading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
-
-                {loadingStates.export ? 'Exporting...' : 'Export Report'}
-
-              </button>
-
-              <button onClick={handleRewrite} disabled={loadingStates.rewrite || isAnyLoading} className="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50">
-
-                {loadingStates.rewrite ? 'Rewriting...' : 'Rewrite Master'}
-
-              </button>
-
-            </div>
-
-          </div>
-
-
-
-          <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
-
-            <span className="mr-4 font-medium">Total: {summary?.totalRecords || 0}</span>
-
-            <span className="mr-4 text-green-400">Verified: {summary?.verifiedRecords || 0}</span>
-
-            <span className="mr-4 text-red-400">Unverified: {summary?.unverifiedRecords || 0}</span>
-
-            <span className="text-blue-400">Rate: {summary?.verificationRate?.toFixed?.(1) || '0.0'}%</span>
-
-          </div>
-
-
-
-          <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
-
-            <table className="min-w-[1750px] text-sm">
-
-              <thead className="sticky top-0 bg-gray-800 text-white z-10">
-
-                <tr>
-
-                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
-
-                    <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-
-                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
-
-                      {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
-
-                    </th>
-
-                  ))}
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {sorted.map((r, idx) => {
-
-                  const isEditing = editingKey && r.uniqueKey === editingKey && r.uniqueKey !== undefined && r.uniqueKey !== ''
-
-                  const draft = isEditing ? { ...r, ...editDraft } : r
-
-                  // Debug logging for editing state
-
-                  if (isEditing) {
-
-                    console.log(`✏️ Row ${idx} is in editing mode. UniqueKey: ${r.uniqueKey}, EditingKey: ${editingKey}`);
-
-                  }
-
-                  return (
-
-                    <tr key={r.uniqueKey || `row-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.customerName}</td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.eventStartsAt}</td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.membershipName}</td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.instructors}</td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.status}</td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">
-
-                        {isEditing ? (
-
-                          <input className="w-32 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.discount ?? ''}`} onChange={(e)=>dispatch(updateEditDraft({discount: e.target.value}))} />
-
-                        ) : (
-
-                          draft.discount
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input 
-
-                            type="number" 
-
-                            step="0.01" 
-
-                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
-
-                            value={`${draft.discountPercentage ?? 0}`} 
-
-                            onChange={(e)=>dispatch(updateEditDraft({discountPercentage: parseFloat(e.target.value || '0')}))} 
-
-                          />
-
-                        ) : (
-
-                          Number(draft.discountPercentage || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap" onDoubleClick={() => { 
-
-                        if (r.uniqueKey) {
-
-                          console.log('🖱️ Double-clicked row with uniqueKey:', r.uniqueKey);
-
-                          console.log('🔍 Row data:', { customer: r.customerName, date: r.eventStartsAt, membership: r.membershipName });
-
-                          console.log('📝 Current editingKey before set:', editingKey);
-
-                          dispatch(setEditingKey(r.uniqueKey)); 
-
-                          dispatch(setEditDraft({}));
-
-                        } else {
-
-                          console.warn('⚠️ Row has no uniqueKey, cannot edit');
-
-                          toast.error('Cannot edit row: missing unique identifier');
-
-                        }
-
-                      }}>
-
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(draft.verificationStatus)}`}>
-
-                          {draft.verificationStatus}
-
-                        </span>
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap">
-
-                        {isEditing ? (
-
-                          <div className="flex gap-2">
-
-                            <button 
-
-                              className="px-3 py-1 rounded bg-emerald-600 text-white disabled:opacity-50" 
-
-                              onClick={() => handleSaveEdit(r)}
-
-                              disabled={loadingStates.saveEdit}
-
-                            >
-
-                              {loadingStates.saveEdit ? 'Saving...' : 'Save Changes'}
-
-                            </button>
-
-                            <button className="px-3 py-1 rounded bg-gray-600 text-white" onClick={handleCancelEdit}>Cancel</button>
-
-                          </div>
-
-                        ) : null}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">
-
-                        {isEditing ? (
-
-                          <input className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" value={`${draft.invoiceNumber ?? ''}`} onChange={(e)=>dispatch(updateEditDraft({invoiceNumber: e.target.value}))} />
-
-                        ) : (
-
-                          draft.invoiceNumber
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input 
-
-                            type="number" 
-
-                            step="0.01" 
-
-                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
-
-                            value={`${draft.amount ?? 0}`} 
-
-                            onChange={(e)=>dispatch(updateEditDraft({amount: parseFloat(e.target.value || '0')}))} 
-
-                          />
-
-                        ) : (
-
-                          Number(draft.amount || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">
-
-                        {isEditing ? (
-
-                          <input 
-
-                            type="date" 
-
-                            className="w-40 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded" 
-
-                            value={`${draft.paymentDate ?? ''}`} 
-
-                            onChange={(e)=>dispatch(updateEditDraft({paymentDate: e.target.value}))} 
-
-                          />
-
-                        ) : (
-
-                          draft.paymentDate
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input 
-
-                            type="number" 
-
-                            step="0.01" 
-
-                            className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
-
-                            value={`${draft.packagePrice ?? 0}`} 
-
-                            onChange={(e)=>dispatch(updateEditDraft({packagePrice: parseFloat(e.target.value || '0')}))} 
-
-                          />
-
-                        ) : (
-
-                          Number(draft.packagePrice || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.sessionPrice ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({sessionPrice: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.sessionPrice || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.discountedSessionPrice ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({discountedSessionPrice: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.discountedSessionPrice || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.coachAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({coachAmount: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.coachAmount || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.bgmAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({bgmAmount: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.bgmAmount || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.managementAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({managementAmount: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.managementAmount || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-
-                        {isEditing ? (
-
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.mfcAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({mfcAmount: parseFloat(e.target.value || '0')}))} />
-
-                        ) : (
-
-                          Number(draft.mfcAmount || 0).toFixed(2)
-
-                        )}
-
-                      </td>
-
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.changeHistory || ''}</td>
-
-                    </tr>
-
-                  )
-
-                })}
-
-                {isAnyLoading && (
-
-                  <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>Loading...</td></tr>
-
-                )}
-
-                {!isAnyLoading && sorted.length === 0 && (
-
-                  <tr><td className="px-3 py-4 text-gray-500" colSpan={18}>No data</td></tr>
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-
-      {activeTab === 1 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Payment Verification section - Coming soon</div>
-      )}
-
-      {activeTab === 2 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Verification Summary section - Coming soon</div>
-      )}
-
-      {activeTab === 3 && (
-        <div className="space-y-4">
-          {selectedCoach ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">Sessions for {selectedCoach}</h2>
-                <button
-                  onClick={handleBackToSummary}
-                  className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
-                >
-                  Back to Summary
-                </button>
-              </div>
-
-              <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto">
-                <table className="min-w-[1000px] text-sm">
-                  <thead className="sticky top-0 bg-gray-800 text-white z-10">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-semibold">Date</th>
-                      <th className="px-3 py-2 text-left font-semibold">Customer</th>
-                      <th className="px-3 py-2 text-left font-semibold">Session Type</th>
-                      <th className="px-3 py-2 text-right font-semibold">Session Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Coach Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">BGM Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Management Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">MFC Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {coachSessions.map((session, idx) => (
-                      <tr key={idx} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="px-3 py-2 whitespace-nowrap text-white">{session.date}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-white">{session.customer}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-white">{session.sessionType}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-white">€{session.sessionAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-green-400 font-medium">€{session.coachAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-blue-400">€{session.bgmAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-purple-400">€{session.managementAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-orange-400">€{session.mfcAmount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                    {coachSessionsLoading && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={8}>Loading coach sessions...</td></tr>
-                    )}
-                    {!coachSessionsLoading && coachSessions.length === 0 && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={8}>No sessions found for this coach.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="date"
-                    value={coachesDateRange.fromDate}
-                    onChange={(e) => handleCoachesDateRangeChange('fromDate', e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-                    placeholder="From Date"
-                  />
-                  <input
-                    type="date"
-                    value={coachesDateRange.toDate}
-                    onChange={(e) => handleCoachesDateRangeChange('toDate', e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
-                    placeholder="To Date"
-                  />
-                  <button
-                    onClick={loadCoachesSummary}
-                    disabled={coachesSummaryLoading}
-                    className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium"
-                  >
-                    {coachesSummaryLoading ? 'Loading...' : 'Load Summary'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="text-sm text-white bg-gray-800 p-3 rounded-lg">
-                <span className="mr-4 font-medium">Total Coaches: {coachesSummaryData.length}</span>
-                <span className="mr-4">Total Sessions: {coachesSummaryData.reduce((acc, coach) => acc + coach.totalSessions, 0)}</span>
-                <span className="mr-4 text-green-400">Total Coach Amount: €{coachesSummaryData.reduce((acc, coach) => acc + coach.totalCoachAmount, 0).toFixed(2)}</span>
-              </div>
-
-              <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-300px)] overflow-x-auto overflow-y-auto">
-                <table className="min-w-[1200px] text-sm">
-                  <thead className="sticky top-0 bg-gray-800 text-white z-10">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-semibold">Coach Name</th>
-                      <th className="px-3 py-2 text-right font-semibold">Sessions</th>
-                      <th className="px-3 py-2 text-right font-semibold">Total Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Coach Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">BGM Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Management Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">MFC Amount</th>
-                      <th className="px-3 py-2 text-right font-semibold">Avg Session</th>
-                      <th className="px-3 py-2 text-center font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {coachesSummaryData.map((coach, idx) => (
-                      <tr key={coach.coachName || idx} className="border-t border-gray-100 dark:border-gray-700">
-                        <td className="px-3 py-2 whitespace-nowrap text-white font-medium">{coach.coachName}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-white">{coach.totalSessions}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-white">€{coach.totalAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-green-400 font-medium">€{coach.totalCoachAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-blue-400">€{coach.totalBgmAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-purple-400">€{coach.totalManagementAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-orange-400">€{coach.totalMfcAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-white">€{coach.averageSessionAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-center">
-                          <button
-                            onClick={() => loadCoachSessions(coach.coachName)}
-                            className="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700"
-                          >
-                            View Sessions
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {coachesSummaryLoading && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>Loading coaches summary...</td></tr>
-                    )}
-                    {!coachesSummaryLoading && coachesSummaryData.length === 0 && (
-                      <tr><td className="px-3 py-4 text-gray-500 text-center" colSpan={9}>No coaches data available. Click "Load Summary" to fetch data.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 2 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Verification Summary section - Coming soon</div>
-      )}
-
-    </div>
-
-  )
-
-}
-
-
 
 export default VerificationManager
 
