@@ -112,7 +112,7 @@ const Reports: React.FC = () => {
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
             <div className="font-semibold mb-2">BGM (Landlord) Report</div>
             <div className="mb-2 text-gray-700 dark:text-gray-300">Generate detailed landlord payment report with breakdown</div>
-            <button className="btn-primary w-full" onClick={() => handleGenerate('BGM Report')}>Generate BGM Report</button>
+            <BgmControls />
           </div>
         </div>
         {/* Individual Payslips & Management */}
@@ -180,7 +180,7 @@ const Reports: React.FC = () => {
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
             <div className="font-semibold mb-2">Management Report</div>
             <div className="mb-2 text-gray-700 dark:text-gray-300">Generate management team payment summary</div>
-            <button className="btn-primary w-full" onClick={() => handleGenerate('Management Report')}>Generate Management Report</button>
+            <ManagementControls />
           </div>
         </div>
       </div>
@@ -234,3 +234,90 @@ const Reports: React.FC = () => {
 }
 
 export default Reports 
+
+// Inline small control components to avoid touching other modules
+const BgmControls: React.FC = () => {
+  const [fromDate, setFromDate] = React.useState('')
+  const [toDate, setToDate] = React.useState('')
+  const [format, setFormat] = React.useState<'excel'|'pdf'>('excel')
+  const [loading, setLoading] = React.useState(false)
+
+  const onGenerate = async () => {
+    try {
+      setLoading(true)
+      await apiService.generateBgmReport({ fromDate: fromDate || undefined, toDate: toDate || undefined, format })
+    } catch (e: any) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">From Date:</label>
+          <input type="date" className="input-field w-full" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">To Date:</label>
+          <input type="date" className="input-field w-full" value={toDate} onChange={e => setToDate(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Format:</label>
+        <select className="input-field w-full" value={format} onChange={e => setFormat(e.target.value as 'excel'|'pdf')}>
+          <option value="excel">Excel (.xlsx)</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </div>
+      <button className="btn-primary w-full" onClick={onGenerate} disabled={loading}>
+        {loading ? 'Generating...' : 'Generate BGM Report'}
+      </button>
+    </div>
+  )
+}
+
+const ManagementControls: React.FC = () => {
+  const [fromDate, setFromDate] = React.useState('')
+  const [toDate, setToDate] = React.useState('')
+  const [format, setFormat] = React.useState<'excel'|'pdf'>('excel')
+  const [loading, setLoading] = React.useState(false)
+
+  const onGenerate = async () => {
+    try {
+      setLoading(true)
+      await apiService.generateManagementReport({ fromDate: fromDate || undefined, toDate: toDate || undefined, format })
+    } catch (e: any) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">From Date:</label>
+          <input type="date" className="input-field w-full" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">To Date:</label>
+          <input type="date" className="input-field w-full" value={toDate} onChange={e => setToDate(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Format:</label>
+        <select className="input-field w-full" value={format} onChange={e => setFormat(e.target.value as 'excel'|'pdf')}>
+          <option value="excel">Excel (.xlsx)</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </div>
+      <button className="btn-primary w-full" onClick={onGenerate} disabled={loading}>
+        {loading ? 'Generating...' : 'Generate Management Report'}
+      </button>
+    </div>
+  )
+}

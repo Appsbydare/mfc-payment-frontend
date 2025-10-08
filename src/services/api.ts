@@ -23,6 +23,41 @@ class ApiService {
     this.baseURL = normalizeBaseURL(API_BASE_URL);
   }
 
+  // New: BGM report
+  async generateBgmReport(params: { fromDate?: string; toDate?: string; format?: 'excel'|'pdf' }) {
+    const url = `${this.baseURL}/reports/bgm`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params || {}),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const href = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ext = params?.format === 'pdf' ? 'pdf' : 'xlsx';
+    a.href = href; a.download = `bgm_report_${new Date().toISOString().split('T')[0]}.${ext}`; a.click();
+    window.URL.revokeObjectURL(href);
+    return { success: true };
+  }
+
+  // New: Management report
+  async generateManagementReport(params: { fromDate?: string; toDate?: string; format?: 'excel'|'pdf' }) {
+    const url = `${this.baseURL}/reports/management`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params || {}),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const href = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ext = params?.format === 'pdf' ? 'pdf' : 'xlsx';
+    a.href = href; a.download = `management_report_${new Date().toISOString().split('T')[0]}.${ext}`; a.click();
+    window.URL.revokeObjectURL(href);
+    return { success: true };
+  }
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
