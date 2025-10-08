@@ -196,6 +196,53 @@ class ApiService {
     });
   }
 
+  // Payslip generation
+  async generatePayslip(params: {
+    coachName: string;
+    fromDate?: string;
+    toDate?: string;
+    format?: 'excel' | 'pdf';
+  }) {
+    const url = `${this.baseURL}/reports/payslip`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+      }
+      
+      // Handle file download
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Set filename based on format
+      const extension = params.format === 'pdf' ? 'pdf' : 'xlsx';
+      const filename = `${params.coachName.replace(/\s+/g, '_')}_payslip_${new Date().toISOString().split('T')[0]}.${extension}`;
+      link.download = filename;
+      
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      return { 
+        success: true, 
+        message: `Payslip generated successfully for ${params.coachName}` 
+      };
+    } catch (error) {
+      console.error('Payslip generation failed:', error);
+      throw error;
+    }
+  }
+
   // Payments calculation removed
 
   // Discounts API

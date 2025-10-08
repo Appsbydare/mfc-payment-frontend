@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
+import toast from 'react-hot-toast'
 
 const coaches = ['All Coaches', 'Alice Smith', 'Bob Johnson', 'Charlie Wilson', 'Diana Garcia', 'Eva Martinez']
 const reportHistory = [
@@ -15,6 +16,65 @@ const Reports: React.FC = () => {
   const [exportFormat, setExportFormat] = useState('PDF')
   const [saveToLocal, setSaveToLocal] = useState(true)
   const [status, setStatus] = useState('Ready to generate reports.')
+  
+  // Individual Payslips state
+  const [payslipCoach, setPayslipCoach] = useState('')
+  const [payslipFromDate, setPayslipFromDate] = useState('')
+  const [payslipToDate, setPayslipToDate] = useState('')
+  const [payslipFormat, setPayslipFormat] = useState<'excel' | 'pdf'>('excel')
+  const [payslipLoading, setPayslipLoading] = useState(false)
+  const [availableCoaches, setAvailableCoaches] = useState<string[]>([])
+
+  // Load available coaches from coaches summary
+  useEffect(() => {
+    const loadCoaches = async () => {
+      try {
+        const response = await apiService.getCoachesSummary()
+        if (response.success && response.data) {
+          const coachNames = response.data.map((coach: any) => coach.coachName)
+          setAvailableCoaches(coachNames)
+          if (coachNames.length > 0 && !payslipCoach) {
+            setPayslipCoach(coachNames[0])
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load coaches, using default list')
+        setAvailableCoaches(coaches.slice(1)) // Remove 'All Coaches' from default list
+      }
+    }
+    loadCoaches()
+  }, [])
+
+  // Generate individual payslip
+  const handleGeneratePayslip = async () => {
+    if (!payslipCoach) {
+      toast.error('Please select a coach')
+      return
+    }
+
+    try {
+      setPayslipLoading(true)
+      toast.loading('Generating payslip...', { id: 'payslip-generation' })
+
+      const params = {
+        coachName: payslipCoach,
+        fromDate: payslipFromDate || undefined,
+        toDate: payslipToDate || undefined,
+        format: payslipFormat
+      }
+
+      await apiService.generatePayslip(params)
+      
+      toast.success(`Payslip generated successfully for ${payslipCoach}`, { id: 'payslip-generation' })
+      setStatus(`Payslip generated successfully for ${payslipCoach}`)
+    } catch (error: any) {
+      console.error('❌ Error generating payslip:', error)
+      toast.error(error?.message || 'Failed to generate payslip', { id: 'payslip-generation' })
+      setStatus(`Error: ${error?.message || 'Failed to generate payslip'}`)
+    } finally {
+      setPayslipLoading(false)
+    }
+  }
 
   // Generate report via backend
   const handleGenerate = async (type: string) => {
@@ -59,14 +119,63 @@ const Reports: React.FC = () => {
         {/* Individual Payslips & Management */}
         <div className="space-y-4">
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
-            <div className="font-semibold mb-2">Individual Payslips</div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-gray-700 dark:text-gray-300">Select Coach:</label>
-              <select className="input-field" value={selectedCoach} onChange={e => setSelectedCoach(e.target.value)}>
-                {coaches.map(coach => <option key={coach} value={coach}>{coach}</option>)}
-              </select>
+            <div className="font-semibold mb-3">Individual Payslips</div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Select Coach:</label>
+                <select 
+                  className="input-field w-full" 
+                  value={payslipCoach} 
+                  onChange={e => setPayslipCoach(e.target.value)}
+                >
+                  <option value="">Select a coach...</option>
+                  {availableCoaches.map(coach => (
+                    <option key={coach} value={coach}>{coach}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">From Date:</label>
+                  <input
+                    type="date"
+                    className="input-field w-full"
+                    value={payslipFromDate}
+                    onChange={e => setPayslipFromDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">To Date:</label>
+                  <input
+                    type="date"
+                    className="input-field w-full"
+                    value={payslipToDate}
+                    onChange={e => setPayslipToDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Format:</label>
+                <select 
+                  className="input-field w-full" 
+                  value={payslipFormat} 
+                  onChange={e => setPayslipFormat(e.target.value as 'excel' | 'pdf')}
+                >
+                  <option value="excel">Excel (.xlsx)</option>
+                  <option value="pdf">PDF</option>
+                </select>
+              </div>
+              
+              <button 
+                className="btn-primary w-full" 
+                onClick={handleGeneratePayslip}
+                disabled={payslipLoading || !payslipCoach}
+              >
+                {payslipLoading ? 'Generating...' : 'Generate Payslip'}
+              </button>
             </div>
-            <button className="btn-primary w-full" onClick={() => handleGenerate('Payslips')}>Generate Payslips</button>
           </div>
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-md">
             <div className="font-semibold mb-2">Management Report</div>
