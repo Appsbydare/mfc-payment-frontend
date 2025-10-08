@@ -12,7 +12,6 @@ const reportHistory = [
 ]
 
 const Reports: React.FC = () => {
-  const [selectedCoach, setSelectedCoach] = useState('All Coaches')
   const [exportFormat, setExportFormat] = useState('PDF')
   const [saveToLocal, setSaveToLocal] = useState(true)
   const [status, setStatus] = useState('Ready to generate reports.')
