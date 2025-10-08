@@ -167,10 +167,11 @@ const Reports: React.FC = () => {
                 </select>
               </div>
               
-              <button 
-                className="btn-primary w-full" 
+              <button
+                className="btn-primary w-full"
                 onClick={handleGeneratePayslip}
                 disabled={payslipLoading || !payslipCoach}
+                id="generate-payslip-btn"
               >
                 {payslipLoading ? 'Generating...' : 'Generate Payslip'}
               </button>
