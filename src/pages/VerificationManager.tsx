@@ -529,12 +529,12 @@ const VerificationManager: React.FC = () => {
           </div>
 
           <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
-            <table className="min-w-[1750px] text-sm">
+            <table className="min-w-[1850px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','classType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Class Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -553,6 +553,7 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.customerName}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.eventStartsAt}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.membershipName}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.classType || ''}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.instructors}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.status}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">

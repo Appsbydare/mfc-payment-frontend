@@ -4,6 +4,7 @@ export interface MasterRow {
   customerName: string
   eventStartsAt: string
   membershipName: string
+  classType?: string
   instructors: string
   status: string
   discount: string
