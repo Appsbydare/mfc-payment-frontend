@@ -534,7 +534,7 @@ const VerificationManager: React.FC = () => {
                 <tr>
                   {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
