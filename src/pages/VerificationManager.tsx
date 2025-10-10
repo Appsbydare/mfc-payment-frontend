@@ -554,8 +554,8 @@ const VerificationManager: React.FC = () => {
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.eventStartsAt}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.membershipName}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.classType || ''}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.instructors}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.sessionType || ''}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-white">{draft.instructors}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">{draft.status}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-white">
                         {isEditing ? (
