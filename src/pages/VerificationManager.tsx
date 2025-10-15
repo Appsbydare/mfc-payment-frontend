@@ -55,6 +55,9 @@ const VerificationManager: React.FC = () => {
   const [coachesSortKey, setCoachesSortKey] = React.useState<'coachName'|'totalSessions'|'totalAmount'|'totalCoachAmount'|'totalBgmAmount'|'totalManagementAmount'|'totalMfcAmount'|'averageSessionAmount'>('totalCoachAmount')
   const [coachesSortDir, setCoachesSortDir] = React.useState<'asc'|'desc'>('desc')
 
+  // Verify choice popover state
+  const [showVerifyChoice, setShowVerifyChoice] = React.useState(false)
+
   // Helper function to update loading states
   const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
     setLoadingStates(prev => ({ ...prev, [key]: value }))
@@ -180,50 +183,65 @@ const VerificationManager: React.FC = () => {
     }
   }
 
-  const handleVerify = async () => {
+  const runVerification = async (includeDiscounts: boolean) => {
     try {
       setLoading('verify', true)
       
-      // Use the new batch verification process (all steps in memory, single write at end)
-      toast.loading('Starting batch verification process...', { id: 'batch-verify' })
-      console.log('🔄 Starting batch verification process...')
-      
-      // Only verify if there is NEW data (server will gate when forceReverify=false)
-      const batchRes = await apiService.batchVerificationProcess(false)
-      if (!(batchRes as any).success) {
-        toast.error((batchRes as any).message || 'Batch verification failed', { id: 'batch-verify' })
-        return
-      }
-      
-      console.log('✅ Batch verification completed')
-      toast.success('Batch verification completed successfully!', { id: 'batch-verify' })
-      
-      // Update UI with final data
-      const rawFinalData = (batchRes as any).data || []
-      const finalData = ensureUniqueKeys(rawFinalData)
-      dispatch(setMasterData(finalData))
-      
-      // Track which are newly verified compared to loaded keys
-      if (existingKeysSet && existingKeysSet.size > 0) {
-        const newCount = finalData.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
-        if (newCount > 0) {
-          toast.success(`${newCount} new records found since last load`)
+      if (includeDiscounts) {
+        // With Discounts: run batch process (verify + discounts + recalculation in one go)
+        toast.loading('Starting batch verification (with discounts)...', { id: 'verify-process' })
+        console.log('🔄 Starting batch verification (with discounts)...')
+        const res = await apiService.batchVerificationProcess(false)
+        if (!(res as any).success) {
+          toast.error((res as any).message || 'Batch verification failed', { id: 'verify-process' })
+          return
         }
+        console.log('✅ Batch verification (with discounts) completed')
+        toast.success('Verification (with discounts) completed successfully!', { id: 'verify-process' })
+        const raw = (res as any).data || []
+        const rows = ensureUniqueKeys(raw)
+        dispatch(setMasterData(rows))
+        if (existingKeysSet && existingKeysSet.size > 0) {
+          const newCount = rows.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
+          if (newCount > 0) toast.success(`${newCount} new records found since last load`)
+        }
+        const summaryFromResponse = (res as any).summary || {}
+        dispatch(setSummary(summaryFromResponse))
+        toast.success(`Verification complete: ${summaryFromResponse.verifiedRecords || 0}/${summaryFromResponse.totalRecords || 0} verified`, { duration: 4000 })
+      } else {
+        // Without Discounts: run basic verification only
+        toast.loading('Starting verification (without discounts)...', { id: 'verify-process' })
+        console.log('🔄 Starting verification (without discounts)...')
+        const res = await apiService.verifyAttendanceData(false)
+        if (!(res as any).success) {
+          toast.error((res as any).message || 'Verification failed', { id: 'verify-process' })
+          return
+        }
+        console.log('✅ Verification (without discounts) completed')
+        toast.success('Verification (without discounts) completed successfully!', { id: 'verify-process' })
+        const raw = (res as any).data || []
+        const rows = ensureUniqueKeys(raw)
+        dispatch(setMasterData(rows))
+        if (existingKeysSet && existingKeysSet.size > 0) {
+          const newCount = rows.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
+          if (newCount > 0) toast.success(`${newCount} new records found since last load`)
+        }
+        const summaryFromResponse = (res as any).summary || {}
+        dispatch(setSummary(summaryFromResponse))
+        toast.success(`Verification complete: ${summaryFromResponse.verifiedRecords || 0}/${summaryFromResponse.totalRecords || 0} verified`, { duration: 4000 })
       }
-
-      // Use the summary from the response
-      const responseSummary = (batchRes as any).summary || {}
-      dispatch(setSummary(responseSummary))
-      
-      // Final success message
-      toast.success(`Verification complete: ${responseSummary.verifiedRecords || 0}/${responseSummary.totalRecords || 0} verified`, { duration: 4000 })
       
     } catch (e: any) {
-      console.error('❌ Batch verification process error:', e)
-      toast.error(e?.message || 'Batch verification process failed')
+      console.error('❌ Verification process error:', e)
+      toast.error(e?.message || 'Verification process failed')
     } finally {
       setLoading('verify', false)
     }
+  }
+
+  const handleVerify = () => {
+    if (isAnyLoading) return
+    setShowVerifyChoice(true)
   }
 
 
@@ -509,9 +527,32 @@ const VerificationManager: React.FC = () => {
               <button onClick={handleLoadVerified} disabled={loadingStates.loadVerified || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
                 {loadingStates.loadVerified ? 'Loading...' : 'Load Verified Data'}
               </button>
-              <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
-                {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
-              </button>
+              <div className="relative">
+                <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
+                  {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
+                </button>
+                {showVerifyChoice && (
+                  <div className="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded shadow-lg z-20">
+                    <div className="px-3 py-2 text-white font-medium border-b border-gray-700">
+                      Run with Discounts?
+                    </div>
+                    <div className="p-2 flex gap-2">
+                      <button
+                        className="flex-1 px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                        onClick={() => { setShowVerifyChoice(false); runVerification(true); }}
+                      >
+                        Yes, include discounts
+                      </button>
+                      <button
+                        className="flex-1 px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+                        onClick={() => { setShowVerifyChoice(false); runVerification(false); }}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button onClick={handleExportReport} disabled={loadingStates.export || isAnyLoading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
                 {loadingStates.export ? 'Exporting...' : 'Export Report'}
               </button>
