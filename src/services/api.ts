@@ -356,6 +356,24 @@ class ApiService {
     });
   }
 
+  async verifyAttendanceDataV2(params: { fromDate?: string; toDate?: string } = {}) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      data: any[];
+      summary: {
+        totalRecords: number;
+        verifiedRecords: number;
+        unverifiedRecords: number;
+        verificationRate: number;
+        newRecordsAdded: number;
+      };
+    }>(`/attendance-verification/verify-v2`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
   async batchVerificationProcess(forceReverify: boolean = true) {
     return this.request<{
       success: boolean;

@@ -185,49 +185,26 @@ const VerificationManager: React.FC = () => {
     try {
       setLoading('verify', true)
       
-      if (includeDiscounts) {
-        // With Discounts: run batch process (verify + discounts + recalculation in one go)
-        toast.loading('Starting batch verification (with discounts)...', { id: 'verify-process' })
-        console.log('🔄 Starting batch verification (with discounts)...')
-        const res = await apiService.batchVerificationProcess(false)
-        if (!(res as any).success) {
-          toast.error((res as any).message || 'Batch verification failed', { id: 'verify-process' })
-          return
-        }
-        console.log('✅ Batch verification (with discounts) completed')
-        toast.success('Verification (with discounts) completed successfully!', { id: 'verify-process' })
-        const raw = (res as any).data || []
-        const rows = ensureUniqueKeys(raw)
-        dispatch(setMasterData(rows))
-        if (existingKeysSet && existingKeysSet.size > 0) {
-          const newCount = rows.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
-          if (newCount > 0) toast.success(`${newCount} new records found since last load`)
-        }
-        const summaryFromResponse = (res as any).summary || {}
-        dispatch(setSummary(summaryFromResponse))
-        toast.success(`Verification complete: ${summaryFromResponse.verifiedRecords || 0}/${summaryFromResponse.totalRecords || 0} verified`, { duration: 4000 })
-      } else {
-        // Without Discounts: run basic verification only
-        toast.loading('Starting verification (without discounts)...', { id: 'verify-process' })
-        console.log('🔄 Starting verification (without discounts)...')
-        const res = await apiService.verifyAttendanceData(false)
-        if (!(res as any).success) {
-          toast.error((res as any).message || 'Verification failed', { id: 'verify-process' })
-          return
-        }
-        console.log('✅ Verification (without discounts) completed')
-        toast.success('Verification (without discounts) completed successfully!', { id: 'verify-process' })
-        const raw = (res as any).data || []
-        const rows = ensureUniqueKeys(raw)
-        dispatch(setMasterData(rows))
-        if (existingKeysSet && existingKeysSet.size > 0) {
-          const newCount = rows.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
-          if (newCount > 0) toast.success(`${newCount} new records found since last load`)
-        }
-        const summaryFromResponse = (res as any).summary || {}
-        dispatch(setSummary(summaryFromResponse))
-        toast.success(`Verification complete: ${summaryFromResponse.verifiedRecords || 0}/${summaryFromResponse.totalRecords || 0} verified`, { duration: 4000 })
+      // Always run new V2 verification (no discounts here)
+      toast.loading('Starting verification...', { id: 'verify-process' })
+      console.log('🔄 Starting V2 verification...')
+      const res = await apiService.verifyAttendanceDataV2({})
+      if (!(res as any).success) {
+        toast.error((res as any).message || 'Verification failed', { id: 'verify-process' })
+        return
       }
+      console.log('✅ V2 verification completed')
+      toast.success('Verification completed successfully!', { id: 'verify-process' })
+      const raw = (res as any).data || []
+      const rows = ensureUniqueKeys(raw)
+      dispatch(setMasterData(rows))
+      if (existingKeysSet && existingKeysSet.size > 0) {
+        const newCount = rows.filter((r: any) => r.uniqueKey && !existingKeysSet.has(r.uniqueKey)).length
+        if (newCount > 0) toast.success(`${newCount} new records found since last load`)
+      }
+      const summaryFromResponse = (res as any).summary || {}
+      dispatch(setSummary(summaryFromResponse))
+      toast.success(`Verification complete: ${summaryFromResponse.verifiedRecords || 0}/${summaryFromResponse.totalRecords || 0} verified`, { duration: 4000 })
       
     } catch (e: any) {
       console.error('❌ Verification process error:', e)
