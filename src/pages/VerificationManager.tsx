@@ -553,9 +553,9 @@ const VerificationManager: React.FC = () => {
             <table className="min-w-[1850px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','numberOfSessions','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Package Price','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Package Price','Number of Sessions','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -672,6 +672,9 @@ const VerificationManager: React.FC = () => {
                         ) : (
                           Number(draft.packagePrice || 0).toFixed(2)
                         )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {Number(draft.numberOfSessions || 0).toFixed(0)}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (

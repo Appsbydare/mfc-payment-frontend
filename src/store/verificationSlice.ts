@@ -15,6 +15,7 @@ export interface MasterRow {
   amount: number
   paymentDate: string
   packagePrice: number
+  numberOfSessions?: number
   sessionPrice: number
   discountedSessionPrice: number
   coachAmount: number
