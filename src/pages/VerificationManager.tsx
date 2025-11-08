@@ -181,7 +181,7 @@ const VerificationManager: React.FC = () => {
     }
   }
 
-  const runVerification = async (includeDiscounts: boolean) => {
+  const runVerification = async () => {
     try {
       setLoading('verify', true)
       
@@ -217,7 +217,7 @@ const VerificationManager: React.FC = () => {
   const handleVerify = () => {
     if (isAnyLoading) return
     // Always run verification without the discount batch
-    runVerification(false)
+    runVerification()
   }
 
   const handleAddDiscounts = async () => {
