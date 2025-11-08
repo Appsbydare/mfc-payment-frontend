@@ -38,6 +38,7 @@ const VerificationManager: React.FC = () => {
   const [loadingStates, setLoadingStates] = React.useState({
     loadVerified: false,
     verify: false,
+    addDiscounts: false,
     export: false,
     rewrite: false,
     saveEdit: false,
@@ -54,9 +55,6 @@ const VerificationManager: React.FC = () => {
   const [coachesFilterText, setCoachesFilterText] = React.useState('')
   const [coachesSortKey, setCoachesSortKey] = React.useState<'coachName'|'totalSessions'|'totalAmount'|'totalCoachAmount'|'totalBgmAmount'|'totalManagementAmount'|'totalMfcAmount'|'averageSessionAmount'>('totalCoachAmount')
   const [coachesSortDir, setCoachesSortDir] = React.useState<'asc'|'desc'>('desc')
-
-  // Verify choice popover state
-  const [showVerifyChoice, setShowVerifyChoice] = React.useState(false)
 
   // Helper function to update loading states
   const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
@@ -241,7 +239,32 @@ const VerificationManager: React.FC = () => {
 
   const handleVerify = () => {
     if (isAnyLoading) return
-    setShowVerifyChoice(true)
+    // Always run verification without the discount batch
+    runVerification(false)
+  }
+
+  const handleAddDiscounts = async () => {
+    try {
+      setLoading('addDiscounts', true)
+      toast.loading('Applying discounts...', { id: 'add-discounts' })
+
+      const res = await apiService.addDiscounts()
+      if ((res as any).success) {
+        const rows = (res as any).data || []
+        dispatch(setMasterData(rows))
+        dispatch(setSummary((res as any).summary || {}))
+
+        const applied = (res as any)?.summary?.discountAppliedCount ?? 0
+        toast.success(`Discounts added to ${applied} record(s)`, { id: 'add-discounts' })
+      } else {
+        toast.error((res as any).message || 'Failed to add discounts', { id: 'add-discounts' })
+      }
+    } catch (e: any) {
+      console.error('❌ Add discounts error:', e)
+      toast.error(e?.message || 'Failed to add discounts', { id: 'add-discounts' })
+    } finally {
+      setLoading('addDiscounts', false)
+    }
   }
 
 
@@ -527,32 +550,12 @@ const VerificationManager: React.FC = () => {
               <button onClick={handleLoadVerified} disabled={loadingStates.loadVerified || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
                 {loadingStates.loadVerified ? 'Loading...' : 'Load Verified Data'}
               </button>
-              <div className="relative">
-                <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
-                  {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
-                </button>
-                {showVerifyChoice && (
-                  <div className="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded shadow-lg z-20">
-                    <div className="px-3 py-2 text-white font-medium border-b border-gray-700">
-                      Run with Discounts?
-                    </div>
-                    <div className="p-2 flex gap-2">
-                      <button
-                        className="flex-1 px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
-                        onClick={() => { setShowVerifyChoice(false); runVerification(true); }}
-                      >
-                        Yes, include discounts
-                      </button>
-                      <button
-                        className="flex-1 px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
-                        onClick={() => { setShowVerifyChoice(false); runVerification(false); }}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button onClick={handleAddDiscounts} disabled={loadingStates.addDiscounts || isAnyLoading} className="px-3 py-2 rounded bg-amber-600 text-white disabled:opacity-50">
+                {loadingStates.addDiscounts ? 'Adding...' : 'Add Discounts'}
+              </button>
+              <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
+                {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
+              </button>
               <button onClick={handleExportReport} disabled={loadingStates.export || isAnyLoading} className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50">
                 {loadingStates.export ? 'Exporting...' : 'Export Report'}
               </button>
