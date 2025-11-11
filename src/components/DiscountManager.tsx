@@ -6,6 +6,7 @@ interface Discount {
   id: number;
   discount_code: string;
   name: string;
+  payment_memo_keyword: string;
   applicable_percentage: number;
   coach_payment_type: 'full' | 'partial' | 'free';
   match_type: 'exact' | 'contains' | 'regex';
@@ -34,6 +35,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
   const [formData, setFormData] = useState({
     discount_code: '',
     name: '',
+    payment_memo_keyword: '',
     applicable_percentage: 0,
     coach_payment_type: 'partial' as 'full' | 'partial' | 'free',
     match_type: 'exact' as 'exact' | 'contains' | 'regex',
@@ -59,6 +61,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     id: Number(row.id ?? fallbackId ?? Date.now()),
     discount_code: String(row.discount_code ?? row['discount_code'] ?? ''),
     name: String(row.name ?? row['name'] ?? ''),
+    payment_memo_keyword: String(row.payment_memo_keyword ?? row['payment_memo_keyword'] ?? row.name ?? row['name'] ?? ''),
     applicable_percentage: Number(row.applicable_percentage ?? row['applicable_percentage'] ?? 0) || 0,
     coach_payment_type: normalizeCoachPaymentType(row.coach_payment_type ?? row['coach_payment_type']),
     match_type: normalizeMatchType(row.match_type ?? row['match_type']),
@@ -129,6 +132,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     setFormData({
       discount_code: discount.discount_code,
       name: discount.name,
+      payment_memo_keyword: discount.payment_memo_keyword,
       applicable_percentage: discount.applicable_percentage,
       coach_payment_type: discount.coach_payment_type,
       match_type: discount.match_type,
@@ -187,6 +191,7 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
     setFormData({
       discount_code: '',
       name: '',
+      payment_memo_keyword: '',
       applicable_percentage: 0,
       coach_payment_type: 'partial',
       match_type: 'exact',
@@ -349,6 +354,20 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                     placeholder="e.g., Loyalty 1-to-1 Single Class Discount"
                   />
                 </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Payment Memo Keyword * <span className="text-xs text-gray-500">(Exact text to match in payment memo)</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.payment_memo_keyword}
+                    onChange={(e) => setFormData({ ...formData, payment_memo_keyword: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., BOXING DISCOUNT (must match exactly as it appears in payments)"
+                  />
+                </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
@@ -458,6 +477,9 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Payment Memo Keyword
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Percentage
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -482,6 +504,11 @@ const DiscountManager: React.FC<DiscountManagerProps> = ({ onDiscountChange }) =
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {discount.name}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                    <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                      {discount.payment_memo_keyword}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {discount.applicable_percentage}%
