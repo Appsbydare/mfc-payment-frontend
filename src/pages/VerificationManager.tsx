@@ -30,7 +30,6 @@ type PaymentVerificationRow = {
   discountAmount?: number
   discountPercentage?: number
   tax: number
-  finalPrice: number
   netPrice: number
   numberOfSessions: number
   discountedSessionPrice: number
@@ -167,8 +166,7 @@ const VerificationManager: React.FC = () => {
         const rows: PaymentVerificationRow[] = (response.data || []).map((row: any) => {
           const amount = Number(row.amount ?? row.totalAmount ?? 0) || 0
           const tax = Number(row.tax ?? 0) || 0
-          const finalPrice = Number(row.finalPrice ?? 0) || 0
-          const netPriceRaw = Number(row.netPrice ?? (finalPrice - tax)) || 0
+          const netPriceRaw = Number(row.netPrice ?? (Number(row.amount ?? row.totalAmount ?? 0) - tax - Number(row.discountAmount ?? row.discount_amount ?? 0))) || 0
           const netPrice = netPriceRaw < 0 ? 0 : netPriceRaw
           const discountPercentage = Number(row.discountPercentage ?? row.discount_percentage ?? 0) || 0
           const discountAmount = Number(row.discountAmount ?? row.discount_amount ?? 0) || 0
@@ -182,7 +180,6 @@ const VerificationManager: React.FC = () => {
             discountAmount,
             discountPercentage,
             tax,
-            finalPrice: finalPrice < 0 ? 0 : finalPrice,
             netPrice,
             numberOfSessions: Number(row.numberOfSessions ?? row.totalSessions ?? 0) || 0,
             discountedSessionPrice: Number(row.discountedSessionPrice ?? row.invoiceVerifiedSessionPrice ?? 0) || 0,
@@ -259,7 +256,6 @@ const VerificationManager: React.FC = () => {
     { key: 'discountPercentage', label: 'Actual Discount %', align: 'right', format: (row) => formatPercent(row.discountPercentage) },
     { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right', format: (row) => Number(row.numberOfSessions || 0).toFixed(0) },
     { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right', format: (row) => formatCurrency(row.discountedSessionPrice) },
-    { key: 'finalPrice', label: 'Final Price', align: 'right', format: (row) => formatCurrency(row.finalPrice) },
   ]), [formatCurrency, formatPercent])
 
   const handlePaymentSort = (key: keyof PaymentVerificationRow) => {
@@ -273,13 +269,11 @@ const VerificationManager: React.FC = () => {
 
   const paymentStats = React.useMemo(() => {
     const totalInvoices = paymentSummary?.totalInvoices ?? paymentData.length
-    const totalFinalPrice = paymentSummary?.totalFinalPrice ?? paymentData.reduce((sum, row) => sum + (row.finalPrice || 0), 0)
     const totalTax = paymentSummary?.totalTax ?? paymentData.reduce((sum, row) => sum + (row.tax || 0), 0)
     const totalNetPrice = paymentSummary?.totalNetPrice ?? paymentData.reduce((sum, row) => sum + (row.netPrice || 0), 0)
     const invoicesWithDiscounts = paymentSummary?.invoicesWithDiscounts ?? paymentData.filter(row => !!row.discount).length
     return {
       totalInvoices,
-      totalFinalPrice,
       totalTax,
       totalNetPrice,
       invoicesWithDiscounts,
@@ -914,7 +908,7 @@ const VerificationManager: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="bg-gray-800 text-white rounded-lg p-3">
               <div className="text-xs uppercase tracking-wide text-gray-400">Total Invoices</div>
               <div className="text-2xl font-semibold">{paymentStats.totalInvoices}</div>
@@ -922,10 +916,6 @@ const VerificationManager: React.FC = () => {
             <div className="bg-gray-800 text-white rounded-lg p-3">
               <div className="text-xs uppercase tracking-wide text-gray-400">Invoices With Discounts</div>
               <div className="text-2xl font-semibold">{paymentStats.invoicesWithDiscounts}</div>
-            </div>
-            <div className="bg-gray-800 text-white rounded-lg p-3">
-              <div className="text-xs uppercase tracking-wide text-gray-400">Total Final Price</div>
-              <div className="text-2xl font-semibold">{formatCurrency(paymentStats.totalFinalPrice)}</div>
             </div>
             <div className="bg-gray-800 text-white rounded-lg p-3">
               <div className="text-xs uppercase tracking-wide text-gray-400">Total Net Price</div>
