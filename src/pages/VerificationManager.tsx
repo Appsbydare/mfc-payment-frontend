@@ -53,7 +53,6 @@ const VerificationManager: React.FC = () => {
   const [loadingStates, setLoadingStates] = React.useState({
     loadVerified: false,
     verify: false,
-    addDiscounts: false,
     export: false,
     rewrite: false,
     saveEdit: false,
@@ -365,30 +364,6 @@ const VerificationManager: React.FC = () => {
     runVerification()
   }
 
-  const handleAddDiscounts = async () => {
-    try {
-      setLoading('addDiscounts', true)
-      toast.loading('Applying discounts...', { id: 'add-discounts' })
-
-      const res = await apiService.addDiscounts()
-      if ((res as any).success) {
-        const rows = (res as any).data || []
-        dispatch(setMasterData(rows))
-        dispatch(setSummary((res as any).summary || {}))
-
-        const applied = (res as any)?.summary?.discountAppliedCount ?? 0
-        toast.success(`Discounts added to ${applied} record(s)`, { id: 'add-discounts' })
-      } else {
-        toast.error((res as any).message || 'Failed to add discounts', { id: 'add-discounts' })
-      }
-    } catch (e: any) {
-      console.error('❌ Add discounts error:', e)
-      toast.error(e?.message || 'Failed to add discounts', { id: 'add-discounts' })
-    } finally {
-      setLoading('addDiscounts', false)
-    }
-  }
-
 
   const handleRewrite = async () => {
     try {
@@ -677,9 +652,6 @@ const VerificationManager: React.FC = () => {
             <div className="flex gap-2">
               <button onClick={handleLoadVerified} disabled={loadingStates.loadVerified || isAnyLoading} className="px-3 py-2 rounded bg-gray-600 text-white disabled:opacity-50">
                 {loadingStates.loadVerified ? 'Loading...' : 'Load Verified Data'}
-              </button>
-              <button onClick={handleAddDiscounts} disabled={loadingStates.addDiscounts || isAnyLoading} className="px-3 py-2 rounded bg-amber-600 text-white disabled:opacity-50">
-                {loadingStates.addDiscounts ? 'Adding...' : 'Add Discounts'}
               </button>
               <button onClick={handleVerify} disabled={loadingStates.verify || isAnyLoading} className="px-4 py-2 rounded bg-primary-600 text-white disabled:opacity-50 font-medium">
                 {loadingStates.verify ? 'Processing...' : 'Verify Payments'}
