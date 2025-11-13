@@ -34,6 +34,8 @@ type PaymentVerificationRow = {
   numberOfSessions: number
   discountedSessionPrice: number
   attendanceVerified?: boolean
+  consumedSessions?: number
+  pendingSessions?: number
 }
 
 const VerificationManager: React.FC = () => {
@@ -183,7 +185,9 @@ const VerificationManager: React.FC = () => {
             netPrice,
             numberOfSessions: Number(row.numberOfSessions ?? row.totalSessions ?? 0) || 0,
             discountedSessionPrice: Number(row.discountedSessionPrice ?? row.invoiceVerifiedSessionPrice ?? 0) || 0,
-            attendanceVerified: Boolean(row.attendanceVerified)
+            attendanceVerified: Boolean(row.attendanceVerified),
+            consumedSessions: Number(row.consumedSessions ?? 0) || 0,
+            pendingSessions: Number(row.pendingSessions ?? 0) || 0
           }
         })
         setPaymentData(rows)
@@ -256,6 +260,8 @@ const VerificationManager: React.FC = () => {
     { key: 'netPrice', label: 'Net Price', align: 'right', format: (row) => formatCurrency(row.netPrice) },
     { key: 'discountPercentage', label: 'Actual Discount %', align: 'right', format: (row) => formatPercent(row.discountPercentage) },
     { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right', format: (row) => Number(row.numberOfSessions || 0).toFixed(0) },
+    { key: 'consumedSessions', label: 'Consumed Sessions', align: 'right', format: (row) => Number(row.consumedSessions || 0).toFixed(0) },
+    { key: 'pendingSessions', label: 'Pending Sessions', align: 'right', format: (row) => Number(row.pendingSessions || 0).toFixed(0) },
     { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right', format: (row) => formatCurrency(row.discountedSessionPrice) },
     { key: 'attendanceVerified', label: 'Attendance Verified', format: (row) => row.attendanceVerified ? 'Yes' : 'No' },
   ]), [formatCurrency, formatPercent])
@@ -302,6 +308,7 @@ const VerificationManager: React.FC = () => {
       case 'Manually verified': return 'bg-blue-100 text-blue-800'
       case 'Not Verified': return 'bg-red-100 text-red-800'
       case 'Package Cannot be found': return 'bg-orange-100 text-orange-800'
+      case 'Pending Attendance': return 'bg-yellow-100 text-yellow-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }

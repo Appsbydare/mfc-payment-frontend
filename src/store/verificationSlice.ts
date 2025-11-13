@@ -10,7 +10,7 @@ export interface MasterRow {
   status: string
   discount: string
   discountPercentage: number
-  verificationStatus: 'Verified' | 'Not Verified' | 'Package Cannot be found'
+  verificationStatus: 'Verified' | 'Not Verified' | 'Package Cannot be found' | 'Pending Attendance'
   invoiceNumber: string
   invoiceAmount?: number
   amount: number
