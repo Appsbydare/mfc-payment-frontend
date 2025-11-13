@@ -640,7 +640,7 @@ const VerificationManager: React.FC = () => {
 
       <div className="mb-4">
         <nav className="flex gap-2" aria-label="Tabs">
-          {['Master Verification', 'Payment Verification', 'Verification Summary', 'Coaches Summary'].map((label, idx) => (
+          {['Master Verification', 'Payment Verification', 'Coaches Summary'].map((label, idx) => (
             <button
               key={label}
               onClick={() => dispatch(setActiveTab(idx))}
@@ -947,10 +947,6 @@ const VerificationManager: React.FC = () => {
       )}
 
       {activeTab === 2 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Verification Summary section - Coming soon</div>
-      )}
-
-      {activeTab === 3 && (
         <div className="space-y-4">
           {selectedCoach ? (
             <div className="space-y-4">
@@ -1105,9 +1101,6 @@ const VerificationManager: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 2 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Verification Summary section - Coming soon</div>
-      )}
     </div>
   )
 }
