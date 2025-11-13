@@ -12,6 +12,7 @@ export interface MasterRow {
   discountPercentage: number
   verificationStatus: 'Verified' | 'Not Verified' | 'Package Cannot be found'
   invoiceNumber: string
+  invoiceAmount?: number
   amount: number
   paymentDate: string
   tax: number

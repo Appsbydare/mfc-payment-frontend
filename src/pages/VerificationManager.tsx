@@ -682,12 +682,12 @@ const VerificationManager: React.FC = () => {
           </div>
 
           <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
-            <table className="min-w-[1650px] text-sm">
+            <table className="min-w-[1750px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','tax','numberOfSessions','discountedSessionPrice','coachAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','invoiceAmount','amount','paymentDate','tax','numberOfSessions','discountedSessionPrice','coachAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Tax','Number of Sessions','Discounted Session Price','Coach Amount','Management Amount','MFC Amount','Change History'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Invoiced Amount','Verified Amount','Payment Date','Tax','Number of Sessions','Discounted Session Price','Coach Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -766,6 +766,9 @@ const VerificationManager: React.FC = () => {
                         ) : (
                           draft.invoiceNumber
                         )}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
+                        {Number((draft as any).invoiceAmount || 0).toFixed(2)}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
