@@ -624,7 +624,7 @@ const VerificationManager: React.FC = () => {
 
   // Auto-load coaches summary when tab is opened
   useEffect(() => {
-    if (activeTab === 3 && coachesSummaryData.length === 0 && !coachesSummaryLoading) {
+    if (activeTab === 2 && coachesSummaryData.length === 0 && !coachesSummaryLoading) {
       loadCoachesSummary()
     }
   }, [activeTab])
