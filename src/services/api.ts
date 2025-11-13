@@ -346,6 +346,7 @@ class ApiService {
         totalInvoices: number;
         totalFinalPrice: number;
         totalTax: number;
+        totalNetPrice: number;
         invoicesWithDiscounts: number;
       };
     }>(`/attendance-verification/payment-verification`);
