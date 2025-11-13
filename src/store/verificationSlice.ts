@@ -14,16 +14,15 @@ export interface MasterRow {
   invoiceNumber: string
   amount: number
   paymentDate: string
-  packagePrice: number
+  tax: number
   numberOfSessions?: number
-  sessionPrice: number
   discountedSessionPrice: number
   coachAmount: number
-  bgmAmount: number
   managementAmount: number
   mfcAmount: number
   uniqueKey?: string
   changeHistory?: string
+  priceSource?: string
 }
 
 interface VerificationState {

@@ -33,6 +33,7 @@ type PaymentVerificationRow = {
   netPrice: number
   numberOfSessions: number
   discountedSessionPrice: number
+  attendanceVerified?: boolean
 }
 
 const VerificationManager: React.FC = () => {
@@ -182,6 +183,7 @@ const VerificationManager: React.FC = () => {
             netPrice,
             numberOfSessions: Number(row.numberOfSessions ?? row.totalSessions ?? 0) || 0,
             discountedSessionPrice: Number(row.discountedSessionPrice ?? row.invoiceVerifiedSessionPrice ?? 0) || 0,
+            attendanceVerified: Boolean(row.attendanceVerified)
           }
         })
         setPaymentData(rows)
@@ -255,6 +257,7 @@ const VerificationManager: React.FC = () => {
     { key: 'discountPercentage', label: 'Actual Discount %', align: 'right', format: (row) => formatPercent(row.discountPercentage) },
     { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right', format: (row) => Number(row.numberOfSessions || 0).toFixed(0) },
     { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right', format: (row) => formatCurrency(row.discountedSessionPrice) },
+    { key: 'attendanceVerified', label: 'Attendance Verified', format: (row) => row.attendanceVerified ? 'Yes' : 'No' },
   ]), [formatCurrency, formatPercent])
 
   const handlePaymentSort = (key: keyof PaymentVerificationRow) => {
@@ -271,11 +274,17 @@ const VerificationManager: React.FC = () => {
     const totalTax = paymentSummary?.totalTax ?? paymentData.reduce((sum, row) => sum + (row.tax || 0), 0)
     const totalNetPrice = paymentSummary?.totalNetPrice ?? paymentData.reduce((sum, row) => sum + (row.netPrice || 0), 0)
     const invoicesWithDiscounts = paymentSummary?.invoicesWithDiscounts ?? paymentData.filter(row => !!row.discount).length
+    const attendanceVerifiedCount = paymentSummary?.attendanceVerifiedCount ?? paymentData.filter(row => row.attendanceVerified).length
+    const attendanceUnverifiedPercent = paymentSummary?.attendanceUnverifiedPercent ?? (
+      totalInvoices > 0 ? ((totalInvoices - attendanceVerifiedCount) / totalInvoices) * 100 : 0
+    )
     return {
       totalInvoices,
       totalTax,
       totalNetPrice,
       invoicesWithDiscounts,
+      attendanceVerifiedCount,
+      attendanceUnverifiedPercent,
     }
   }, [paymentSummary, paymentData])
 
@@ -433,7 +442,7 @@ const VerificationManager: React.FC = () => {
 
       // Compose change history entry
       const changedFields: string[] = []
-      const fieldsToTrack: (keyof MasterRow)[] = ['discount','discountPercentage','invoiceNumber','amount','paymentDate','packagePrice','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount']
+      const fieldsToTrack: (keyof MasterRow)[] = ['discount','discountPercentage','invoiceNumber','amount','paymentDate','tax','numberOfSessions','discountedSessionPrice','coachAmount','managementAmount','mfcAmount']
       fieldsToTrack.forEach(k => {
         const beforeVal = (original as any)[k]
         const afterVal = (merged as any)[k]
@@ -673,12 +682,12 @@ const VerificationManager: React.FC = () => {
           </div>
 
           <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-260px)] overflow-x-auto overflow-y-auto">
-            <table className="min-w-[1850px] text-sm">
+            <table className="min-w-[1650px] text-sm">
               <thead className="sticky top-0 bg-gray-800 text-white z-10">
                 <tr>
-                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','packagePrice','numberOfSessions','sessionPrice','discountedSessionPrice','coachAmount','bgmAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
+                  {['customerName','eventStartsAt','membershipName','classType','sessionType','instructors','status','discount','discountPercentage','verificationStatus','actions','invoiceNumber','amount','paymentDate','tax','numberOfSessions','discountedSessionPrice','coachAmount','managementAmount','mfcAmount','changeHistory'].map((key, idx) => (
                     <th key={key} onClick={() => handleSort(key as keyof MasterRow)} className="px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none text-white">
-                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Package Price','Number of Sessions','Session Price','Discounted Session Price','Coach Amount','BGM Amount','Management Amount','MFC Amount','Change History'][idx]}
+                      {['Customer Name','Event Starts At','Membership Name','Class Type','Session Type','Instructors','Status','Discount','Discount %','Verification Status','Actions','Invoice #','Verified Amount','Payment Date','Tax','Number of Sessions','Discounted Session Price','Coach Amount','Management Amount','MFC Amount','Change History'][idx]}
                       {sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                     </th>
                   ))}
@@ -789,22 +798,15 @@ const VerificationManager: React.FC = () => {
                             type="number" 
                             step="0.01" 
                             className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" 
-                            value={`${draft.packagePrice ?? 0}`} 
-                            onChange={(e)=>dispatch(updateEditDraft({packagePrice: parseFloat(e.target.value || '0')}))} 
+                            value={`${draft.tax ?? 0}`} 
+                            onChange={(e)=>dispatch(updateEditDraft({tax: parseFloat(e.target.value || '0')}))} 
                           />
                         ) : (
-                          Number(draft.packagePrice || 0).toFixed(2)
+                          Number(draft.tax || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {Number(draft.numberOfSessions || 0).toFixed(0)}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.sessionPrice ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({sessionPrice: parseFloat(e.target.value || '0')}))} />
-                        ) : (
-                          Number(draft.sessionPrice || 0).toFixed(2)
-                        )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
                         {isEditing ? (
@@ -818,13 +820,6 @@ const VerificationManager: React.FC = () => {
                           <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.coachAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({coachAmount: parseFloat(e.target.value || '0')}))} />
                         ) : (
                           Number(draft.coachAmount || 0).toFixed(2)
-                        )}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
-                        {isEditing ? (
-                          <input type="number" step="0.01" className="w-24 px-2 py-1 bg-gray-900 text-white border border-gray-700 rounded text-right" value={`${draft.bgmAmount ?? 0}`} onChange={(e)=>dispatch(updateEditDraft({bgmAmount: parseFloat(e.target.value || '0')}))} />
-                        ) : (
-                          Number(draft.bgmAmount || 0).toFixed(2)
                         )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">
@@ -880,14 +875,18 @@ const VerificationManager: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div className="bg-gray-800 text-white rounded-lg p-3">
               <div className="text-xs uppercase tracking-wide text-gray-400">Total Invoices</div>
               <div className="text-2xl font-semibold">{paymentStats.totalInvoices}</div>
             </div>
             <div className="bg-gray-800 text-white rounded-lg p-3">
-              <div className="text-xs uppercase tracking-wide text-gray-400">Invoices With Discounts</div>
-              <div className="text-2xl font-semibold">{paymentStats.invoicesWithDiscounts}</div>
+              <div className="text-xs uppercase tracking-wide text-gray-400">Attendance Verified</div>
+              <div className="text-2xl font-semibold">{paymentStats.attendanceVerifiedCount}</div>
+            </div>
+            <div className="bg-gray-800 text-white rounded-lg p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Not Verified %</div>
+              <div className="text-2xl font-semibold">{formatPercent(paymentStats.attendanceUnverifiedPercent)}</div>
             </div>
             <div className="bg-gray-800 text-white rounded-lg p-3">
               <div className="text-xs uppercase tracking-wide text-gray-400">Total Net Price</div>

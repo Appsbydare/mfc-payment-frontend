@@ -348,6 +348,8 @@ class ApiService {
         totalTax: number;
         totalNetPrice: number;
         invoicesWithDiscounts: number;
+        attendanceVerifiedCount: number;
+        attendanceUnverifiedPercent: number;
       };
     }>(`/attendance-verification/payment-verification`);
   }
@@ -403,20 +405,6 @@ class ApiService {
     }>('/attendance-verification/batch-verify', {
       method: 'POST',
       body: JSON.stringify({ forceReverify }),
-    });
-  }
-
-  async addDiscounts() {
-    return this.request<{
-      success: boolean;
-      message: string;
-      data: any[];
-      summary: {
-        totalRecords: number;
-        discountAppliedCount: number;
-      };
-    }>('/attendance-verification/add-discounts', {
-      method: 'POST',
     });
   }
 

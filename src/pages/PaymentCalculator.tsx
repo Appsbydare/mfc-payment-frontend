@@ -86,7 +86,7 @@ const PaymentCalculator: React.FC = () => {
       const headers = [
         'Customer Name', 'Event Starts At', 'Membership Name', 'Instructors', 'Status',
         'Discount', 'Discount %', 'Verification Status', 'Invoice #', 'Amount',
-        'Payment Date', 'Session Price', 'Coach Amount', 'BGM Amount', 'Management Amount', 'MFC Amount'
+        'Payment Date', 'Tax', 'Number of Sessions', 'Discounted Session Price', 'Coach Amount', 'Management Amount', 'MFC Amount'
       ]
 
       const csv = [
@@ -103,9 +103,10 @@ const PaymentCalculator: React.FC = () => {
           escape(r.invoiceNumber),
           escape(r.amount),
           escape(r.paymentDate),
-          escape(r.sessionPrice),
+          escape(r.tax),
+          escape(r.numberOfSessions),
+          escape(r.discountedSessionPrice),
           escape(r.coachAmount),
-          escape(r.bgmAmount),
           escape(r.managementAmount),
           escape(r.mfcAmount)
         ].join(','))
@@ -230,7 +231,7 @@ const PaymentCalculator: React.FC = () => {
                       </colgroup>
                       <thead className="sticky top-0 z-10 bg-primary-50/80 dark:bg-slate-800/90 text-primary-800 dark:text-primary-200">
                         <tr>
-                          {[ 
+                          {[
                             { key: 'customerName', label: 'Customer Name' },
                             { key: 'eventStartsAt', label: 'Event Starts At' },
                             { key: 'membershipName', label: 'Membership Name' },
@@ -242,9 +243,10 @@ const PaymentCalculator: React.FC = () => {
                             { key: 'invoiceNumber', label: 'Invoice #' },
                             { key: 'amount', label: 'Amount' },
                             { key: 'paymentDate', label: 'Payment Date' },
-                            { key: 'sessionPrice', label: 'Session Price' },
+                            { key: 'tax', label: 'Tax' },
+                            { key: 'numberOfSessions', label: 'Number of Sessions' },
+                            { key: 'discountedSessionPrice', label: 'Discounted Session Price' },
                             { key: 'coachAmount', label: 'Coach Amount' },
-                            { key: 'bgmAmount', label: 'BGM Amount' },
                             { key: 'managementAmount', label: 'Management Amount' },
                             { key: 'mfcAmount', label: 'MFC Amount' },
                           ].map(col => (
@@ -292,18 +294,19 @@ const PaymentCalculator: React.FC = () => {
                             <td className="px-3 py-2 border-b whitespace-nowrap">{r.invoiceNumber}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.amount || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap">{r.paymentDate}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.sessionPrice || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.tax || 0).toFixed(2)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">{Number(r.numberOfSessions || 0).toFixed(0)}</td>
+                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.discountedSessionPrice || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.coachAmount || 0).toFixed(2)}</td>
-                            <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.bgmAmount || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.managementAmount || 0).toFixed(2)}</td>
                             <td className="px-3 py-2 border-b whitespace-nowrap text-right">€{Number(r.mfcAmount || 0).toFixed(2)}</td>
                           </tr>
                         ))}
                         {masterData.length === 0 && !loading && (
-                          <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>No verification data available. Click "Verify Payments" to process data.</td></tr>
+                          <tr><td className="px-3 py-4 text-gray-500" colSpan={17}>No verification data available. Click "Verify Payments" to process data.</td></tr>
                         )}
                         {loading && (
-                          <tr><td className="px-3 py-4 text-gray-500" colSpan={16}>Loading verification data...</td></tr>
+                          <tr><td className="px-3 py-4 text-gray-500" colSpan={17}>Loading verification data...</td></tr>
                         )}
                       </tbody>
                     </table>
