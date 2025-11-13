@@ -238,20 +238,29 @@ const VerificationManager: React.FC = () => {
     return rows
   }, [filteredPaymentData, paymentSortKey, paymentSortDir])
 
-  const paymentColumns: { key: keyof PaymentVerificationRow; label: string; align?: 'left' | 'right' }[] = React.useMemo(() => ([
+  const formatCurrency = React.useCallback((value: number) => `€${(Number(value) || 0).toFixed(2)}`, [])
+  const formatPercent = React.useCallback((value?: number) => `${(Number(value) || 0).toFixed(2)}%`, [])
+
+  const paymentColumns: {
+    key: keyof PaymentVerificationRow
+    label: string
+    align?: 'left' | 'right'
+    format?: (row: PaymentVerificationRow) => React.ReactNode
+  }[] = React.useMemo(() => ([
     { key: 'date', label: 'Date' },
     { key: 'invoice', label: 'Invoice' },
     { key: 'customer', label: 'Customer' },
     { key: 'package', label: 'Package' },
-    { key: 'amount', label: 'Amount', align: 'right' },
     { key: 'discount', label: 'Discount' },
-    { key: 'discountPercentage', label: 'Discount %', align: 'right' },
-    { key: 'tax', label: 'Tax', align: 'right' },
-    { key: 'finalPrice', label: 'Final Price', align: 'right' },
-    { key: 'netPrice', label: 'Net Price', align: 'right' },
-    { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right' },
-    { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right' },
-  ]), [])
+    { key: 'amount', label: 'Invoice Amount', align: 'right', format: (row) => formatCurrency(row.amount) },
+    { key: 'tax', label: 'Tax', align: 'right', format: (row) => formatCurrency(row.tax) },
+    { key: 'discountAmount', label: 'Discount Amount', align: 'right', format: (row) => formatCurrency(row.discountAmount ?? 0) },
+    { key: 'netPrice', label: 'Net Price', align: 'right', format: (row) => formatCurrency(row.netPrice) },
+    { key: 'discountPercentage', label: 'Actual Discount %', align: 'right', format: (row) => formatPercent(row.discountPercentage) },
+    { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right', format: (row) => Number(row.numberOfSessions || 0).toFixed(0) },
+    { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right', format: (row) => formatCurrency(row.discountedSessionPrice) },
+    { key: 'finalPrice', label: 'Final Price', align: 'right', format: (row) => formatCurrency(row.finalPrice) },
+  ]), [formatCurrency, formatPercent])
 
   const handlePaymentSort = (key: keyof PaymentVerificationRow) => {
     if (paymentSortKey === key) {
@@ -261,9 +270,6 @@ const VerificationManager: React.FC = () => {
       setPaymentSortDir(key === 'date' ? 'desc' : 'asc')
     }
   }
-
-  const formatCurrency = (value: number) => `€${(Number(value) || 0).toFixed(2)}`
-  const formatPercent = (value?: number) => `${(Number(value) || 0).toFixed(2)}%`
 
   const paymentStats = React.useMemo(() => {
     const totalInvoices = paymentSummary?.totalInvoices ?? paymentData.length
@@ -950,18 +956,18 @@ const VerificationManager: React.FC = () => {
               <tbody>
                 {sortedPaymentData.map((row, idx) => (
                   <tr key={`${row.invoice}-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.date}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.invoice}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.customer}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.package}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.amount)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.discount}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatPercent(row.discountPercentage)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.tax)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.finalPrice)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.netPrice)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(row.numberOfSessions || 0).toFixed(0)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.discountedSessionPrice)}</td>
+                    {paymentColumns.map((col) => {
+                      const cellValue = col.format ? col.format(row) : (row[col.key] ?? '')
+                      const alignClass = col.align === 'right' ? 'text-right tabular-nums' : 'text-left'
+                      return (
+                        <td
+                          key={col.key}
+                          className={`px-3 py-2 whitespace-nowrap text-white ${alignClass}`}
+                        >
+                          {cellValue}
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))}
                 {paymentLoading && (
