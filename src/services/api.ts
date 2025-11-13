@@ -338,6 +338,19 @@ class ApiService {
     }>('/attendance-verification/master');
   }
 
+  async getPaymentVerificationTable() {
+    return this.request<{
+      success: boolean;
+      data: any[];
+      summary?: {
+        totalInvoices: number;
+        totalFinalPrice: number;
+        totalTax: number;
+        invoicesWithDiscounts: number;
+      };
+    }>(`/attendance-verification/payment-verification`);
+  }
+
   async verifyAttendanceData(forceReverify: boolean = true) {
     return this.request<{
       success: boolean;

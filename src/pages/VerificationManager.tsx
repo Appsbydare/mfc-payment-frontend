@@ -20,6 +20,20 @@ import {
   updateMasterRow,
 } from '../store/verificationSlice'
 
+type PaymentVerificationRow = {
+  invoice: string
+  date: string
+  amount: number
+  customer: string
+  package: string
+  discount: string
+  discountAmount?: number
+  tax: number
+  finalPrice: number
+  numberOfSessions: number
+  discountedSessionPrice: number
+}
+
 const VerificationManager: React.FC = () => {
   const dispatch = useDispatch()
   const {
@@ -55,6 +69,13 @@ const VerificationManager: React.FC = () => {
   const [coachesFilterText, setCoachesFilterText] = React.useState('')
   const [coachesSortKey, setCoachesSortKey] = React.useState<'coachName'|'totalSessions'|'totalAmount'|'totalCoachAmount'|'totalBgmAmount'|'totalManagementAmount'|'totalMfcAmount'|'averageSessionAmount'>('totalCoachAmount')
   const [coachesSortDir, setCoachesSortDir] = React.useState<'asc'|'desc'>('desc')
+
+  const [paymentData, setPaymentData] = React.useState<PaymentVerificationRow[]>([])
+  const [paymentSummary, setPaymentSummary] = React.useState<any | null>(null)
+  const [paymentLoading, setPaymentLoading] = React.useState(false)
+  const [paymentFilter, setPaymentFilter] = React.useState('')
+  const [paymentSortKey, setPaymentSortKey] = React.useState<keyof PaymentVerificationRow>('date')
+  const [paymentSortDir, setPaymentSortDir] = React.useState<'asc' | 'desc'>('desc')
 
   // Helper function to update loading states
   const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
@@ -134,6 +155,100 @@ const VerificationManager: React.FC = () => {
     })
     return out
   }, [filtered, sortKey, sortDir])
+
+  const loadPaymentVerification = React.useCallback(async () => {
+    try {
+      setPaymentLoading(true)
+      toast.loading('Loading payment verification...', { id: 'payment-verification' })
+      const response: any = await apiService.getPaymentVerificationTable()
+      if (response?.success) {
+        const rows: PaymentVerificationRow[] = response.data || []
+        setPaymentData(rows)
+        setPaymentSummary(response.summary || null)
+        toast.success(`Loaded ${rows.length} payment records`, { id: 'payment-verification' })
+      } else {
+        toast.error(response?.message || 'Failed to load payment verification data', { id: 'payment-verification' })
+      }
+    } catch (error: any) {
+      console.error('❌ Payment verification load error:', error)
+      toast.error(error?.message || 'Failed to load payment verification data', { id: 'payment-verification' })
+    } finally {
+      setPaymentLoading(false)
+    }
+  }, [])
+
+  const filteredPaymentData = React.useMemo(() => {
+    const query = paymentFilter.trim().toLowerCase()
+    if (!query) return paymentData
+    return paymentData.filter(row => {
+      return [
+        row.invoice,
+        row.customer,
+        row.package,
+        row.discount,
+      ].some(value => (value || '').toLowerCase().includes(query))
+    })
+  }, [paymentFilter, paymentData])
+
+  const sortedPaymentData = React.useMemo(() => {
+    const rows = [...filteredPaymentData]
+    rows.sort((a, b) => {
+      const aValue = a[paymentSortKey]
+      const bValue = b[paymentSortKey]
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return paymentSortDir === 'asc' ? aValue - bValue : bValue - aValue
+      }
+      const aStr = String(aValue ?? '')
+      const bStr = String(bValue ?? '')
+      if (paymentSortKey === 'date') {
+        const aDate = new Date(aStr).getTime()
+        const bDate = new Date(bStr).getTime()
+        if (!Number.isFinite(aDate) || !Number.isFinite(bDate)) {
+          return paymentSortDir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr)
+        }
+        return paymentSortDir === 'asc' ? aDate - bDate : bDate - aDate
+      }
+      return paymentSortDir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr)
+    })
+    return rows
+  }, [filteredPaymentData, paymentSortKey, paymentSortDir])
+
+  const paymentColumns: { key: keyof PaymentVerificationRow; label: string; align?: 'left' | 'right' }[] = React.useMemo(() => ([
+    { key: 'date', label: 'Date' },
+    { key: 'invoice', label: 'Invoice' },
+    { key: 'amount', label: 'Amount', align: 'right' },
+    { key: 'customer', label: 'Customer' },
+    { key: 'package', label: 'Package' },
+    { key: 'discount', label: 'Discount' },
+    { key: 'tax', label: 'Tax', align: 'right' },
+    { key: 'finalPrice', label: 'Final Price', align: 'right' },
+    { key: 'numberOfSessions', label: 'Number of Sessions', align: 'right' },
+    { key: 'discountedSessionPrice', label: 'Discounted Session Price', align: 'right' },
+  ]), [])
+
+  const handlePaymentSort = (key: keyof PaymentVerificationRow) => {
+    if (paymentSortKey === key) {
+      setPaymentSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setPaymentSortKey(key)
+      setPaymentSortDir(key === 'date' ? 'desc' : 'asc')
+    }
+  }
+
+  const formatCurrency = (value: number) => `€${(Number(value) || 0).toFixed(2)}`
+
+  const paymentStats = React.useMemo(() => {
+    const totalInvoices = paymentSummary?.totalInvoices ?? paymentData.length
+    const totalFinalPrice = paymentSummary?.totalFinalPrice ?? paymentData.reduce((sum, row) => sum + (row.finalPrice || 0), 0)
+    const totalTax = paymentSummary?.totalTax ?? paymentData.reduce((sum, row) => sum + (row.tax || 0), 0)
+    const invoicesWithDiscounts = paymentSummary?.invoicesWithDiscounts ?? paymentData.filter(row => !!row.discount).length
+    return {
+      totalInvoices,
+      totalFinalPrice,
+      totalTax,
+      invoicesWithDiscounts,
+    }
+  }, [paymentSummary, paymentData])
 
   const handleSort = (key: keyof MasterRow) => {
     if (sortKey === key) {
@@ -357,6 +472,12 @@ const VerificationManager: React.FC = () => {
     console.log('❌ Canceling edit mode');
     dispatch(clearEditState())
   }
+
+  useEffect(() => {
+    if (activeTab === 1 && paymentData.length === 0 && !paymentLoading) {
+      loadPaymentVerification()
+    }
+  }, [activeTab, paymentData.length, paymentLoading, loadPaymentVerification])
 
   // Coaches Summary functions
   const loadCoachesSummary = async () => {
@@ -735,7 +856,94 @@ const VerificationManager: React.FC = () => {
       )}
 
       {activeTab === 1 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">Payment Verification section - Coming soon</div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadPaymentVerification}
+                disabled={paymentLoading}
+                className="px-3 py-2 rounded bg-primary-600 text-white disabled:opacity-50"
+              >
+                {paymentLoading ? 'Loading...' : 'Refresh'}
+              </button>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {paymentData.length > 0 ? `${paymentData.length} invoice${paymentData.length === 1 ? '' : 's'} loaded` : 'No data loaded yet'}
+              </span>
+            </div>
+            <input
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="w-72 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded"
+              placeholder="Search invoices, customers, packages..."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="bg-gray-800 text-white rounded-lg p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Total Invoices</div>
+              <div className="text-2xl font-semibold">{paymentStats.totalInvoices}</div>
+            </div>
+            <div className="bg-gray-800 text-white rounded-lg p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Invoices With Discounts</div>
+              <div className="text-2xl font-semibold">{paymentStats.invoicesWithDiscounts}</div>
+            </div>
+            <div className="bg-gray-800 text-white rounded-lg p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Total Final Price</div>
+              <div className="text-2xl font-semibold">{formatCurrency(paymentStats.totalFinalPrice)}</div>
+            </div>
+            <div className="bg-gray-800 text-white rounded-lg p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Total Tax</div>
+              <div className="text-2xl font-semibold">{formatCurrency(paymentStats.totalTax)}</div>
+            </div>
+          </div>
+
+          <div className="relative border border-gray-200 dark:border-gray-700 rounded max-h-[calc(100vh-300px)] overflow-x-auto overflow-y-auto">
+            <table className="min-w-[1100px] text-sm">
+              <thead className="sticky top-0 bg-gray-800 text-white z-10">
+                <tr>
+                  {paymentColumns.map(col => (
+                    <th
+                      key={col.key}
+                      onClick={() => handlePaymentSort(col.key)}
+                      className={`px-3 py-2 text-left font-semibold whitespace-nowrap cursor-pointer select-none ${col.align === 'right' ? 'text-right' : ''}`}
+                    >
+                      {col.label}
+                      {paymentSortKey === col.key ? (paymentSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPaymentData.map((row, idx) => (
+                  <tr key={`${row.invoice}-${idx}`} className="border-t border-gray-100 dark:border-gray-700">
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.date}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.invoice}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.amount)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.customer}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.package}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-white">{row.discount}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.tax)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.finalPrice)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{Number(row.numberOfSessions || 0).toFixed(0)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-white">{formatCurrency(row.discountedSessionPrice)}</td>
+                  </tr>
+                ))}
+                {paymentLoading && (
+                  <tr>
+                    <td className="px-3 py-4 text-gray-400" colSpan={paymentColumns.length}>Loading payment verification data...</td>
+                  </tr>
+                )}
+                {!paymentLoading && sortedPaymentData.length === 0 && (
+                  <tr>
+                    <td className="px-3 py-4 text-gray-400" colSpan={paymentColumns.length}>
+                      {paymentData.length === 0 ? 'No payment verification data loaded yet. Click Refresh to load data.' : 'No matching records for your search.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {activeTab === 2 && (
